@@ -1,3 +1,4 @@
+// for app
 import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
@@ -15,4 +16,7 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  server: {
+    allowedHosts: ['web'] // для поддержки hmr в докер контейнере (это доменное имя докер контейнера)
+  }
 })

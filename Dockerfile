@@ -1,4 +1,4 @@
-FROM node:23.4-alpine as builder
+FROM node:23.4-alpine AS builder
 
 RUN apk add --no-cache git;
 
@@ -16,11 +16,11 @@ RUN npm install
 
 RUN npm run build-only
 
-FROM builder as local
+FROM builder AS local
 
 CMD [ "npm", "run", "dev" ]
 
-FROM nginx:1.21.6-alpine as production
+FROM nginx:1.21.6-alpine AS production
 
 COPY ./docker/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /home/node/app/dist/ /srv
