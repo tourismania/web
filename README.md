@@ -83,6 +83,16 @@ npm run build
 npm run test:e2e
 ```
 
+### Run Component Tests with [Cypress](https://www.cypress.io/)
+
+Тестирование компонентов можно запустить командой ниже
+
+```sh
+npm run test:component:dev
+```
+**Важно помнить**. Для того, чтобы cypress корректно работал с Vite, ему необходима 4, 5 или 6-я версия Vite (а на 2025-08-24 актуальная 7-я).
+
+
 ### Lint with [ESLint](https://eslint.org/)
 
 ```sh
