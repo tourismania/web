@@ -1,7 +1,7 @@
 <template>
   <main>
     <div class="main__welcome">
-      <h1>Tourismania!</h1>
+      <img src="@/assets/logos/logo_main_transparent.png" alt="">
     </div>
   </main>
 </template>
@@ -17,6 +17,10 @@
   background-position: center;
   background-size: cover;
   color: white;
-  background-image: url('../assets/images/background_main.jpg');
+  background-image: url('../assets/images/background_main.png');
+
+  & img {
+    width: 300px;
+  }
 }
 </style>
