@@ -8,3 +8,6 @@ import { RouterView } from 'vue-router'
   </header>
   <RouterView />
 </template>
+<style lang="scss">
+@import '@/assets/fonts/amatic-sc';
+</style>
