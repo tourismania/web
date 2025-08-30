@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import SocialLinksFooter from "@/blocks/SocialLinksFooter.vue";
+import SocialLinksFooter from '@/blocks/SocialLinksFooter.vue'
 </script>
-
 
 <template>
   <main>
     <div class="main__welcome">
       <div class="main__welcome__logo">
-        <img src="@/assets/logos/logo_main_transparent.png" alt="">
+        <img src="@/assets/logos/logo_main_transparent.png" alt="" />
       </div>
     </div>
     <SocialLinksFooter />
