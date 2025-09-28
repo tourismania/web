@@ -41,10 +41,10 @@ export default defineComponent({
 </template>
 
 <style scoped lang="scss">
-@import '@/assets/variables';
+@use '@/assets/variables';
 
 .block-social-links-footer {
-  font-family: $font-family;
+  font-family: variables.$font-family;
   position: fixed;
   bottom: 0;
   width: 100%;

@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
+import MainLayout from "@/layouts/MainLayout.vue";
 </script>
 
 <template>
   <header>
     <!-- Menu	  -->
   </header>
-  <RouterView />
+  <MainLayout />
 </template>
-<style lang="scss">
-@import '@/assets/fonts/amatic-sc';
-</style>
+

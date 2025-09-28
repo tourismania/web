@@ -16,17 +16,10 @@
   text-align: center;
   align-items: center;
   flex-direction: column;
-  height: 100vh;
   align-content: center;
   justify-content: center;
-  background-position: center;
-  background-size: cover;
-  color: white;
-  background-image: url('../assets/images/background_main.jpg');
-
-  & a {
-    color: white;
-    text-decoration: underline;
-  }
+  height: 100vh;
 }
 </style>
+<script setup lang="ts">
+</script>
