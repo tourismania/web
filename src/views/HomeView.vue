@@ -12,6 +12,7 @@ import SocialLinksFooter from '@/blocks/SocialLinksFooter.vue'
         <router-link to="/travel-voucher">Информация о путевке</router-link>
       </div>
     </div>
+    <SocialLinksFooter />
   </main>
 </template>
 

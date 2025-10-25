@@ -44,7 +44,7 @@ export default defineComponent({
 @use '@/assets/variables';
 
 .block-social-links-footer {
-  font-family: variables.$font-family;
+  font-family: variables.$font-family-amatic;
   position: fixed;
   bottom: 0;
   width: 100%;

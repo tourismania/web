@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import SocialLinksFooter from '@/blocks/SocialLinksFooter.vue'
 import {RouterView} from "vue-router";
 </script>
 
@@ -8,7 +7,6 @@ import {RouterView} from "vue-router";
     <div class="main__layout">
       <RouterView />
     </div>
-    <SocialLinksFooter />
   </main>
 </template>
 
@@ -17,12 +15,13 @@ import {RouterView} from "vue-router";
 @use '@/assets/fonts/amatic-sc';
 
 .main__layout {
-  font-family: variables.$font-family;
+  font-family: variables.$font-family-amatic;
   height: 100vh;
   background-position: center;
   background-size: cover;
   color: white;
   background-image: url('../assets/images/background_main.png');
+  overflow-y: scroll;
 
   & img {
     width: 250px;
