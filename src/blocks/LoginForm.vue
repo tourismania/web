@@ -1,9 +1,7 @@
 <script lang="ts">
 import {defineComponent, ref} from 'vue'
-
-interface LoginFormData {
-  email: string;
-}
+import {AuthAPI} from "@/api/AuthAPI.ts";
+import router from "@/router";
 
 interface ValidationRule {
   (value: string): boolean | string;
@@ -38,8 +36,17 @@ export default defineComponent({
     ];
 
     const onSubmit = (): void => {
-      // Логика отправки формы
-      console.log('Форма отправлена:', email.value);
+
+      loading.value = true;
+
+      const api = new AuthAPI();
+      api.login(email.value, password.value)
+          .then(() => {
+            router.push('/');
+          })
+          .finally(() => {
+            loading.value = false;
+          });
     };
 
     return { email, password, emailRules, passwordRules, onSubmit, loading };
@@ -49,13 +56,22 @@ export default defineComponent({
 
 <template>
   <v-sheet class="mx-auto w-xs-75 w-sm-75 w-md-33 w-lg-33 w-xl-33 ">
-    <v-card class="mx-auto px-6 py-8 ">
+    <v-card :disabled="loading" :loading="loading" class="mx-auto px-6 py-8 custom-v-card-loader-full-loading">
+      <template v-slot:loader="{ isActive }">
+        <v-progress-circular
+            color="red"
+            :active="isActive"
+            indeterminate
+            v-show="loading"
+        ></v-progress-circular>
+      </template>
+
       <v-card-title>
         <h2>Вход в личный кабинет</h2>
       </v-card-title>
       <v-form
           @submit.prevent="onSubmit"
-          class="v-form-bold"
+          class="custom-v-form-bold"
       >
         <v-text-field
             v-model="email"
@@ -80,7 +96,6 @@ export default defineComponent({
         <br>
 
         <v-btn
-            :loading="loading"
             color="success"
             size="large"
             type="submit"

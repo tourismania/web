@@ -1,5 +1,6 @@
+@use "variables.scss";
+
 @import './base.css';
-@import "./variables.scss";
 
 h1 {
   font-size: 4rem !important;
@@ -28,20 +29,33 @@ a:hover {
   text-decoration-thickness: from-font !important;
 }
 
-.v-form-bold {
+.custom-v-form-bold {
   & .v-messages__message {
-    font-weight: $font-family-amatic-default-bold;
+    font-weight: variables.$font-family-amatic-default-bold;
   }
 
   & .v-btn__content {
-    font-weight: $font-family-amatic-default-bold;
+    font-weight: variables.$font-family-amatic-default-bold;
   }
 
   & .v-field-label {
-    font-weight: $font-family-amatic-default-bold;
+    font-weight: variables.$font-family-amatic-default-bold;
   }
 
   & .v-field__input {
-    font-weight: $font-family-amatic-default-bold;
+    font-weight: variables.$font-family-amatic-default-bold;
+  }
+}
+
+.v-card--disabled.custom-v-card-loader-full-loading {
+  & .v-card__loader {
+    height: 100%;
+    display: flex;
+    align-content: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    background-color: #15151591;
   }
 }

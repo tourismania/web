@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import SocialLinksFooter from '@/blocks/SocialLinksFooter.vue'
-import LoginForm from "@/blocks/LoginForm.vue";
 </script>
 
 <template>
