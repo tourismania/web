@@ -16,12 +16,23 @@ import {RouterView} from "vue-router";
 
 .main__layout {
   font-family: variables.$font-family-amatic;
+  font-weight: 800!important;
   height: 100vh;
   background-position: center;
   background-size: cover;
   color: white;
   background-image: url('../assets/images/background_main.png');
   overflow-y: scroll;
+
+  & > main {
+    display: flex;
+    text-align: center;
+    align-items: center;
+    flex-direction: column;
+    align-content: center;
+    justify-content: center;
+    height: 100vh;
+  }
 
   & img {
     width: 250px;

@@ -1,0 +1,47 @@
+@import './base.css';
+@import "./variables.scss";
+
+h1 {
+  font-size: 4rem !important;
+}
+
+h2 {
+  font-size: 2.5rem !important;
+}
+
+h3 {
+  font-size: 2rem;
+}
+
+* {
+  font-size: 1.3rem;
+}
+
+a:-webkit-any-link {
+  color: white !important;
+}
+a {
+  text-decoration-thickness: from-font !important;
+}
+
+a:hover {
+  text-decoration-thickness: from-font !important;
+}
+
+.v-form-bold {
+  & .v-messages__message {
+    font-weight: $font-family-amatic-default-bold;
+  }
+
+  & .v-btn__content {
+    font-weight: $font-family-amatic-default-bold;
+  }
+
+  & .v-field-label {
+    font-weight: $font-family-amatic-default-bold;
+  }
+
+  & .v-field__input {
+    font-weight: $font-family-amatic-default-bold;
+  }
+}
