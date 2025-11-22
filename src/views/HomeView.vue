@@ -9,7 +9,8 @@ import SocialLinksFooter from '@/blocks/SocialLinksFooter.vue'
         <img src="@/assets/logos/logo_main_transparent.png" alt="" />
       </div>
       <div class="main__routes">
-        <router-link to="/travel-voucher">Информация о путевке</router-link>
+<!--        <router-link to="/travel-voucher">Информация о путевке</router-link>-->
+        <router-link to="/login">Личный кабинет</router-link>
       </div>
     </div>
     <SocialLinksFooter />
@@ -30,6 +31,17 @@ import SocialLinksFooter from '@/blocks/SocialLinksFooter.vue'
     & img {
       width: 250px;
       filter: drop-shadow(2px 4px 6px black);
+    }
+  }
+
+  .main__routes {
+    a {
+      font-size: 31px;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
     }
   }
 }
