@@ -1,16 +1,11 @@
-// api/AuthAPI.ts
 import axios from 'axios';
 import type { AxiosInstance } from 'axios';
+import type {AuthResponse} from "@/api/types/auth.ts";
 import { useAuthStore } from '@/stores/auth.ts'
-
-interface AuthResponse {
-  token: string;
-}
 
 const AUTH_URL: string = import.meta.env.VITE_API_BASE_URL;
 
-console.log(import.meta.env.VITE_API_BASE_URL);
-export class AuthAPI {
+export class Auth {
   private apiClient: AxiosInstance;
   private authStore = useAuthStore();
 

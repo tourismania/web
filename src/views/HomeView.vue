@@ -1,5 +1,17 @@
 <script setup lang="ts">
 import SocialLinksFooter from '@/blocks/SocialLinksFooter.vue'
+import {useUserStore} from "@/stores/user.ts";
+import {onMounted, ref} from "vue";
+
+const userStore = useUserStore();
+
+const isAuthenticated = ref<boolean>(false);
+
+onMounted(() => {
+  userStore.loadCurrentUser().finally(() => {
+    isAuthenticated.value = userStore.isAuthenticated;
+  });
+})
 </script>
 
 <template>
@@ -10,7 +22,7 @@ import SocialLinksFooter from '@/blocks/SocialLinksFooter.vue'
       </div>
       <div class="main__routes">
 <!--        <router-link to="/travel-voucher">Информация о путевке</router-link>-->
-        <router-link to="/login">Личный кабинет</router-link>
+        <router-link v-if="!isAuthenticated" to="/login">Личный кабинет</router-link>
       </div>
     </div>
     <SocialLinksFooter />

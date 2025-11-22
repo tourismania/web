@@ -16,9 +16,5 @@ export const useAuthStore = defineStore('auth', {
       this.token = token;
       localStorage.setItem(TOKEN_KEY, token);
     },
-    clearToken() {
-      this.token = null;
-      localStorage.removeItem(TOKEN_KEY);
-    },
   },
 });

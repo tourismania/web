@@ -1,6 +1,6 @@
 <script lang="ts">
 import {defineComponent, ref} from 'vue'
-import {AuthAPI} from "@/api/AuthAPI.ts";
+import {Auth} from "@/api/auth.ts";
 import router from "@/router";
 
 interface ValidationRule {
@@ -39,7 +39,7 @@ export default defineComponent({
 
       loading.value = true;
 
-      const api = new AuthAPI();
+      const api = new Auth();
       api.login(email.value, password.value)
           .then(() => {
             router.push('/');
@@ -94,7 +94,6 @@ export default defineComponent({
         ></v-text-field>
 
         <br>
-
         <v-btn
             color="success"
             size="large"
