@@ -42,7 +42,7 @@ export default defineComponent({
       const api = new Auth();
       api.login(email.value, password.value)
           .then(() => {
-            router.push('/');
+            location.assign('/');
           })
           .finally(() => {
             loading.value = false;
@@ -56,7 +56,7 @@ export default defineComponent({
 
 <template>
   <v-sheet class="mx-auto w-xs-75 w-sm-75 w-md-33 w-lg-33 w-xl-33 ">
-    <v-card :disabled="loading" :loading="loading" class="mx-auto px-6 py-8 custom-v-card-loader-full-loading">
+    <v-card :disabled="loading" :loading="loading" theme="myCustomDarkTheme" class="mx-auto px-6 py-8 custom-v-card-loader-full-loading">
       <template v-slot:loader="{ isActive }">
         <v-progress-circular
             color="red"

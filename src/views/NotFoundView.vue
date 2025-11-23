@@ -8,7 +8,6 @@
         <RouterLink to="/"><p>Вернитесь домой</p></RouterLink>
       </div>
     </div>
-    <SocialLinksFooter />
   </main>
 </template>
 <style lang="scss" scoped>
@@ -23,5 +22,4 @@
 }
 </style>
 <script setup lang="ts">
-import SocialLinksFooter from "@/blocks/SocialLinksFooter.vue";
 </script>
