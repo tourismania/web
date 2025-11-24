@@ -4,10 +4,12 @@ import {useUserStore} from "@/stores/user.ts";
 import {onMounted, ref} from "vue";
 import SocialLinksFooter from "@/blocks/SocialLinksFooter.vue";
 import AppBar from "@/blocks/AppBar.vue";
+import NavigationDrawer from "@/blocks/NavigationDrawer.vue";
 
 const userStore = useUserStore();
 const isAuthenticated = ref<boolean>(false);
 const isSuperAdmin = ref<boolean>(false);
+const drawer = ref<boolean>(false);
 
 onMounted(() => {
   fetchCurrentUser();
@@ -24,13 +26,12 @@ function fetchCurrentUser(): void {
 
 <template>
     <v-app>
-      <AppBar :is-authenticated="isAuthenticated" :is-super-admin="isSuperAdmin" />
+      <AppBar
+          v-model="drawer"
+          :is-authenticated="isAuthenticated"
+          :is-super-admin="isSuperAdmin" />
 
-<!--      <v-navigation-drawer>
-        <v-list>
-          <v-list-item title="Navigation drawer"></v-list-item>
-        </v-list>
-      </v-navigation-drawer>-->
+      <NavigationDrawer v-model="drawer" />
 
       <v-main class="main__layout">
         <v-container>

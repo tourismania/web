@@ -6,11 +6,20 @@ import {mapStores} from "pinia";
 export default defineComponent({
   name: "AppBar",
   computed: {
-    ...mapStores(useAuthStore)
+    ...mapStores(useAuthStore),
+    value: {
+      get() {
+        return this.modelValue
+      },
+      set(value: any) {
+        this.$emit('update:modelValue', value)
+      }
+    }
   },
   props: {
     isAuthenticated: Boolean,
-    isSuperAdmin: Boolean
+    isSuperAdmin: Boolean,
+    modelValue: Boolean
   },
   methods: {
     logout(): void {
@@ -18,21 +27,23 @@ export default defineComponent({
       authStore.clearToken();
       location.assign('/');
     }
-  }
+  },
+  emits: ['update:modelValue'],
 })
 </script>
 
 <template>
   <v-app-bar class="app__bar" :elevation="2">
     <template v-slot:prepend>
-      <router-link to="/"><img src="../assets/logos/logo_symbol.png" alt=""></router-link>
+      <router-link v-if="!isSuperAdmin" to="/"><img src="../assets/logos/logo_symbol.png" alt=""></router-link>
+      <v-app-bar-nav-icon v-if="isSuperAdmin" @click.stop="value = !value" variant="text"></v-app-bar-nav-icon>
     </template>
     <div class="app__bar__menu">
-      <router-link v-if="isSuperAdmin" to="/travel-voucher">Информация о путевке</router-link>
+      <!--      <router-link v-if="isSuperAdmin" to="/travel-voucher">Информация о путевке</router-link>-->
     </div>
     <template v-slot:append>
       <v-btn @click="logout" v-if="isAuthenticated" icon="mdi-logout"></v-btn>
-      <router-link to="/login"><v-btn v-if="!isAuthenticated" icon="mdi-login"></v-btn></router-link>
+      <router-link v-else to="/login"><v-btn icon="mdi-login"></v-btn></router-link>
     </template>
   </v-app-bar>
 </template>
