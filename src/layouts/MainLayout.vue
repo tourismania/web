@@ -3,13 +3,11 @@ import {RouterView} from "vue-router";
 import {useUserStore} from "@/stores/user.ts";
 import {onMounted, ref} from "vue";
 import SocialLinksFooter from "@/blocks/SocialLinksFooter.vue";
-import router from "@/router";
-import {useAuthStore} from "@/stores/auth.ts";
+import AppBar from "@/blocks/AppBar.vue";
 
 const userStore = useUserStore();
-const authStore = useAuthStore();
-
 const isAuthenticated = ref<boolean>(false);
+const isSuperAdmin = ref<boolean>(false);
 
 onMounted(() => {
   fetchCurrentUser();
@@ -18,29 +16,15 @@ onMounted(() => {
 function fetchCurrentUser(): void {
   userStore.loadCurrentUser().finally(() => {
     isAuthenticated.value = userStore.isAuthenticated;
+    isSuperAdmin.value = userStore.isSuperAdmin;
   });
 }
 
-function logout(): void {
-  authStore.clearToken();
-  location.assign('/');
-}
 </script>
 
 <template>
     <v-app>
-      <v-app-bar class="app__bar" :elevation="2">
-        <template v-slot:prepend>
-          <router-link to="/"><img src="../assets/logos/logo_symbol.png" alt=""></router-link>
-        </template>
-        <div class="app__bar__menu">
-          <router-link to="/travel-voucher">Информация о путевке</router-link>
-        </div>
-        <template v-slot:append>
-          <v-btn @click="logout" v-if="isAuthenticated" icon="mdi-logout"></v-btn>
-          <router-link to="/login"><v-btn v-if="!isAuthenticated" icon="mdi-login"></v-btn></router-link>
-        </template>
-      </v-app-bar>
+      <AppBar :is-authenticated="isAuthenticated" :is-super-admin="isSuperAdmin" />
 
 <!--      <v-navigation-drawer>
         <v-list>
@@ -60,22 +44,6 @@ function logout(): void {
 <style lang="scss" scoped>
 @use '@/assets/variables';
 @use '@/assets/fonts/amatic-sc';
-
-header.app__bar {
-  font-family: variables.$font-family-amatic !important;
-  background-color: variables.$color-blue-dark;
-  font-weight: 800!important;
-
-  & .app__bar__menu {
-    & > a {
-      font-size: 25px;
-    }
-  }
-
-  & img {
-    width: 60px;
-  }
-}
 
 main.main__layout {
   font-family: variables.$font-family-amatic;

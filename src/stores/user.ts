@@ -26,6 +26,7 @@ export const useUserStore = defineStore('user', {
     },
   },
   getters: {
-    isAuthenticated: (state) => state.user !== null
+    isAuthenticated: (state) => state.user !== null,
+    isSuperAdmin: (state) => state.user?.rights?.isSuperAdmin || false,
   }
 });
