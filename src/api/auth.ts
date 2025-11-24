@@ -24,8 +24,10 @@ export class Auth {
       this.authStore.setToken(response.data.token);
     } catch (error: any) {
       if (error.response?.data?.message) {
+        console.error('login error', error.response?.data);
         throw new Error(error.response.data.message);
       } else {
+        console.error('login error', error.response?.data);
         throw new Error('Ошибка при авторизации. Попробуйте позже.');
       }
     }

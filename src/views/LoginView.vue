@@ -10,4 +10,13 @@ import LoginForm from "@/blocks/LoginForm.vue";
   </main>
 </template>
 <style lang="scss" scoped>
+
+.main__login {
+  height: 80vh;
+  display: flex;
+  align-content: center;
+  justify-content: center;
+  align-items: center;
+}
+
 </style>

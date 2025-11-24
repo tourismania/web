@@ -18,6 +18,10 @@ h3 {
   font-size: 1.3rem;
 }
 
+.font-weight-bold-800 {
+  font-weight: 800 !important;
+}
+
 a:-webkit-any-link {
   color: white !important;
 }
@@ -27,6 +31,12 @@ a {
 
 a:hover {
   text-decoration-thickness: from-font !important;
+}
+
+.custom-v-alert__content {
+  & .v-alert__content {
+    font-weight: variables.$font-family-amatic-default-bold;
+  }
 }
 
 .custom-v-form-bold {

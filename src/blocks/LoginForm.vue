@@ -1,7 +1,6 @@
 <script lang="ts">
 import {defineComponent, ref} from 'vue'
 import {Auth} from "@/api/auth.ts";
-import router from "@/router";
 
 interface ValidationRule {
   (value: string): boolean | string;
@@ -13,6 +12,7 @@ export default defineComponent({
 
     const email = ref<string>('');
     const password = ref<string>('');
+    const errorMessage = ref<string>('');
 
     const loading = ref<boolean>(false);
 
@@ -37,6 +37,7 @@ export default defineComponent({
 
     const onSubmit = (): void => {
 
+      errorMessage.value = ''
       loading.value = true;
 
       const api = new Auth();
@@ -44,12 +45,23 @@ export default defineComponent({
           .then(() => {
             location.assign('/');
           })
+          .catch((reason: string) => {
+            errorMessage.value = reason;
+          })
           .finally(() => {
             loading.value = false;
           });
     };
 
-    return { email, password, emailRules, passwordRules, onSubmit, loading };
+    return {
+      email,
+      password,
+      emailRules,
+      errorMessage,
+      passwordRules,
+      onSubmit,
+      loading
+    };
   }
 });
 </script>
@@ -69,6 +81,17 @@ export default defineComponent({
       <v-card-title>
         <h2>Вход в личный кабинет</h2>
       </v-card-title>
+      <v-alert
+          v-show="errorMessage !== ''"
+          border="top"
+          type="error"
+          variant="outlined"
+          class="custom-v-alert__content"
+          prominent
+      >
+        {{ errorMessage }}
+      </v-alert>
+      <br>
       <v-form
           @submit.prevent="onSubmit"
           class="custom-v-form-bold"
@@ -113,5 +136,4 @@ export default defineComponent({
 </template>
 
 <style scoped lang="scss">
-
 </style>
