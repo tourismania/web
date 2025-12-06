@@ -47,7 +47,8 @@ export default defineComponent({
   font-family: variables.$font-family-amatic;
   position: fixed;
   bottom: 0;
-  width: 100%;
+  margin: auto;
+  width: 75%;
   height: 100px;
   display: flex;
   align-items: center;

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SocialLinksFooter from "@/blocks/SocialLinksFooter.vue";
 </script>
 
 <template>
@@ -8,6 +9,7 @@
         <img src="@/assets/logos/logo_main_transparent.png" alt="" />
       </div>
     </div>
+    <SocialLinksFooter />
   </main>
 </template>
 

@@ -37,7 +37,6 @@ function fetchCurrentUser(): void {
         <v-container>
             <RouterView />
         </v-container>
-        <SocialLinksFooter />
       </v-main>
     </v-app>
 </template>

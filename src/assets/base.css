@@ -55,7 +55,11 @@
 *::after {
   box-sizing: border-box;
   margin: 0;
-  font-weight: normal;
+}
+
+p {
+    padding-top: 20px;
+    padding-bottom: 20px;
 }
 
 body {
