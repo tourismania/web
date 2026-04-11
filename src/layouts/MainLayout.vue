@@ -43,11 +43,10 @@ function fetchCurrentUser(): void {
 
 <style lang="scss" scoped>
 @use '@/assets/variables';
-@use '@/assets/fonts/amatic-sc';
 
 main.main__layout {
-  font-family: variables.$font-family-amatic;
-  font-weight: 800!important;
+  font-family: variables.$font-family-base;
+  font-weight: 400;
   height: 100vh;
   background-position: center;
   background-size: cover;

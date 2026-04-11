@@ -44,7 +44,7 @@ export default defineComponent({
 @use '@/assets/variables';
 
 .block-social-links-footer {
-  font-family: variables.$font-family-amatic;
+  font-family: variables.$font-family-base;
   position: fixed;
   bottom: 0;
   margin: auto;
@@ -62,8 +62,8 @@ export default defineComponent({
   }
 
   & &__title {
-    font-size: 25px;
-    font-weight: 700;
+    font-size: 1.125rem;
+    font-weight: 600;
   }
 
   & &__link:hover {
