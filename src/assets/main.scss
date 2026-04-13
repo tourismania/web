@@ -33,31 +33,27 @@ a:hover {
   text-decoration-thickness: from-font !important;
 }
 
-.v-application {
-  font-family: variables.$font-family-base;
-}
-
 .custom-v-alert__content {
   & .v-alert__content {
-    font-weight: variables.$font-weight-ui-strong;
+    font-weight: variables.$font-family-amatic-default-bold;
   }
 }
 
 .custom-v-form-bold {
   & .v-messages__message {
-    font-weight: variables.$font-weight-ui-strong;
+    font-weight: variables.$font-family-amatic-default-bold;
   }
 
   & .v-btn__content {
-    font-weight: variables.$font-weight-ui-strong;
+    font-weight: variables.$font-family-amatic-default-bold;
   }
 
   & .v-field-label {
-    font-weight: variables.$font-weight-ui-strong;
+    font-weight: variables.$font-family-amatic-default-bold;
   }
 
   & .v-field__input {
-    font-weight: variables.$font-weight-ui-strong;
+    font-weight: variables.$font-family-amatic-default-bold;
   }
 }
 

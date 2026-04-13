@@ -39,7 +39,7 @@ export default defineComponent({
       <v-app-bar-nav-icon v-if="isSuperAdmin" @click.stop="value = !value" variant="text"></v-app-bar-nav-icon>
     </template>
     <div class="app__bar__menu">
-      <!--      <router-link v-if="isSuperAdmin" to="/voucher">Информация о путевке</router-link>-->
+      <!--      <router-link v-if="isSuperAdmin" to="/travel-voucher">Информация о путевке</router-link>-->
     </div>
     <template v-slot:append>
       <v-btn @click="logout" v-if="isAuthenticated" icon="mdi-logout"></v-btn>
@@ -50,15 +50,16 @@ export default defineComponent({
 
 <style scoped lang="scss">
 @use '@/assets/variables';
+@use '@/assets/fonts/amatic-sc';
 
 header.app__bar {
-  font-family: variables.$font-family-base !important;
+  font-family: variables.$font-family-amatic !important;
   background-color: variables.$color-blue-dark;
-  font-weight: 500;
+  font-weight: 800!important;
 
   & .app__bar__menu {
     & > a {
-      font-size: 1.125rem;
+      font-size: 25px;
     }
   }
 

@@ -31,7 +31,7 @@ export default defineComponent({
   >
     <v-list nav>
       <v-list-item prepend-icon="mdi-home" title="Главная" value="home" href="/" :link="true"></v-list-item>
-      <v-list-item prepend-icon="mdi-wallet-travel" title="Путевка" value="voucher" href="/voucher" :link="true"></v-list-item>
+      <v-list-item prepend-icon="mdi-wallet-travel" title="Путевка" value="travel-voucher" href="/travel-voucher" :link="true"></v-list-item>
       <v-list-item prepend-icon="mdi-clock-start" title="Управление предложениями" href="/offers" :link="true" value="offer"></v-list-item>
     </v-list>
   </v-navigation-drawer>
