@@ -4,6 +4,7 @@ import NotFoundView from '@/views/NotFoundView.vue'
 import TravelVoucherView from "@/views/TravelVoucherView.vue";
 import LoginView from "@/views/LoginView.vue";
 import OfferView from "@/views/Offers/OfferView.vue";
+import VoucherView from "@/views/VoucherView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -17,6 +18,11 @@ const router = createRouter({
       path: '/travel-voucher',
       name: 'travel-voucher',
       component: TravelVoucherView,
+    },
+    {
+      path: '/voucher',
+      name: 'voucher',
+      component: VoucherView,
     },
     {
       path: '/offers',
