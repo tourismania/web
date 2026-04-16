@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Tour } from '@/api/types/tour'
+
 import FlightCard from '@/components/tour/FlightCard.vue'
 import HotelCard from '@/components/tour/HotelCard.vue'
 import CarRentalCard from '@/components/tour/CarRentalCard.vue'

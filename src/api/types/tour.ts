@@ -102,6 +102,8 @@ export interface AdditionalService {
 }
 
 export interface Tour {
+  id?: string
+  createdAt?: string
   startDate: string
   endDate: string
   title: string
