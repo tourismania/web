@@ -7,6 +7,7 @@ import CarRentalCard from '@/components/voucher/CarRentalCard.vue'
 import CruiseCard from '@/components/voucher/CruiseCard.vue'
 import ExcursionCard from '@/components/voucher/ExcursionCard.vue'
 import TransportCard from '@/components/voucher/TransportCard.vue'
+import AdditionalServiceCard from '@/components/voucher/AdditionalServiceCard.vue'
 
 // ---------------------------------------------------------------------------
 // Данные тура "Путешествие по США" — Нью-Йорк, Орландо, Майами + круиз
@@ -173,6 +174,7 @@ const tour: Tour = {
         'Современный дизайн, уютные номера, вкусные завтраки. ' +
         'В пешей доступности кафе, рестораны, магазины.',
       roomType: 'Superior Room',
+      roomDescription: 'Просторный номер с видом на Босфор, двуспальная кровать king-size, ванная с душем, кондиционер, мини-бар.',
       occupancyType: 'Breakfast buffet',
       price: 17264,
       currency: 'RUB',
@@ -202,6 +204,7 @@ const tour: Tour = {
         'Находится посередине Манхэттена, удобно добираться до любой точки, ' +
         'рядом метро, кафе, рестораны.',
       roomType: 'Studio, 2 Queen Beds',
+      roomDescription: 'Студия с двумя двуспальными кроватями, кухонным уголком, гардеробной и видом на Манхэттен. Площадь ~35 м².',
       occupancyType: 'RO — без питания',
       price: 254709,
       currency: 'RUB',
@@ -258,6 +261,7 @@ const tour: Tour = {
         'Роскошный пляжный курорт на первой линии океана с бассейнами, спа и фитнес-центром. ' +
         'Рядом кафе, рестораны и магазины. До Майами-Бич 20 минут на машине.',
       roomType: 'Deluxe Studio Bay View (2 queen beds)',
+      roomDescription: 'Делюкс-студия с панорамным видом на залив, две кровати queen, балкон, ванная с джакузи, прямой выход к бассейну.',
       occupancyType: 'RO — без питания',
       price: 190257,
       currency: 'RUB',
@@ -424,6 +428,37 @@ const tour: Tour = {
     },
   ],
 
+  // ── Дополнительные услуги ────────────────────────────────────────────────────
+  additionalServices: [
+    {
+      name: 'Страховка туристическая',
+      price: 18600,
+      currency: 'RUB',
+      managerComment:
+        'Комплексная страховка для двух человек на весь период поездки · ' +
+        'Покрытие: медицина до $100 000, отмена поездки, задержка рейса, потеря багажа · ' +
+        'Действует во всех странах маршрута',
+    },
+    {
+      name: 'SIM-карта США (T-Mobile)',
+      price: 4300,
+      currency: 'RUB',
+      managerComment:
+        'Безлимитный интернет и звонки по всей территории США на 30 дней · ' +
+        'Активация до вылета, получение в аэропорту Екатеринбурга · ' +
+        '2 SIM-карты (для двух человек)',
+    },
+    {
+      name: 'Доступ в бизнес-зал аэропорта IST',
+      price: 7200,
+      currency: 'RUB',
+      managerComment:
+        'Turkish Airlines Lounge, Istanbul Airport (IST) · ' +
+        'Доступ для 2 персон при стыковке 27 сентября · ' +
+        'Включено: питание, Wi-Fi, душевые кабины, зона отдыха',
+    },
+  ],
+
   // ── Общественный транспорт ───────────────────────────────────────────────────
   transport: [
     {
@@ -492,6 +527,10 @@ const transportTotal = computed(() =>
   tour.transport.reduce((sum, t) => sum + t.price, 0),
 )
 
+const additionalServicesTotal = computed(() =>
+  tour.additionalServices.reduce((sum, s) => sum + s.price, 0),
+)
+
 const grandTotal = computed(
   () =>
     tour.totalFlightsCost +
@@ -499,7 +538,8 @@ const grandTotal = computed(
     carRentalMin.value +
     cruiseTotal.value +
     excursionTotal.value +
-    transportTotal.value,
+    transportTotal.value +
+    additionalServicesTotal.value,
 )
 
 function fmt(price: number, currency: string = 'RUB'): string {
@@ -604,6 +644,11 @@ function fmtDate(iso: string): string {
           <div class="voucher__hero-stat">
             <span class="stat-num">{{ tour.transport.length }}</span>
             <span class="stat-label">транспорт</span>
+          </div>
+          <div class="voucher__hero-stat-divider" />
+          <div class="voucher__hero-stat">
+            <span class="stat-num">{{ tour.additionalServices.length }}</span>
+            <span class="stat-label">услуги</span>
           </div>
           <div class="voucher__hero-stat-divider" />
           <div class="voucher__hero-stat">
@@ -748,6 +793,28 @@ function fmtDate(iso: string): string {
         </div>
       </section>
 
+      <!-- ── Дополнительные услуги ─────────────────────────────────────────── -->
+      <section v-if="tour.additionalServices.length > 0" class="voucher__section">
+        <div class="voucher__section-header">
+          <div class="voucher__section-icon">
+            <v-icon icon="mdi-plus-box-multiple" />
+          </div>
+          <div>
+            <h2 class="voucher__section-title">Дополнительные услуги</h2>
+            <div class="voucher__section-count">{{ tour.additionalServices.length }} услуги в маршруте</div>
+          </div>
+          <div class="voucher__section-total">{{ fmt(additionalServicesTotal) }}</div>
+        </div>
+        <div class="voucher__cards">
+          <AdditionalServiceCard
+            v-for="(service, i) in tour.additionalServices"
+            :key="i"
+            :service="service"
+            :index="i"
+          />
+        </div>
+      </section>
+
       <!-- ── Итог ────────────────────────────────────────────────────────── -->
       <section class="voucher__summary">
         <div class="voucher__summary-title">Итоговая стоимость</div>
@@ -775,6 +842,10 @@ function fmtDate(iso: string): string {
           <div class="voucher__summary-row">
             <span><v-icon icon="mdi-bus-clock" size="16" class="mr-2" />Транспорт ({{ tour.transport.length }} поездки)</span>
             <span>{{ fmt(transportTotal) }}</span>
+          </div>
+          <div class="voucher__summary-row">
+            <span><v-icon icon="mdi-plus-box-multiple" size="16" class="mr-2" />Доп. услуги ({{ tour.additionalServices.length }})</span>
+            <span>{{ fmt(additionalServicesTotal) }}</span>
           </div>
         </div>
         <div class="voucher__summary-total">

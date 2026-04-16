@@ -151,6 +151,7 @@ npm run lint
 | `cruises` | `Cruise[]` | Круизы |
 | `excursions` | `Excursion[]` | Экскурсии |
 | `transport` | `PublicTransport[]` | Общественный транспорт |
+| `additionalServices` | `AdditionalService[]` | Дополнительные услуги |
 
 ---
 
@@ -188,6 +189,7 @@ npm run lint
 | `address` | `string` | Адрес |
 | `description` | `string` | Описание |
 | `roomType` | `string` | Тип номера |
+| `roomDescription` | `string?` | Описание номера |
 | `occupancyType` | `string` | Тип заселения |
 | `checkIn` | `string` | Дата заезда (ISO) |
 | `checkOut` | `string` | Дата выезда (ISO) |
@@ -258,6 +260,17 @@ npm run lint
 | `currency` | `Currency` | Валюта |
 | `managerComment` | `string` | Комментарий менеджера |
 | `gallery` | `HotelImage[]` | Галерея |
+
+---
+
+### `AdditionalService` — дополнительные услуги
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `name` | `string` | Название услуги |
+| `price` | `number` | Стоимость |
+| `currency` | `Currency` | Валюта |
+| `managerComment` | `string?` | Комментарий менеджера |
 
 ---
 

@@ -32,6 +32,7 @@ export interface Hotel {
   address: string
   description: string
   roomType: string
+  roomDescription?: string
   occupancyType: string
   price: number
   currency: Currency
@@ -93,6 +94,13 @@ export interface PublicTransport {
   managerComment?: string
 }
 
+export interface AdditionalService {
+  name: string
+  managerComment?: string
+  price: number
+  currency: Currency
+}
+
 export interface Tour {
   startDate: string
   endDate: string
@@ -108,4 +116,5 @@ export interface Tour {
   cruises: Cruise[]
   excursions: Excursion[]
   transport: PublicTransport[]
+  additionalServices: AdditionalService[]
 }

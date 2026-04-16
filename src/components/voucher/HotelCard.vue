@@ -89,6 +89,11 @@ function formatDate(iso: string): string {
         </v-chip>
       </div>
 
+      <div v-if="hotel.roomDescription" class="hotel-card__room-description">
+        <v-icon icon="mdi-door-open" size="small" class="mr-1" />
+        {{ hotel.roomDescription }}
+      </div>
+
       <div v-if="hotel.managerComment" class="hotel-card__comment">
         <v-icon icon="mdi-comment-text-outline" size="small" class="mr-1" />
         {{ hotel.managerComment }}
@@ -255,6 +260,20 @@ function formatDate(iso: string): string {
 
   &__chips {
     margin-bottom: 12px;
+  }
+
+  &__room-description {
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    background: rgba(54, 170, 184, 0.07);
+    border-left: 2px solid rgba(54, 170, 184, 0.4);
+    border-radius: 4px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.65);
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    line-height: 1.5;
   }
 
   &__comment {
