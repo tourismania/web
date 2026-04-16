@@ -80,6 +80,19 @@ export interface Excursion {
   gallery: HotelImage[]
 }
 
+export type TransportCategory = 'taxi' | 'bus' | 'transfer'
+
+export interface PublicTransport {
+  datetime: string            // ISO datetime string
+  category: TransportCategory
+  pickupLocation: string      // место посадки
+  dropoffLocation: string     // место высадки
+  duration: number            // minutes
+  price: number
+  currency: Currency
+  managerComment?: string
+}
+
 export interface Tour {
   startDate: string
   endDate: string
@@ -94,4 +107,5 @@ export interface Tour {
   carRentals: CarRental[]
   cruises: Cruise[]
   excursions: Excursion[]
+  transport: PublicTransport[]
 }

@@ -6,6 +6,7 @@ import HotelCard from '@/components/voucher/HotelCard.vue'
 import CarRentalCard from '@/components/voucher/CarRentalCard.vue'
 import CruiseCard from '@/components/voucher/CruiseCard.vue'
 import ExcursionCard from '@/components/voucher/ExcursionCard.vue'
+import TransportCard from '@/components/voucher/TransportCard.vue'
 
 // ---------------------------------------------------------------------------
 // Данные тура "Путешествие по США" — Нью-Йорк, Орландо, Майами + круиз
@@ -422,6 +423,50 @@ const tour: Tour = {
       ],
     },
   ],
+
+  // ── Общественный транспорт ───────────────────────────────────────────────────
+  transport: [
+    {
+      datetime: '2025-09-27T23:15:00',
+      category: 'taxi',
+      pickupLocation: 'Аэропорт JFK — Терминал 1',
+      dropoffLocation: 'The Fifty Sonesta Hotel, Мидтаун Манхэттен',
+      duration: 55,
+      price: 6800,
+      currency: 'RUB',
+      managerComment: 'Встреча по табличке · оплата водителю · ориентировочно 80 $',
+    },
+    {
+      datetime: '2025-10-01T09:00:00',
+      category: 'bus',
+      pickupLocation: 'The Fifty Sonesta Hotel, Нью-Йорк',
+      dropoffLocation: 'Статуя Свободы — паром Battery Park',
+      duration: 40,
+      price: 3200,
+      currency: 'RUB',
+      managerComment: 'Групповой автобус экскурсионной программы · гид сопровождает',
+    },
+    {
+      datetime: '2025-10-02T11:30:00',
+      category: 'transfer',
+      pickupLocation: 'The Fifty Sonesta Hotel, Нью-Йорк',
+      dropoffLocation: 'Ньюарк Либерти Интернэшнл (EWR)',
+      duration: 50,
+      price: 7500,
+      currency: 'RUB',
+      managerComment: 'Трансфер в аэропорт · минивэн на 2 персоны с багажом · предоплата онлайн',
+    },
+    {
+      datetime: '2025-10-18T14:00:00',
+      category: 'transfer',
+      pickupLocation: 'Trump International Beach Resort Miami',
+      dropoffLocation: 'Порт Майами — причал Royal Caribbean',
+      duration: 30,
+      price: 4200,
+      currency: 'RUB',
+      managerComment: 'Трансфер на посадку на круизный лайнер Icon of the Seas',
+    },
+  ],
 }
 
 // ── Итоги ────────────────────────────────────────────────────────────────────
@@ -443,13 +488,18 @@ const excursionTotal = computed(() =>
   tour.excursions.reduce((sum, ex) => sum + ex.price, 0),
 )
 
+const transportTotal = computed(() =>
+  tour.transport.reduce((sum, t) => sum + t.price, 0),
+)
+
 const grandTotal = computed(
   () =>
     tour.totalFlightsCost +
     tour.totalHotelsCost +
     carRentalMin.value +
     cruiseTotal.value +
-    excursionTotal.value,
+    excursionTotal.value +
+    transportTotal.value,
 )
 
 function fmt(price: number, currency: string = 'RUB'): string {
@@ -549,6 +599,11 @@ function fmtDate(iso: string): string {
           <div class="voucher__hero-stat">
             <span class="stat-num">{{ tour.excursions.length }}</span>
             <span class="stat-label">экскурсии</span>
+          </div>
+          <div class="voucher__hero-stat-divider" />
+          <div class="voucher__hero-stat">
+            <span class="stat-num">{{ tour.transport.length }}</span>
+            <span class="stat-label">транспорт</span>
           </div>
           <div class="voucher__hero-stat-divider" />
           <div class="voucher__hero-stat">
@@ -671,6 +726,28 @@ function fmtDate(iso: string): string {
         </div>
       </section>
 
+      <!-- ── Транспорт ───────────────────────────────────────────────────────── -->
+      <section v-if="tour.transport.length > 0" class="voucher__section">
+        <div class="voucher__section-header">
+          <div class="voucher__section-icon">
+            <v-icon icon="mdi-bus-clock" />
+          </div>
+          <div>
+            <h2 class="voucher__section-title">Транспорт</h2>
+            <div class="voucher__section-count">{{ tour.transport.length }} поездки в маршруте</div>
+          </div>
+          <div class="voucher__section-total">{{ fmt(transportTotal) }}</div>
+        </div>
+        <div class="voucher__cards">
+          <TransportCard
+            v-for="(item, i) in tour.transport"
+            :key="i"
+            :transport="item"
+            :index="i"
+          />
+        </div>
+      </section>
+
       <!-- ── Итог ────────────────────────────────────────────────────────── -->
       <section class="voucher__summary">
         <div class="voucher__summary-title">Итоговая стоимость</div>
@@ -694,6 +771,10 @@ function fmtDate(iso: string): string {
           <div class="voucher__summary-row">
             <span><v-icon icon="mdi-binoculars" size="16" class="mr-2" />Экскурсии ({{ tour.excursions.length }})</span>
             <span>{{ fmt(excursionTotal) }}</span>
+          </div>
+          <div class="voucher__summary-row">
+            <span><v-icon icon="mdi-bus-clock" size="16" class="mr-2" />Транспорт ({{ tour.transport.length }} поездки)</span>
+            <span>{{ fmt(transportTotal) }}</span>
           </div>
         </div>
         <div class="voucher__summary-total">

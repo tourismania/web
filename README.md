@@ -116,3 +116,160 @@ npm run test:component:dev
 ```sh
 npm run lint
 ```
+
+---
+
+## Модель данных ваучера (`src/api/types/voucher.ts`)
+
+### Вспомогательные типы
+
+| Тип | Значения |
+|---|---|
+| `FlightClass` | `'economy'` \| `'business'` \| `'comfort'` |
+| `Currency` | `'RUB'` \| `'USD'` \| `'EUR'` \| `'TRY'` |
+| `TransportCategory` | `'taxi'` \| `'bus'` \| `'transfer'` |
+
+---
+
+### `Tour` — корневая сущность ваучера
+
+Объединяет все составляющие поездки.
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `title` | `string` | Название тура |
+| `welcomeText` | `string` | Приветственный текст от менеджера |
+| `startDate` | `string` | Дата начала (ISO) |
+| `endDate` | `string` | Дата окончания (ISO) |
+| `flights` | `Flight[]` | Перелёты |
+| `totalFlightsCost` | `number` | Итог по перелётам |
+| `flightsCurrency` | `Currency` | Валюта итога перелётов |
+| `hotels` | `Hotel[]` | Отели |
+| `totalHotelsCost` | `number` | Итог по отелям |
+| `hotelsCurrency` | `Currency` | Валюта итога отелей |
+| `carRentals` | `CarRental[]` | Аренда автомобилей |
+| `cruises` | `Cruise[]` | Круизы |
+| `excursions` | `Excursion[]` | Экскурсии |
+| `transport` | `PublicTransport[]` | Общественный транспорт |
+
+---
+
+### `Flight` — перелёт
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `airline` | `string` | Авиакомпания |
+| `departure` | `FlightEndpoint` | Точка вылета |
+| `arrival` | `FlightEndpoint` | Точка прилёта |
+| `managerComment` | `string?` | Комментарий менеджера |
+
+#### `FlightEndpoint` — точка маршрута перелёта
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `city` | `string` | Город |
+| `dateTime` | `string` | Дата и время (ISO) |
+| `flight` | `string` | Номер рейса (напр. `U6 773`) |
+| `airport` | `string` | Название аэропорта |
+| `airportCode` | `string` | Код аэропорта (напр. `SVX`) |
+| `hasLayovers` | `boolean` | Наличие пересадок |
+| `flightClass` | `FlightClass` | Класс перелёта |
+| `price` | `number` | Стоимость |
+| `currency` | `Currency` | Валюта |
+
+---
+
+### `Hotel` — отель
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `name` | `string` | Название отеля |
+| `stars` | `number` | Количество звёзд |
+| `address` | `string` | Адрес |
+| `description` | `string` | Описание |
+| `roomType` | `string` | Тип номера |
+| `occupancyType` | `string` | Тип заселения |
+| `checkIn` | `string` | Дата заезда (ISO) |
+| `checkOut` | `string` | Дата выезда (ISO) |
+| `nights` | `number` | Количество ночей |
+| `price` | `number` | Стоимость проживания |
+| `currency` | `Currency` | Валюта |
+| `serviceFee` | `number` | Сервисный сбор |
+| `serviceFeeCurrency` | `Currency?` | Валюта сервисного сбора |
+| `images` | `HotelImage[]` | Галерея |
+| `managerComment` | `string?` | Комментарий менеджера |
+
+#### `HotelImage`
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `url` | `string` | URL изображения |
+| `alt` | `string?` | Alt-текст |
+
+---
+
+### `CarRental` — аренда автомобиля
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `name` | `string` | Название прокатной компании |
+| `startLocation` | `string` | Место получения |
+| `endLocation` | `string` | Место возврата |
+| `vehicles` | `CarRentalVehicle[]` | Варианты автомобилей |
+| `managerComment` | `string?` | Комментарий менеджера |
+
+#### `CarRentalVehicle`
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `vehicle` | `string` | Идентификатор/тип автомобиля |
+| `name` | `string` | Название модели |
+| `price` | `number` | Стоимость |
+| `currency` | `Currency` | Валюта |
+
+---
+
+### `Cruise` — круиз
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `name` | `string` | Название круиза |
+| `gallery` | `string[]` | Галерея (массив URL) |
+| `cabins` | `CruiseCabin[]` | Варианты кают |
+| `managerComment` | `string?` | Комментарий менеджера |
+
+#### `CruiseCabin`
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `description` | `string` | Описание каюты |
+| `price` | `number` | Стоимость |
+| `currency` | `Currency` | Валюта |
+
+---
+
+### `Excursion` — экскурсия
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `date` | `Date \| null \| undefined` | Дата (опционально) |
+| `city` | `string \| null \| undefined` | Город (опционально) |
+| `price` | `number` | Стоимость |
+| `currency` | `Currency` | Валюта |
+| `managerComment` | `string` | Комментарий менеджера |
+| `gallery` | `HotelImage[]` | Галерея |
+
+---
+
+### `PublicTransport` — общественный транспорт
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `datetime` | `string` | Дата и время (ISO) |
+| `category` | `TransportCategory` | Категория: такси / автобус / трансфер |
+| `pickupLocation` | `string` | Место посадки |
+| `dropoffLocation` | `string` | Место высадки |
+| `duration` | `number` | Длительность в минутах |
+| `price` | `number` | Стоимость |
+| `currency` | `Currency` | Валюта |
+| `managerComment` | `string?` | Комментарий менеджера |
