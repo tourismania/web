@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { CarRental } from '@/api/types/voucher'
+import type { CarRental } from '@/api/types/tour'
 
 defineProps<{ carRental: CarRental; index: number }>()
 
@@ -43,11 +43,7 @@ function formatPrice(price: number, currency: string): string {
     </div>
 
     <div class="car-rental-card__vehicles">
-      <div
-        v-for="(vehicle, i) in carRental.vehicles"
-        :key="i"
-        class="car-rental-card__vehicle"
-      >
+      <div v-for="(vehicle, i) in carRental.vehicles" :key="i" class="car-rental-card__vehicle">
         <div class="car-rental-card__vehicle-info">
           <v-icon icon="mdi-car" size="small" class="mr-2" color="rgba(255,255,255,0.5)" />
           <span class="car-rental-card__vehicle-name">{{ vehicle.name }}</span>
@@ -74,7 +70,9 @@ function formatPrice(price: number, currency: string): string {
   border: 1px solid rgba(54, 170, 184, 0.22);
   border-radius: 16px;
   padding: 24px;
-  transition: border-color 0.25s, background 0.25s;
+  transition:
+    border-color 0.25s,
+    background 0.25s;
 
   &:hover {
     background: rgba(0, 22, 21, 0.92);

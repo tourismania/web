@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { Cruise } from '@/api/types/voucher'
+import type { Cruise } from '@/api/types/tour'
 
 defineProps<{ cruise: Cruise; index: number }>()
 
@@ -28,12 +28,7 @@ function formatPrice(price: number, currency: string): string {
         hide-delimiters
         :show-arrows="cruise.gallery.length > 1"
       >
-        <v-carousel-item
-          v-for="(img, i) in cruise.gallery"
-          :key="i"
-          :src="img"
-          cover
-        />
+        <v-carousel-item v-for="(img, i) in cruise.gallery" :key="i" :src="img" cover />
       </v-carousel>
     </div>
 
@@ -46,11 +41,7 @@ function formatPrice(price: number, currency: string): string {
 
       <div v-if="cruise.cabins.length > 0" class="cruise-card__cabins">
         <div class="cruise-card__cabins-title">Каюты</div>
-        <div
-          v-for="(cabin, i) in cruise.cabins"
-          :key="i"
-          class="cruise-card__cabin"
-        >
+        <div v-for="(cabin, i) in cruise.cabins" :key="i" class="cruise-card__cabin">
           <p class="cruise-card__cabin-desc">{{ cabin.description }}</p>
           <div class="cruise-card__cabin-price">{{ formatPrice(cabin.price, cabin.currency) }}</div>
         </div>
@@ -72,7 +63,9 @@ function formatPrice(price: number, currency: string): string {
   border: 1px solid rgba(54, 170, 184, 0.22);
   border-radius: 16px;
   overflow: hidden;
-  transition: border-color 0.25s, background 0.25s;
+  transition:
+    border-color 0.25s,
+    background 0.25s;
 
   &:hover {
     background: rgba(0, 22, 21, 0.92);

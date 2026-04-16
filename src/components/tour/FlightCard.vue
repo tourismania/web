@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Flight } from '@/api/types/voucher'
+import type { Flight } from '@/api/types/tour'
 
 defineProps<{ flight: Flight; index: number }>()
 
@@ -54,7 +54,13 @@ function formatPrice(price: number, currency: string): string {
           <v-chip size="x-small" color="teal-lighten-1" variant="tonal">
             {{ classLabel[flight.departure.flightClass] ?? flight.departure.flightClass }}
           </v-chip>
-          <v-chip v-if="flight.departure.hasLayovers" size="x-small" color="amber" variant="tonal" class="ml-1">
+          <v-chip
+            v-if="flight.departure.hasLayovers"
+            size="x-small"
+            color="amber"
+            variant="tonal"
+            class="ml-1"
+          >
             Пересадка
           </v-chip>
         </div>
@@ -78,7 +84,13 @@ function formatPrice(price: number, currency: string): string {
           <v-chip size="x-small" color="teal-lighten-1" variant="tonal">
             {{ classLabel[flight.arrival.flightClass] ?? flight.arrival.flightClass }}
           </v-chip>
-          <v-chip v-if="flight.arrival.hasLayovers" size="x-small" color="amber" variant="tonal" class="ml-1">
+          <v-chip
+            v-if="flight.arrival.hasLayovers"
+            size="x-small"
+            color="amber"
+            variant="tonal"
+            class="ml-1"
+          >
             Пересадка
           </v-chip>
         </div>
@@ -100,7 +112,9 @@ function formatPrice(price: number, currency: string): string {
   border: 1px solid rgba(54, 170, 184, 0.22);
   border-radius: 16px;
   padding: 24px;
-  transition: border-color 0.25s, background 0.25s;
+  transition:
+    border-color 0.25s,
+    background 0.25s;
 
   &:hover {
     background: rgba(0, 22, 21, 0.92);
@@ -214,7 +228,12 @@ function formatPrice(price: number, currency: string): string {
   &__arrow-line {
     width: 100%;
     height: 1px;
-    background: linear-gradient(90deg, rgba(54, 170, 184, 0.2), variables.$color-blue, rgba(54, 170, 184, 0.2));
+    background: linear-gradient(
+      90deg,
+      rgba(54, 170, 184, 0.2),
+      variables.$color-blue,
+      rgba(54, 170, 184, 0.2)
+    );
   }
 
   &__arrow-icon {
@@ -235,9 +254,15 @@ function formatPrice(price: number, currency: string): string {
 
 @media (max-width: 600px) {
   .flight-card {
-    &__code { font-size: 24px; }
-    &__time { font-size: 20px; }
-    &__arrow { width: 40px; }
+    &__code {
+      font-size: 24px;
+    }
+    &__time {
+      font-size: 20px;
+    }
+    &__arrow {
+      width: 40px;
+    }
   }
 }
 </style>

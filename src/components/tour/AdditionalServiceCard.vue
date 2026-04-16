@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AdditionalService } from '@/api/types/voucher'
+import type { AdditionalService } from '@/api/types/tour'
 
 defineProps<{ service: AdditionalService; index: number }>()
 
@@ -17,7 +17,6 @@ function formatPrice(price: number, currency: string): string {
 
 <template>
   <div class="service-card">
-
     <!-- Header row -->
     <div class="service-card__header">
       <!-- Icon + index -->
@@ -40,10 +39,13 @@ function formatPrice(price: number, currency: string): string {
 
     <!-- Manager comment -->
     <div v-if="service.managerComment" class="service-card__comment">
-      <v-icon icon="mdi-comment-text-outline" size="small" class="mr-2 service-card__comment-icon" />
+      <v-icon
+        icon="mdi-comment-text-outline"
+        size="small"
+        class="mr-2 service-card__comment-icon"
+      />
       <span>{{ service.managerComment }}</span>
     </div>
-
   </div>
 </template>
 
@@ -55,7 +57,9 @@ function formatPrice(price: number, currency: string): string {
   border: 1px solid rgba(54, 170, 184, 0.22);
   border-radius: 14px;
   padding: 18px 22px;
-  transition: border-color 0.25s, background 0.25s;
+  transition:
+    border-color 0.25s,
+    background 0.25s;
 
   &:hover {
     background: rgba(0, 22, 21, 0.92);
@@ -146,8 +150,12 @@ function formatPrice(price: number, currency: string): string {
 
 @media (max-width: 600px) {
   .service-card {
-    &__name { font-size: 14px; }
-    &__price { font-size: 17px; }
+    &__name {
+      font-size: 14px;
+    }
+    &__price {
+      font-size: 17px;
+    }
   }
 }
 </style>

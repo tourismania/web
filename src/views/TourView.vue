@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Tour } from '@/api/types/voucher'
-import FlightCard from '@/components/voucher/FlightCard.vue'
-import HotelCard from '@/components/voucher/HotelCard.vue'
-import CarRentalCard from '@/components/voucher/CarRentalCard.vue'
-import CruiseCard from '@/components/voucher/CruiseCard.vue'
-import ExcursionCard from '@/components/voucher/ExcursionCard.vue'
-import TransportCard from '@/components/voucher/TransportCard.vue'
-import AdditionalServiceCard from '@/components/voucher/AdditionalServiceCard.vue'
+import type { Tour } from '@/api/types/tour'
+import FlightCard from '@/components/tour/FlightCard.vue'
+import HotelCard from '@/components/tour/HotelCard.vue'
+import CarRentalCard from '@/components/tour/CarRentalCard.vue'
+import CruiseCard from '@/components/tour/CruiseCard.vue'
+import ExcursionCard from '@/components/tour/ExcursionCard.vue'
+import TransportCard from '@/components/tour/TransportCard.vue'
+import AdditionalServiceCard from '@/components/tour/AdditionalServiceCard.vue'
 
 // ---------------------------------------------------------------------------
 // Данные тура "Путешествие по США" — Нью-Йорк, Орландо, Майами + круиз
@@ -83,7 +83,8 @@ const tour: Tour = {
     },
     {
       airline: 'Turkish Airlines',
-      managerComment: 'Группа 2 (туда-обратно): 272 691 ₽ · TK-11 / Boeing 777-300ER · 10ч 55м · без багажа',
+      managerComment:
+        'Группа 2 (туда-обратно): 272 691 ₽ · TK-11 / Boeing 777-300ER · 10ч 55м · без багажа',
       departure: {
         city: 'Стамбул',
         dateTime: '2025-09-27T18:45:00',
@@ -174,7 +175,8 @@ const tour: Tour = {
         'Современный дизайн, уютные номера, вкусные завтраки. ' +
         'В пешей доступности кафе, рестораны, магазины.',
       roomType: 'Superior Room',
-      roomDescription: 'Просторный номер с видом на Босфор, двуспальная кровать king-size, ванная с душем, кондиционер, мини-бар.',
+      roomDescription:
+        'Просторный номер с видом на Босфор, двуспальная кровать king-size, ванная с душем, кондиционер, мини-бар.',
       occupancyType: 'Breakfast buffet',
       price: 17264,
       currency: 'RUB',
@@ -204,7 +206,8 @@ const tour: Tour = {
         'Находится посередине Манхэттена, удобно добираться до любой точки, ' +
         'рядом метро, кафе, рестораны.',
       roomType: 'Studio, 2 Queen Beds',
-      roomDescription: 'Студия с двумя двуспальными кроватями, кухонным уголком, гардеробной и видом на Манхэттен. Площадь ~35 м².',
+      roomDescription:
+        'Студия с двумя двуспальными кроватями, кухонным уголком, гардеробной и видом на Манхэттен. Площадь ~35 м².',
       occupancyType: 'RO — без питания',
       price: 254709,
       currency: 'RUB',
@@ -261,7 +264,8 @@ const tour: Tour = {
         'Роскошный пляжный курорт на первой линии океана с бассейнами, спа и фитнес-центром. ' +
         'Рядом кафе, рестораны и магазины. До Майами-Бич 20 минут на машине.',
       roomType: 'Deluxe Studio Bay View (2 queen beds)',
-      roomDescription: 'Делюкс-студия с панорамным видом на залив, две кровати queen, балкон, ванная с джакузи, прямой выход к бассейну.',
+      roomDescription:
+        'Делюкс-студия с панорамным видом на залив, две кровати queen, балкон, ванная с джакузи, прямой выход к бассейну.',
       occupancyType: 'RO — без питания',
       price: 190257,
       currency: 'RUB',
@@ -513,19 +517,12 @@ const carRentalMin = computed(() =>
 )
 
 const cruiseTotal = computed(() =>
-  tour.cruises.reduce(
-    (sum, cr) => sum + cr.cabins.reduce((s, c) => s + c.price, 0),
-    0,
-  ),
+  tour.cruises.reduce((sum, cr) => sum + cr.cabins.reduce((s, c) => s + c.price, 0), 0),
 )
 
-const excursionTotal = computed(() =>
-  tour.excursions.reduce((sum, ex) => sum + ex.price, 0),
-)
+const excursionTotal = computed(() => tour.excursions.reduce((sum, ex) => sum + ex.price, 0))
 
-const transportTotal = computed(() =>
-  tour.transport.reduce((sum, t) => sum + t.price, 0),
-)
+const transportTotal = computed(() => tour.transport.reduce((sum, t) => sum + t.price, 0))
 
 const additionalServicesTotal = computed(() =>
   tour.additionalServices.reduce((sum, s) => sum + s.price, 0),
@@ -558,35 +555,64 @@ function fmtDate(iso: string): string {
 
 <template>
   <div class="voucher">
-
     <!-- ── Hero ──────────────────────────────────────────────────────────── -->
     <section class="voucher__hero">
       <!-- Decorative world-map SVG dots pattern -->
       <div class="voucher__hero-pattern" aria-hidden="true">
-        <svg viewBox="0 0 800 300" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <svg
+          viewBox="0 0 800 300"
+          preserveAspectRatio="xMidYMid slice"
+          xmlns="http://www.w3.org/2000/svg"
+        >
           <!-- Stylized continents as dot-clusters -->
           <g fill="rgba(54,170,184,0.18)" stroke="none">
             <!-- North America -->
-            <circle cx="120" cy="90" r="2.5"/><circle cx="140" cy="80" r="2"/><circle cx="160" cy="88" r="2.5"/>
-            <circle cx="130" cy="105" r="2"/><circle cx="150" cy="100" r="2.5"/><circle cx="170" cy="95" r="2"/>
-            <circle cx="110" cy="115" r="2"/><circle cx="140" cy="118" r="2.5"/><circle cx="165" cy="112" r="2"/>
-            <circle cx="125" cy="130" r="2"/><circle cx="148" cy="135" r="2.5"/>
+            <circle cx="120" cy="90" r="2.5" />
+            <circle cx="140" cy="80" r="2" />
+            <circle cx="160" cy="88" r="2.5" />
+            <circle cx="130" cy="105" r="2" />
+            <circle cx="150" cy="100" r="2.5" />
+            <circle cx="170" cy="95" r="2" />
+            <circle cx="110" cy="115" r="2" />
+            <circle cx="140" cy="118" r="2.5" />
+            <circle cx="165" cy="112" r="2" />
+            <circle cx="125" cy="130" r="2" />
+            <circle cx="148" cy="135" r="2.5" />
             <!-- Europe -->
-            <circle cx="360" cy="70" r="2"/><circle cx="375" cy="65" r="2.5"/><circle cx="390" cy="72" r="2"/>
-            <circle cx="368" cy="82" r="2.5"/><circle cx="382" cy="78" r="2"/><circle cx="398" cy="68" r="2"/>
+            <circle cx="360" cy="70" r="2" />
+            <circle cx="375" cy="65" r="2.5" />
+            <circle cx="390" cy="72" r="2" />
+            <circle cx="368" cy="82" r="2.5" />
+            <circle cx="382" cy="78" r="2" />
+            <circle cx="398" cy="68" r="2" />
             <!-- Africa -->
-            <circle cx="372" cy="130" r="2.5"/><circle cx="388" cy="125" r="2"/><circle cx="365" cy="148" r="2"/>
-            <circle cx="382" cy="145" r="2.5"/><circle cx="395" cy="138" r="2"/>
+            <circle cx="372" cy="130" r="2.5" />
+            <circle cx="388" cy="125" r="2" />
+            <circle cx="365" cy="148" r="2" />
+            <circle cx="382" cy="145" r="2.5" />
+            <circle cx="395" cy="138" r="2" />
             <!-- Asia -->
-            <circle cx="520" cy="75" r="2.5"/><circle cx="545" cy="68" r="2"/><circle cx="565" cy="80" r="2.5"/>
-            <circle cx="535" cy="88" r="2"/><circle cx="558" cy="92" r="2.5"/><circle cx="580" cy="78" r="2"/>
-            <circle cx="510" cy="100" r="2"/><circle cx="548" cy="105" r="2.5"/><circle cx="572" cy="108" r="2"/>
+            <circle cx="520" cy="75" r="2.5" />
+            <circle cx="545" cy="68" r="2" />
+            <circle cx="565" cy="80" r="2.5" />
+            <circle cx="535" cy="88" r="2" />
+            <circle cx="558" cy="92" r="2.5" />
+            <circle cx="580" cy="78" r="2" />
+            <circle cx="510" cy="100" r="2" />
+            <circle cx="548" cy="105" r="2.5" />
+            <circle cx="572" cy="108" r="2" />
             <!-- Australia -->
-            <circle cx="620" cy="170" r="2.5"/><circle cx="638" cy="165" r="2"/><circle cx="630" cy="182" r="2.5"/>
-            <circle cx="648" cy="178" r="2"/><circle cx="618" cy="188" r="2"/>
+            <circle cx="620" cy="170" r="2.5" />
+            <circle cx="638" cy="165" r="2" />
+            <circle cx="630" cy="182" r="2.5" />
+            <circle cx="648" cy="178" r="2" />
+            <circle cx="618" cy="188" r="2" />
             <!-- South America -->
-            <circle cx="200" cy="165" r="2.5"/><circle cx="215" cy="172" r="2"/><circle cx="208" cy="188" r="2.5"/>
-            <circle cx="222" cy="182" r="2"/><circle cx="198" cy="200" r="2"/>
+            <circle cx="200" cy="165" r="2.5" />
+            <circle cx="215" cy="172" r="2" />
+            <circle cx="208" cy="188" r="2.5" />
+            <circle cx="222" cy="182" r="2" />
+            <circle cx="198" cy="200" r="2" />
           </g>
           <!-- Flight path line SVX → IST → JFK -->
           <path
@@ -605,8 +631,24 @@ function fmtDate(iso: string): string {
             stroke-dasharray="3 3"
           />
           <!-- Plane icons -->
-          <text x="268" y="118" font-size="10" fill="rgba(54,170,184,0.5)" transform="rotate(-30 268 118)">✈</text>
-          <text x="246" y="175" font-size="8" fill="rgba(239,159,59,0.4)" transform="rotate(10 246 175)">✈</text>
+          <text
+            x="268"
+            y="118"
+            font-size="10"
+            fill="rgba(54,170,184,0.5)"
+            transform="rotate(-30 268 118)"
+          >
+            ✈
+          </text>
+          <text
+            x="246"
+            y="175"
+            font-size="8"
+            fill="rgba(239,159,59,0.4)"
+            transform="rotate(10 246 175)"
+          >
+            ✈
+          </text>
         </svg>
       </div>
 
@@ -660,7 +702,6 @@ function fmtDate(iso: string): string {
     </section>
 
     <div class="voucher__body">
-
       <!-- ── Перелёты ────────────────────────────────────────────────────── -->
       <section class="voucher__section">
         <div class="voucher__section-header">
@@ -674,12 +715,7 @@ function fmtDate(iso: string): string {
           <div class="voucher__section-total">{{ fmt(tour.totalFlightsCost) }}</div>
         </div>
         <div class="voucher__cards">
-          <FlightCard
-            v-for="(flight, i) in tour.flights"
-            :key="i"
-            :flight="flight"
-            :index="i"
-          />
+          <FlightCard v-for="(flight, i) in tour.flights" :key="i" :flight="flight" :index="i" />
         </div>
       </section>
 
@@ -696,12 +732,7 @@ function fmtDate(iso: string): string {
           <div class="voucher__section-total">{{ fmt(tour.totalHotelsCost) }}</div>
         </div>
         <div class="voucher__cards voucher__cards--grid">
-          <HotelCard
-            v-for="(hotel, i) in tour.hotels"
-            :key="i"
-            :hotel="hotel"
-            :index="i"
-          />
+          <HotelCard v-for="(hotel, i) in tour.hotels" :key="i" :hotel="hotel" :index="i" />
         </div>
       </section>
 
@@ -740,12 +771,7 @@ function fmtDate(iso: string): string {
           <div class="voucher__section-total">{{ fmt(cruiseTotal) }}</div>
         </div>
         <div class="voucher__cards voucher__cards--grid">
-          <CruiseCard
-            v-for="(cruise, i) in tour.cruises"
-            :key="i"
-            :cruise="cruise"
-            :index="i"
-          />
+          <CruiseCard v-for="(cruise, i) in tour.cruises" :key="i" :cruise="cruise" :index="i" />
         </div>
       </section>
 
@@ -757,7 +783,9 @@ function fmtDate(iso: string): string {
           </div>
           <div>
             <h2 class="voucher__section-title">Экскурсии</h2>
-            <div class="voucher__section-count">{{ tour.excursions.length }} экскурсии в маршруте</div>
+            <div class="voucher__section-count">
+              {{ tour.excursions.length }} экскурсии в маршруте
+            </div>
           </div>
           <div class="voucher__section-total">{{ fmt(excursionTotal) }}</div>
         </div>
@@ -801,7 +829,9 @@ function fmtDate(iso: string): string {
           </div>
           <div>
             <h2 class="voucher__section-title">Дополнительные услуги</h2>
-            <div class="voucher__section-count">{{ tour.additionalServices.length }} услуги в маршруте</div>
+            <div class="voucher__section-count">
+              {{ tour.additionalServices.length }} услуги в маршруте
+            </div>
           </div>
           <div class="voucher__section-total">{{ fmt(additionalServicesTotal) }}</div>
         </div>
@@ -824,11 +854,17 @@ function fmtDate(iso: string): string {
             <span>{{ fmt(tour.totalFlightsCost) }}</span>
           </div>
           <div class="voucher__summary-row">
-            <span><v-icon icon="mdi-bed-outline" size="16" class="mr-2" />Отели и жильё (5 объектов)</span>
+            <span
+              ><v-icon icon="mdi-bed-outline" size="16" class="mr-2" />Отели и жильё (5
+              объектов)</span
+            >
             <span>{{ fmt(tour.totalHotelsCost) }}</span>
           </div>
           <div class="voucher__summary-row">
-            <span><v-icon icon="mdi-car-outline" size="16" class="mr-2" />Аренда авто (от Nissan Rogue)</span>
+            <span
+              ><v-icon icon="mdi-car-outline" size="16" class="mr-2" />Аренда авто (от Nissan
+              Rogue)</span
+            >
             <span>{{ fmt(carRentalMin) }}</span>
           </div>
           <div class="voucher__summary-row">
@@ -836,15 +872,28 @@ function fmtDate(iso: string): string {
             <span>{{ fmt(cruiseTotal) }}</span>
           </div>
           <div class="voucher__summary-row">
-            <span><v-icon icon="mdi-binoculars" size="16" class="mr-2" />Экскурсии ({{ tour.excursions.length }})</span>
+            <span
+              ><v-icon icon="mdi-binoculars" size="16" class="mr-2" />Экскурсии ({{
+                tour.excursions.length
+              }})</span
+            >
             <span>{{ fmt(excursionTotal) }}</span>
           </div>
           <div class="voucher__summary-row">
-            <span><v-icon icon="mdi-bus-clock" size="16" class="mr-2" />Транспорт ({{ tour.transport.length }} поездки)</span>
+            <span
+              ><v-icon icon="mdi-bus-clock" size="16" class="mr-2" />Транспорт ({{
+                tour.transport.length
+              }}
+              поездки)</span
+            >
             <span>{{ fmt(transportTotal) }}</span>
           </div>
           <div class="voucher__summary-row">
-            <span><v-icon icon="mdi-plus-box-multiple" size="16" class="mr-2" />Доп. услуги ({{ tour.additionalServices.length }})</span>
+            <span
+              ><v-icon icon="mdi-plus-box-multiple" size="16" class="mr-2" />Доп. услуги ({{
+                tour.additionalServices.length
+              }})</span
+            >
             <span>{{ fmt(additionalServicesTotal) }}</span>
           </div>
         </div>
@@ -856,7 +905,6 @@ function fmtDate(iso: string): string {
           * Курс USD актуален на день получения предложения · 1 USD ≈ 85,74 ₽
         </div>
       </section>
-
     </div>
   </div>
 </template>
@@ -877,7 +925,7 @@ function fmtDate(iso: string): string {
   text-align: center;
   // Unique layered gradient — different from main app background
   background:
-    radial-gradient(ellipse 80% 60% at 20% 40%, rgba(54, 170, 184, 0.10) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 60% at 20% 40%, rgba(54, 170, 184, 0.1) 0%, transparent 70%),
     radial-gradient(ellipse 60% 80% at 80% 60%, rgba(239, 159, 59, 0.06) 0%, transparent 60%),
     linear-gradient(160deg, #002724 0%, #001d1b 45%, #00201e 100%);
 
@@ -885,9 +933,18 @@ function fmtDate(iso: string): string {
   &::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0;
+    top: 0;
+    left: 0;
+    right: 0;
     height: 2px;
-    background: linear-gradient(90deg, transparent, variables.$color-blue, variables.$color-yellow, variables.$color-blue, transparent);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      variables.$color-blue,
+      variables.$color-yellow,
+      variables.$color-blue,
+      transparent
+    );
   }
 
   &-pattern {
@@ -1091,7 +1148,9 @@ function fmtDate(iso: string): string {
     padding: 12px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 
-    &:last-child { border-bottom: none; }
+    &:last-child {
+      border-bottom: none;
+    }
 
     span:first-child {
       display: flex;

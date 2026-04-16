@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { Excursion } from '@/api/types/voucher'
+import type { Excursion } from '@/api/types/tour'
 
 defineProps<{ excursion: Excursion; index: number }>()
 
@@ -28,7 +28,6 @@ function formatDate(date: Date): string {
 
 <template>
   <div class="excursion-card">
-
     <!-- Gallery -->
     <div v-if="excursion.gallery.length > 0" class="excursion-card__gallery">
       <div class="excursion-card__image-wrap">
@@ -64,7 +63,6 @@ function formatDate(date: Date): string {
 
     <!-- Info block -->
     <div class="excursion-card__info">
-
       <!-- Header row: index + meta + price -->
       <div class="excursion-card__header">
         <div class="excursion-card__meta">
@@ -74,12 +72,18 @@ function formatDate(date: Date): string {
             <span class="excursion-card__label">Экскурсия</span>
           </div>
           <!-- City (text fallback when no gallery) -->
-          <div v-if="excursion.city && excursion.gallery.length === 0" class="excursion-card__city-text">
+          <div
+            v-if="excursion.city && excursion.gallery.length === 0"
+            class="excursion-card__city-text"
+          >
             <v-icon icon="mdi-map-marker" size="14" class="mr-1" />
             {{ excursion.city }}
           </div>
           <!-- Date (text fallback when no gallery) -->
-          <div v-if="excursion.date && excursion.gallery.length === 0" class="excursion-card__date-text">
+          <div
+            v-if="excursion.date && excursion.gallery.length === 0"
+            class="excursion-card__date-text"
+          >
             <v-icon icon="mdi-calendar" size="14" class="mr-1" />
             {{ formatDate(excursion.date) }}
           </div>
@@ -93,7 +97,10 @@ function formatDate(date: Date): string {
       </div>
 
       <!-- Chips row: city + date when gallery exists -->
-      <div v-if="excursion.gallery.length > 0 && (excursion.city || excursion.date)" class="excursion-card__chips">
+      <div
+        v-if="excursion.gallery.length > 0 && (excursion.city || excursion.date)"
+        class="excursion-card__chips"
+      >
         <v-chip
           v-if="excursion.city"
           size="small"
@@ -117,10 +124,13 @@ function formatDate(date: Date): string {
 
       <!-- Manager comment -->
       <div class="excursion-card__comment">
-        <v-icon icon="mdi-comment-text-outline" size="small" class="mr-2 excursion-card__comment-icon" />
+        <v-icon
+          icon="mdi-comment-text-outline"
+          size="small"
+          class="mr-2 excursion-card__comment-icon"
+        />
         <span>{{ excursion.managerComment }}</span>
       </div>
-
     </div>
   </div>
 </template>
@@ -133,7 +143,9 @@ function formatDate(date: Date): string {
   border: 1px solid rgba(54, 170, 184, 0.22);
   border-radius: 16px;
   overflow: hidden;
-  transition: border-color 0.25s, background 0.25s;
+  transition:
+    border-color 0.25s,
+    background 0.25s;
 
   &:hover {
     background: rgba(0, 22, 21, 0.92);

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { PublicTransport, TransportCategory } from '@/api/types/voucher'
+import type { PublicTransport, TransportCategory } from '@/api/types/tour'
 
 defineProps<{ transport: PublicTransport; index: number }>()
 
@@ -10,7 +10,10 @@ const currencySymbol: Record<string, string> = {
   TRY: '₺',
 }
 
-const categoryConfig: Record<TransportCategory, { label: string; icon: string; color: string; chipColor: string }> = {
+const categoryConfig: Record<
+  TransportCategory,
+  { label: string; icon: string; color: string; chipColor: string }
+> = {
   taxi: {
     label: 'Такси',
     icon: 'mdi-taxi',
@@ -57,7 +60,6 @@ function formatDuration(minutes: number): string {
 
 <template>
   <div class="transport-card">
-
     <!-- Header row -->
     <div class="transport-card__header">
       <div class="transport-card__index">#{{ index + 1 }}</div>
@@ -77,7 +79,9 @@ function formatDuration(minutes: number): string {
       <div class="transport-card__datetime">
         <v-icon icon="mdi-clock-outline" size="14" class="mr-1" />
         <span class="transport-card__time">{{ formatDateTime(transport.datetime).time }}</span>
-        <span class="transport-card__date">&nbsp;·&nbsp;{{ formatDateTime(transport.datetime).date }}</span>
+        <span class="transport-card__date"
+          >&nbsp;·&nbsp;{{ formatDateTime(transport.datetime).date }}</span
+        >
       </div>
 
       <!-- Price -->
@@ -88,7 +92,6 @@ function formatDuration(minutes: number): string {
 
     <!-- Route row -->
     <div class="transport-card__route">
-
       <!-- Pickup -->
       <div class="transport-card__location">
         <div class="transport-card__location-pin">
@@ -122,7 +125,6 @@ function formatDuration(minutes: number): string {
           <v-icon icon="mdi-map-marker-check" size="16" />
         </div>
       </div>
-
     </div>
 
     <!-- Footer row: duration -->
@@ -138,7 +140,6 @@ function formatDuration(minutes: number): string {
       <v-icon icon="mdi-comment-text-outline" size="small" class="mr-1" />
       {{ transport.managerComment }}
     </div>
-
   </div>
 </template>
 
@@ -150,7 +151,9 @@ function formatDuration(minutes: number): string {
   border: 1px solid rgba(54, 170, 184, 0.22);
   border-radius: 16px;
   padding: 20px 24px;
-  transition: border-color 0.25s, background 0.25s;
+  transition:
+    border-color 0.25s,
+    background 0.25s;
 
   &:hover {
     background: rgba(0, 22, 21, 0.92);
@@ -337,9 +340,15 @@ function formatDuration(minutes: number): string {
 
 @media (max-width: 600px) {
   .transport-card {
-    &__connector { width: 48px; }
-    &__price { font-size: 17px; }
-    &__location-name { font-size: 13px; }
+    &__connector {
+      width: 48px;
+    }
+    &__price {
+      font-size: 17px;
+    }
+    &__location-name {
+      font-size: 13px;
+    }
   }
 }
 </style>

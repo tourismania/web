@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { Hotel } from '@/api/types/voucher'
+import type { Hotel } from '@/api/types/tour'
 
 defineProps<{ hotel: Hotel; index: number }>()
 
@@ -33,13 +33,7 @@ function formatDate(iso: string): string {
           class="hotel-card__image"
         />
         <div class="hotel-card__stars">
-          <v-icon
-            v-for="i in hotel.stars"
-            :key="i"
-            icon="mdi-star"
-            size="small"
-            color="amber"
-          />
+          <v-icon v-for="i in hotel.stars" :key="i" icon="mdi-star" size="small" color="amber" />
         </div>
         <div class="hotel-card__dates-badge">
           {{ formatDate(hotel.checkIn) }} — {{ formatDate(hotel.checkOut) }}
@@ -84,7 +78,13 @@ function formatDate(iso: string): string {
         <v-chip size="small" variant="tonal" color="teal-lighten-1" prepend-icon="mdi-bed-outline">
           {{ hotel.roomType }}
         </v-chip>
-        <v-chip size="small" variant="tonal" color="teal-lighten-1" prepend-icon="mdi-silverware-fork-knife" class="ml-2">
+        <v-chip
+          size="small"
+          variant="tonal"
+          color="teal-lighten-1"
+          prepend-icon="mdi-silverware-fork-knife"
+          class="ml-2"
+        >
           {{ hotel.occupancyType }}
         </v-chip>
       </div>
@@ -110,7 +110,9 @@ function formatDate(iso: string): string {
   border: 1px solid rgba(54, 170, 184, 0.22);
   border-radius: 16px;
   overflow: hidden;
-  transition: border-color 0.25s, background 0.25s;
+  transition:
+    border-color 0.25s,
+    background 0.25s;
 
   &:hover {
     background: rgba(0, 22, 21, 0.92);
