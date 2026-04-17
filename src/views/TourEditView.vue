@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useTourStore } from '@/stores/tour'
 import type {
   Tour, Flight, FlightEndpoint, Hotel, HotelImage,
   CarRental, CarRentalVehicle, Cruise, CruiseCabin,
@@ -7,7 +9,12 @@ import type {
   FlightClass, Currency, TransportCategory,
 } from '@/api/types/tour'
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+const route = useRoute()
+const router = useRouter()
+const tourStore = useTourStore()
+
+const isEdit = ref(false)
+const tourId = ref<string | null>(null)
 
 const CURRENCIES: Currency[] = ['RUB', 'USD', 'EUR', 'TRY']
 const FLIGHT_CLASSES: FlightClass[] = ['economy', 'comfort', 'business']
@@ -45,33 +52,44 @@ function blankService(): AdditionalService {
   return { name: '', price: 0, currency: 'RUB' }
 }
 
-// ── Tour model ────────────────────────────────────────────────────────────────
+function blankTour(): Tour {
+  return {
+    title: '',
+    welcomeText: '',
+    startDate: '',
+    endDate: '',
+    flights: [],
+    totalFlightsCost: 0,
+    flightsCurrency: 'RUB',
+    hotels: [],
+    totalHotelsCost: 0,
+    hotelsCurrency: 'RUB',
+    carRentals: [],
+    cruises: [],
+    excursions: [],
+    transport: [],
+    additionalServices: [],
+  }
+}
 
-const tour = reactive<Tour>({
-  title: '',
-  welcomeText: '',
-  startDate: '',
-  endDate: '',
-  flights: [],
-  totalFlightsCost: 0,
-  flightsCurrency: 'RUB',
-  hotels: [],
-  totalHotelsCost: 0,
-  hotelsCurrency: 'RUB',
-  carRentals: [],
-  cruises: [],
-  excursions: [],
-  transport: [],
-  additionalServices: [],
+const tour = reactive<Tour>(blankTour())
+
+onMounted(async () => {
+  const id = route.params.id as string | undefined
+  if (id) {
+    isEdit.value = true
+    tourId.value = id
+    await tourStore.loadTourById(id)
+    if (tourStore.currentTour) {
+      Object.assign(tour, JSON.parse(JSON.stringify(tourStore.currentTour)))
+    }
+  }
 })
-
-// ── Dialog state ──────────────────────────────────────────────────────────────
 
 type DialogType = 'flight' | 'hotel' | 'carRental' | 'cruise' | 'excursion' | 'transport' | 'service' | null
 const activeDialog = ref<DialogType>(null)
 const editingIndex = ref<number | null>(null)
 
-// Draft objects for each dialog
 const draftFlight = ref<Flight>(blankFlight())
 const draftHotel = ref<Hotel>(blankHotel())
 const draftCarRental = ref<CarRental>(blankCarRental())
@@ -147,8 +165,6 @@ function removeItem(type: DialogType, index: number) {
   if (type === 'service') tour.additionalServices.splice(index, 1)
 }
 
-// ── Vehicle / cabin helpers inside dialogs ────────────────────────────────────
-
 function addVehicle() { draftCarRental.value.vehicles.push(blankVehicle()) }
 function removeVehicle(i: number) { draftCarRental.value.vehicles.splice(i, 1) }
 function addCabin() { draftCruise.value.cabins.push(blankCabin()) }
@@ -158,10 +174,19 @@ function removeCruiseGallery(i: number) { draftCruise.value.gallery.splice(i, 1)
 function addHotelImage() { draftHotel.value.images.push({ url: '' }) }
 function removeHotelImage(i: number) { draftHotel.value.images.splice(i, 1) }
 
-// ── Submit ────────────────────────────────────────────────────────────────────
-
-function submitTour() {
-  console.log('Tour data:', JSON.parse(JSON.stringify(tour)))
+async function submitTour() {
+  const data = JSON.parse(JSON.stringify(tour)) as Tour
+  if (isEdit.value && tourId.value) {
+    const result = await tourStore.updateTour(tourId.value, data)
+    if (result) {
+      router.push({ name: 'tour', params: { id: tourId.value } })
+    }
+  } else {
+    const result = await tourStore.createTour(data)
+    if (result?.id) {
+      router.push({ name: 'tour', params: { id: result.id } })
+    }
+  }
 }
 </script>
 
@@ -169,10 +194,24 @@ function submitTour() {
   <v-container class="py-4" max-width="900">
     <div class="d-flex align-center mb-4 ga-2">
       <v-icon color="primary" size="28">mdi-map-marker-path</v-icon>
-      <h1 class="text-h5 font-weight-bold">Настройка тура</h1>
+      <h1 class="text-h5 font-weight-bold">{{ isEdit ? 'Редактирование тура' : 'Настройка тура' }}</h1>
+      <v-spacer />
+      <v-btn
+        v-if="isEdit && tourId"
+        variant="text"
+        size="small"
+        prepend-icon="mdi-eye"
+        :to="{ name: 'tour', params: { id: tourId } }"
+      >
+        Просмотр
+      </v-btn>
     </div>
 
-    <!-- ── Основная информация ─────────────────────────────────────────────── -->
+    <v-alert v-if="tourStore.error" type="error" class="mb-3" closable>
+      {{ tourStore.error }}
+    </v-alert>
+
+    <!-- Основная информация -->
     <v-card class="mb-3 section-card">
       <v-card-text class="pb-2">
         <div class="section-label mb-2">Основное</div>
@@ -193,7 +232,7 @@ function submitTour() {
       </v-card-text>
     </v-card>
 
-    <!-- ── Секции сущностей ────────────────────────────────────────────────── -->
+    <!-- Секции сущностей -->
     <v-expansion-panels variant="accordion" class="mb-4">
 
       <!-- Перелёты -->
@@ -384,15 +423,27 @@ function submitTour() {
       </v-expansion-panel>
     </v-expansion-panels>
 
-    <!-- ── Сохранить ───────────────────────────────────────────────────────── -->
-    <div class="d-flex justify-end">
-      <v-btn color="primary" size="large" prepend-icon="mdi-content-save" @click="submitTour">Сохранить тур</v-btn>
+    <!-- Сохранить -->
+    <div class="d-flex justify-end ga-2">
+      <v-btn
+        variant="text"
+        @click="router.back()"
+      >
+        Отмена
+      </v-btn>
+      <v-btn
+        color="primary"
+        size="large"
+        prepend-icon="mdi-content-save"
+        :loading="tourStore.loading"
+        @click="submitTour"
+      >
+        {{ isEdit ? 'Сохранить изменения' : 'Создать тур' }}
+      </v-btn>
     </div>
   </v-container>
 
-  <!-- ════════════════════════════════════════════════════════════════════════ -->
-  <!-- ДИАЛОГ: ПЕРЕЛЁТ                                                         -->
-  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- ДИАЛОГ: ПЕРЕЛЁТ -->
   <v-dialog v-model="activeDialog" :model-value="activeDialog === 'flight'" @update:model-value="v => { if (!v) activeDialog = null }" max-width="700" scrollable>
     <v-card>
       <v-card-title class="dialog-title">
@@ -409,7 +460,6 @@ function submitTour() {
             <v-textarea v-model="draftFlight.managerComment" label="Комментарий менеджера" density="compact" variant="outlined" rows="2" hide-details auto-grow />
           </v-col>
         </v-row>
-
         <v-row dense class="mt-3">
           <v-col cols="6">
             <div class="text-caption font-weight-medium mb-1 text-primary">Вылет</div>
@@ -450,9 +500,7 @@ function submitTour() {
     </v-card>
   </v-dialog>
 
-  <!-- ════════════════════════════════════════════════════════════════════════ -->
-  <!-- ДИАЛОГ: ОТЕЛЬ                                                           -->
-  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- ДИАЛОГ: ОТЕЛЬ -->
   <v-dialog :model-value="activeDialog === 'hotel'" @update:model-value="v => { if (!v) activeDialog = null }" max-width="650" scrollable>
     <v-card>
       <v-card-title class="dialog-title"><v-icon class="mr-2">mdi-bed</v-icon>{{ editingIndex !== null ? 'Редактировать' : 'Добавить' }} отель</v-card-title>
@@ -460,9 +508,7 @@ function submitTour() {
       <v-card-text class="dialog-body">
         <v-row dense>
           <v-col cols="8"><v-text-field v-model="draftHotel.name" label="Название" density="compact" variant="outlined" hide-details /></v-col>
-          <v-col cols="4">
-            <v-select v-model="draftHotel.stars" :items="STARS" label="Звёзды" density="compact" variant="outlined" hide-details />
-          </v-col>
+          <v-col cols="4"><v-select v-model="draftHotel.stars" :items="STARS" label="Звёзды" density="compact" variant="outlined" hide-details /></v-col>
           <v-col cols="12"><v-text-field v-model="draftHotel.address" label="Адрес" density="compact" variant="outlined" hide-details /></v-col>
           <v-col cols="12"><v-textarea v-model="draftHotel.description" label="Описание" density="compact" variant="outlined" rows="2" hide-details auto-grow /></v-col>
           <v-col cols="6"><v-text-field v-model="draftHotel.roomType" label="Тип номера" density="compact" variant="outlined" hide-details /></v-col>
@@ -477,7 +523,6 @@ function submitTour() {
           <v-col cols="4"><v-select v-model="draftHotel.serviceFeeCurrency" :items="CURRENCIES" label="Валюта сбора" density="compact" variant="outlined" hide-details /></v-col>
           <v-col cols="12"><v-textarea v-model="draftHotel.managerComment" label="Комментарий менеджера" density="compact" variant="outlined" rows="2" hide-details auto-grow /></v-col>
         </v-row>
-
         <div class="text-caption font-weight-medium mt-3 mb-1">Фотографии</div>
         <div v-for="(img, i) in draftHotel.images" :key="i" class="d-flex align-center ga-2 mb-1">
           <v-text-field v-model="img.url" label="URL фото" density="compact" variant="outlined" hide-details class="flex-grow-1" />
@@ -495,9 +540,7 @@ function submitTour() {
     </v-card>
   </v-dialog>
 
-  <!-- ════════════════════════════════════════════════════════════════════════ -->
-  <!-- ДИАЛОГ: АРЕНДА АВТО                                                     -->
-  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- ДИАЛОГ: АРЕНДА АВТО -->
   <v-dialog :model-value="activeDialog === 'carRental'" @update:model-value="v => { if (!v) activeDialog = null }" max-width="600" scrollable>
     <v-card>
       <v-card-title class="dialog-title"><v-icon class="mr-2">mdi-car</v-icon>{{ editingIndex !== null ? 'Редактировать' : 'Добавить' }} аренду авто</v-card-title>
@@ -509,7 +552,6 @@ function submitTour() {
           <v-col cols="6"><v-text-field v-model="draftCarRental.endLocation" label="Место сдачи" density="compact" variant="outlined" hide-details /></v-col>
           <v-col cols="12"><v-textarea v-model="draftCarRental.managerComment" label="Комментарий менеджера" density="compact" variant="outlined" rows="2" hide-details auto-grow /></v-col>
         </v-row>
-
         <div class="text-caption font-weight-medium mt-3 mb-1">Автомобили</div>
         <div v-for="(v, i) in draftCarRental.vehicles" :key="i" class="mb-2 pa-2 rounded" style="border:1px solid rgba(255,255,255,.12)">
           <v-row dense>
@@ -533,9 +575,7 @@ function submitTour() {
     </v-card>
   </v-dialog>
 
-  <!-- ════════════════════════════════════════════════════════════════════════ -->
-  <!-- ДИАЛОГ: КРУИЗ                                                           -->
-  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- ДИАЛОГ: КРУИЗ -->
   <v-dialog :model-value="activeDialog === 'cruise'" @update:model-value="v => { if (!v) activeDialog = null }" max-width="600" scrollable>
     <v-card>
       <v-card-title class="dialog-title"><v-icon class="mr-2">mdi-ferry</v-icon>{{ editingIndex !== null ? 'Редактировать' : 'Добавить' }} круиз</v-card-title>
@@ -545,7 +585,6 @@ function submitTour() {
           <v-col cols="12"><v-text-field v-model="draftCruise.name" label="Название круиза" density="compact" variant="outlined" hide-details /></v-col>
           <v-col cols="12"><v-textarea v-model="draftCruise.managerComment" label="Комментарий менеджера" density="compact" variant="outlined" rows="2" hide-details auto-grow /></v-col>
         </v-row>
-
         <div class="text-caption font-weight-medium mt-3 mb-1">Каюты</div>
         <div v-for="(cab, i) in draftCruise.cabins" :key="i" class="mb-2 pa-2 rounded" style="border:1px solid rgba(255,255,255,.12)">
           <v-row dense>
@@ -558,7 +597,6 @@ function submitTour() {
           </v-row>
         </div>
         <v-btn size="x-small" variant="text" prepend-icon="mdi-plus" @click="addCabin">Добавить каюту</v-btn>
-
         <div class="text-caption font-weight-medium mt-3 mb-1">Галерея (URL)</div>
         <div v-for="(url, i) in draftCruise.gallery" :key="i" class="d-flex align-center ga-2 mb-1">
           <v-text-field v-model="draftCruise.gallery[i]" label="URL" density="compact" variant="outlined" hide-details class="flex-grow-1" />
@@ -575,9 +613,7 @@ function submitTour() {
     </v-card>
   </v-dialog>
 
-  <!-- ════════════════════════════════════════════════════════════════════════ -->
-  <!-- ДИАЛОГ: ЭКСКУРСИЯ                                                       -->
-  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- ДИАЛОГ: ЭКСКУРСИЯ -->
   <v-dialog :model-value="activeDialog === 'excursion'" @update:model-value="v => { if (!v) activeDialog = null }" max-width="500" scrollable>
     <v-card>
       <v-card-title class="dialog-title"><v-icon class="mr-2">mdi-camera</v-icon>{{ editingIndex !== null ? 'Редактировать' : 'Добавить' }} экскурсию</v-card-title>
@@ -607,9 +643,7 @@ function submitTour() {
     </v-card>
   </v-dialog>
 
-  <!-- ════════════════════════════════════════════════════════════════════════ -->
-  <!-- ДИАЛОГ: ТРАНСПОРТ                                                       -->
-  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- ДИАЛОГ: ТРАНСПОРТ -->
   <v-dialog :model-value="activeDialog === 'transport'" @update:model-value="v => { if (!v) activeDialog = null }" max-width="500" scrollable>
     <v-card>
       <v-card-title class="dialog-title"><v-icon class="mr-2">mdi-bus</v-icon>{{ editingIndex !== null ? 'Редактировать' : 'Добавить' }} транспорт</v-card-title>
@@ -635,9 +669,7 @@ function submitTour() {
     </v-card>
   </v-dialog>
 
-  <!-- ════════════════════════════════════════════════════════════════════════ -->
-  <!-- ДИАЛОГ: ДОП. УСЛУГА                                                     -->
-  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- ДИАЛОГ: ДОП. УСЛУГА -->
   <v-dialog :model-value="activeDialog === 'service'" @update:model-value="v => { if (!v) activeDialog = null }" max-width="420" scrollable>
     <v-card>
       <v-card-title class="dialog-title"><v-icon class="mr-2">mdi-star-plus</v-icon>{{ editingIndex !== null ? 'Редактировать' : 'Добавить' }} услугу</v-card-title>
@@ -677,7 +709,6 @@ function submitTour() {
   color: rgba(255, 255, 255, 0.5);
 }
 
-/* Нейтрализуем глобальный font-size: 1.3rem для компактных элементов формы */
 :deep(.v-field__input),
 :deep(.v-field-label),
 :deep(.v-label),

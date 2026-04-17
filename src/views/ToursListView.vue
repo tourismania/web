@@ -1,119 +1,26 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import type { Tour } from '@/api/types/tour'
+import { useTourStore } from '@/stores/tour'
+import TourListItem from '@/components/tour/TourListItem.vue'
 
 const router = useRouter()
+const tourStore = useTourStore()
 
-const tours: Tour[] = [
-  {
-    id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-    createdAt: '2025-01-15T10:30:00Z',
-    title: 'Путешествие по США',
-    startDate: '2025-09-26',
-    endDate: '2025-10-28',
-    welcomeText: '',
-    flights: [],
-    totalFlightsCost: 0,
-    flightsCurrency: 'RUB',
-    hotels: [],
-    totalHotelsCost: 0,
-    hotelsCurrency: 'RUB',
-    carRentals: [],
-    cruises: [],
-    excursions: [],
-    transport: [],
-    additionalServices: [],
-  },
-  {
-    id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
-    createdAt: '2025-02-03T08:00:00Z',
-    title: 'Тур по Японии — Токио и Киото',
-    startDate: '2025-11-05',
-    endDate: '2025-11-22',
-    welcomeText: '',
-    flights: [],
-    totalFlightsCost: 0,
-    flightsCurrency: 'RUB',
-    hotels: [],
-    totalHotelsCost: 0,
-    hotelsCurrency: 'RUB',
-    carRentals: [],
-    cruises: [],
-    excursions: [],
-    transport: [],
-    additionalServices: [],
-  },
-  {
-    id: 'c3d4e5f6-a7b8-9012-cdef-012345678902',
-    createdAt: '2025-02-28T14:45:00Z',
-    title: 'Круиз по Средиземноморью',
-    startDate: '2025-07-10',
-    endDate: '2025-07-24',
-    welcomeText: '',
-    flights: [],
-    totalFlightsCost: 0,
-    flightsCurrency: 'RUB',
-    hotels: [],
-    totalHotelsCost: 0,
-    hotelsCurrency: 'RUB',
-    carRentals: [],
-    cruises: [],
-    excursions: [],
-    transport: [],
-    additionalServices: [],
-  },
-  {
-    id: 'd4e5f6a7-b8c9-0123-def0-123456789003',
-    createdAt: '2025-03-12T09:15:00Z',
-    title: 'Дубай — золотой город',
-    startDate: '2025-12-01',
-    endDate: '2025-12-10',
-    welcomeText: '',
-    flights: [],
-    totalFlightsCost: 0,
-    flightsCurrency: 'RUB',
-    hotels: [],
-    totalHotelsCost: 0,
-    hotelsCurrency: 'RUB',
-    carRentals: [],
-    cruises: [],
-    excursions: [],
-    transport: [],
-    additionalServices: [],
-  },
-  {
-    id: 'e5f6a7b8-c9d0-1234-ef01-234567890004',
-    createdAt: '2025-04-01T11:00:00Z',
-    title: 'Сафари в Кении',
-    startDate: '2026-02-15',
-    endDate: '2026-02-28',
-    welcomeText: '',
-    flights: [],
-    totalFlightsCost: 0,
-    flightsCurrency: 'RUB',
-    hotels: [],
-    totalHotelsCost: 0,
-    hotelsCurrency: 'RUB',
-    carRentals: [],
-    cruises: [],
-    excursions: [],
-    transport: [],
-    additionalServices: [],
-  },
-]
+onMounted(() => {
+  tourStore.loadTours()
+})
 
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('ru-RU', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  })
+function navigateToTour(id: string) {
+  router.push({ name: 'tour', params: { id } })
 }
 
-function navigateToTour(id: string | undefined) {
-  if (id) {
-    router.push({ name: 'tour', params: { id } })
-  }
+function navigateToNew() {
+  router.push({ name: 'tourNew' })
+}
+
+function navigateToEdit(id: string) {
+  router.push({ name: 'tourEdit', params: { id } })
 }
 </script>
 
@@ -124,41 +31,46 @@ function navigateToTour(id: string | undefined) {
         <div class="tours-list__header-icon">
           <v-icon icon="mdi-earth" size="28" />
         </div>
-        <div>
+        <div class="flex-grow-1">
           <h1 class="tours-list__title">Туры</h1>
-          <p class="tours-list__subtitle">{{ tours.length }} туров в системе</p>
         </div>
+        <v-btn
+            elevation="2"
+            @click="navigateToNew"
+            size="default"
+            prepend-icon="mdi-plus-circle"
+        >
+          Создать тур
+        </v-btn>
       </div>
 
-      <div class="tours-list__table-wrap">
+      <div v-if="tourStore.loading" class="tours-list__state">
+        <v-progress-circular indeterminate color="primary" size="36" />
+      </div>
+
+      <div v-else-if="tourStore.error" class="tours-list__state">
+        <v-icon icon="mdi-alert-circle-outline" size="40" color="error" class="mb-2" />
+        <div>{{ tourStore.error }}</div>
+      </div>
+
+      <div v-else class="tours-list__table-wrap">
         <v-table class="tours-list__table" density="comfortable">
           <thead>
             <tr>
               <th class="tours-list__th">Название</th>
-              <th class="tours-list__th">Идентификатор</th>
+              <th class="tours-list__th">Клиент</th>
               <th class="tours-list__th">Дата создания</th>
+              <th class="tours-list__th tours-list__th--actions"></th>
             </tr>
           </thead>
-          <tbody v-if="tours.length > 0">
-            <tr
-              v-for="tour in tours"
+          <tbody v-if="tourStore.tours.length > 0">
+            <TourListItem
+              v-for="tour in tourStore.tours"
               :key="tour.id"
-              class="tours-list__row"
-            >
-              <td class="tours-list__td tours-list__td--name">{{ tour.title }}</td>
-              <td class="tours-list__td">
-                <span
-                  class="tours-list__id-chip"
-                  role="button"
-                  tabindex="0"
-                  @click="navigateToTour(tour.id)"
-                  @keyup.enter="navigateToTour(tour.id)"
-                >{{ tour.id }}</span>
-              </td>
-              <td class="tours-list__td tours-list__td--date">
-                {{ tour.createdAt ? fmtDate(tour.createdAt) : '—' }}
-              </td>
-            </tr>
+              :tour="tour"
+              @click="navigateToTour"
+              @edit="navigateToEdit"
+            />
           </tbody>
           <tbody v-else>
             <tr>
@@ -214,14 +126,22 @@ function navigateToTour(id: string | undefined) {
     font-weight: 800;
     color: #fff;
     margin: 0;
-    line-height: 1.15;
-    letter-spacing: -0.5px;
   }
 
   &__subtitle {
     font-size: 13px;
     color: rgba(255, 255, 255, 0.35);
     margin: 4px 0 0;
+  }
+
+  &__state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 15px;
   }
 
   &__table-wrap {
@@ -244,6 +164,10 @@ function navigateToTour(id: string | undefined) {
     }
   }
 
+  &__th--actions {
+    width: 56px !important;
+  }
+
   &__th {
     font-size: 11px !important;
     font-weight: 700 !important;
@@ -254,65 +178,6 @@ function navigateToTour(id: string | undefined) {
     padding: 14px 20px !important;
     border-bottom: 1px solid rgba(54, 170, 184, 0.15) !important;
     white-space: nowrap;
-  }
-
-  &__row {
-    transition: background-color 150ms ease, border-left-color 150ms ease;
-    border-left: 3px solid transparent;
-    cursor: default;
-
-    &:hover {
-      background: rgba(54, 170, 184, 0.06) !important;
-      border-left-color: variables.$color-blue;
-    }
-
-    &:not(:last-child) td {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
-    }
-  }
-
-  &__td {
-    padding: 16px 20px !important;
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.75);
-    vertical-align: middle;
-    border-bottom: none !important;
-
-    &--name {
-      font-weight: 600;
-      color: rgba(255, 255, 255, 0.9);
-    }
-
-    &--date {
-      white-space: nowrap;
-      color: rgba(255, 255, 255, 0.45);
-      font-size: 13px;
-    }
-  }
-
-  &__id-chip {
-    display: inline-block;
-    font-family: monospace;
-    font-size: 12px;
-    color: variables.$color-blue;
-    background: rgba(54, 170, 184, 0.1);
-    border: 1px solid rgba(54, 170, 184, 0.25);
-    border-radius: 6px;
-    padding: 3px 10px;
-    cursor: pointer;
-    transition: background-color 150ms ease, border-color 150ms ease;
-    outline: none;
-    user-select: none;
-
-    &:hover {
-      background: rgba(54, 170, 184, 0.2);
-      border-color: rgba(54, 170, 184, 0.5);
-    }
-
-    &:focus-visible {
-      outline: 2px solid variables.$color-blue;
-      outline-offset: 2px;
-    }
   }
 
   &__empty {

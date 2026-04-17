@@ -119,7 +119,44 @@ npm run lint
 
 ---
 
-## Модель данных ваучера (`src/api/types/voucher.ts`)
+## Tour Domain
+
+### Архитектура
+
+| Слой | Файл | Описание |
+|---|---|---|
+| Types | `src/api/types/tour.ts` | Все типы доменной сущности Tour |
+| API | `src/api/tour.ts` | `TourApi` — CRUD через `/api/v1/tours` |
+| Store | `src/stores/tour.ts` | `useTourStore` — состояние + mock-данные как fallback |
+| Views | `src/views/TourView.vue` | Просмотр тура (ид из маршрута) |
+| Views | `src/views/ToursListView.vue` | Список туров |
+| Views | `src/views/TourEditView.vue` | Создание / редактирование тура |
+
+### Tour-компоненты (`src/components/tour/`)
+
+| Компонент | Назначение |
+|---|---|
+| `TourHeader.vue` | Hero-блок: SVG-карта мира, название, даты, статистика |
+| `TourPriceCard.vue` | Итоговая карточка с расчётом стоимости |
+| `TourSectionHeader.vue` | Заголовок секции (иконка + название + счётчик + итог) |
+| `TourListItem.vue` | Строка тура в таблице списка |
+| `TourBasicInfoForm.vue` | Форма редактирования основных данных тура |
+| `FlightCard.vue` | Карточка перелёта |
+| `HotelCard.vue` | Карточка отеля с галереей |
+| `CarRentalCard.vue` | Карточка аренды авто |
+| `CruiseCard.vue` | Карточка круиза с галереей |
+
+### Store (`useTourStore`)
+
+**State:** `tours`, `currentTour`, `loading`, `error`  
+**Getters:** `tourById`, `toursCount`  
+**Actions:** `loadTours`, `loadTourById`, `createTour`, `updateTour`, `deleteTour`
+
+При недоступности API автоматически используются mock-данные (5 туров с полным набором вложенных сущностей).
+
+---
+
+## Модель данных (`src/api/types/tour.ts`)
 
 ### Вспомогательные типы
 
@@ -128,6 +165,8 @@ npm run lint
 | `FlightClass` | `'economy'` \| `'business'` \| `'comfort'` |
 | `Currency` | `'RUB'` \| `'USD'` \| `'EUR'` \| `'TRY'` |
 | `TransportCategory` | `'taxi'` \| `'bus'` \| `'transfer'` |
+
+> Типы ранее были в `src/api/types/voucher.ts`, теперь в `src/api/types/tour.ts`.
 
 ---
 

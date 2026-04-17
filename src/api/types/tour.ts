@@ -103,6 +103,7 @@ export interface AdditionalService {
 
 export interface Tour {
   id?: string
+  clients: Client[]
   createdAt?: string
   startDate: string
   endDate: string
@@ -119,4 +120,10 @@ export interface Tour {
   excursions: Excursion[]
   transport: PublicTransport[]
   additionalServices: AdditionalService[]
+}
+
+export interface Client {
+  name: string,
+  surname: string
+  email: string
 }
