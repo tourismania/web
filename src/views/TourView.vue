@@ -65,12 +65,12 @@ const additionalServicesTotal = computed(() => {
 </script>
 
 <template>
-  <div class="voucher">
-    <div v-if="tourStore.loading" class="voucher__loading">
+  <div class="tour">
+    <div v-if="tourStore.loading" class="tour__loading">
       <v-progress-circular indeterminate color="primary" size="48" />
     </div>
 
-    <div v-else-if="tourStore.error || !tour" class="voucher__error">
+    <div v-else-if="tourStore.error || !tour" class="tour__error">
       <v-icon icon="mdi-alert-circle-outline" size="48" color="error" class="mb-3" />
       <div>{{ tourStore.error ?? 'Тур не найден' }}</div>
     </div>
@@ -78,7 +78,7 @@ const additionalServicesTotal = computed(() => {
     <template v-else>
       <TourHeader :tour="tour" />
 
-      <div class="voucher__toolbar">
+      <div class="tour__toolbar">
         <v-btn
           prepend-icon="mdi-pencil-outline"
           variant="tonal"
@@ -90,41 +90,41 @@ const additionalServicesTotal = computed(() => {
         </v-btn>
       </div>
 
-      <div class="voucher__body">
+      <div class="tour__body">
         <!-- Перелёты -->
-        <section v-if="tour.flights.length > 0" class="voucher__section">
+        <section v-if="tour.flights.length > 0" class="tour__section">
           <TourSectionHeader
             icon="mdi-airplane"
             title="Перелёты"
             :count="`${tour.flights.length} рейсов в маршруте`"
             :total="fmt(tour.totalFlightsCost)"
           />
-          <div class="voucher__cards">
+          <div class="tour__cards">
             <FlightCard v-for="(flight, i) in tour.flights" :key="i" :flight="flight" :index="i" />
           </div>
         </section>
 
         <!-- Отели -->
-        <section v-if="tour.hotels.length > 0" class="voucher__section">
+        <section v-if="tour.hotels.length > 0" class="tour__section">
           <TourSectionHeader
             icon="mdi-bed-outline"
             title="Отели и жильё"
             :count="`${tour.hotels.length} объекта размещения`"
             :total="fmt(tour.totalHotelsCost)"
           />
-          <div class="voucher__cards voucher__cards--grid">
+          <div class="tour__cards tour__cards--grid">
             <HotelCard v-for="(hotel, i) in tour.hotels" :key="i" :hotel="hotel" :index="i" />
           </div>
         </section>
 
         <!-- Аренда авто -->
-        <section v-if="tour.carRentals.length > 0" class="voucher__section">
+        <section v-if="tour.carRentals.length > 0" class="tour__section">
           <TourSectionHeader
             icon="mdi-car-outline"
             title="Аренда автомобилей"
             :total="`от ${fmt(carRentalMin)}`"
           />
-          <div class="voucher__cards">
+          <div class="tour__cards">
             <CarRentalCard
               v-for="(car, i) in tour.carRentals"
               :key="i"
@@ -135,26 +135,26 @@ const additionalServicesTotal = computed(() => {
         </section>
 
         <!-- Круизы -->
-        <section v-if="tour.cruises.length > 0" class="voucher__section">
+        <section v-if="tour.cruises.length > 0" class="tour__section">
           <TourSectionHeader
             icon="mdi-ferry"
             title="Круиз"
             :total="fmt(cruiseTotal)"
           />
-          <div class="voucher__cards voucher__cards--grid">
+          <div class="tour__cards tour__cards--grid">
             <CruiseCard v-for="(cruise, i) in tour.cruises" :key="i" :cruise="cruise" :index="i" />
           </div>
         </section>
 
         <!-- Экскурсии -->
-        <section v-if="tour.excursions.length > 0" class="voucher__section">
+        <section v-if="tour.excursions.length > 0" class="tour__section">
           <TourSectionHeader
             icon="mdi-binoculars"
             title="Экскурсии"
             :count="`${tour.excursions.length} экскурсии в маршруте`"
             :total="fmt(excursionTotal)"
           />
-          <div class="voucher__cards voucher__cards--grid">
+          <div class="tour__cards tour__cards--grid">
             <ExcursionCard
               v-for="(excursion, i) in tour.excursions"
               :key="i"
@@ -165,14 +165,14 @@ const additionalServicesTotal = computed(() => {
         </section>
 
         <!-- Транспорт -->
-        <section v-if="tour.transport.length > 0" class="voucher__section">
+        <section v-if="tour.transport.length > 0" class="tour__section">
           <TourSectionHeader
             icon="mdi-bus-clock"
             title="Транспорт"
             :count="`${tour.transport.length} поездки в маршруте`"
             :total="fmt(transportTotal)"
           />
-          <div class="voucher__cards">
+          <div class="tour__cards">
             <TransportCard
               v-for="(item, i) in tour.transport"
               :key="i"
@@ -183,14 +183,14 @@ const additionalServicesTotal = computed(() => {
         </section>
 
         <!-- Дополнительные услуги -->
-        <section v-if="tour.additionalServices.length > 0" class="voucher__section">
+        <section v-if="tour.additionalServices.length > 0" class="tour__section">
           <TourSectionHeader
             icon="mdi-plus-box-multiple"
             title="Дополнительные услуги"
             :count="`${tour.additionalServices.length} услуги в маршруте`"
             :total="fmt(additionalServicesTotal)"
           />
-          <div class="voucher__cards">
+          <div class="tour__cards">
             <AdditionalServiceCard
               v-for="(service, i) in tour.additionalServices"
               :key="i"
@@ -210,13 +210,17 @@ const additionalServicesTotal = computed(() => {
 <style scoped lang="scss">
 @use '@/assets/variables';
 
-.voucher {
+.tour {
   min-height: 100vh;
   font-family: 'Roboto', sans-serif;
+  background:
+      radial-gradient(ellipse 80% 60% at 20% 40%, rgba(54, 170, 184, 0.1) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 80% at 80% 60%, rgba(239, 159, 59, 0.06) 0%, transparent 60%),
+      linear-gradient(160deg, #002724 0%, #001d1b 45%, #00201e 100%);
 }
 
-.voucher__loading,
-.voucher__error {
+.tour__loading,
+.tour__error {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -226,7 +230,7 @@ const additionalServicesTotal = computed(() => {
   color: rgba(255, 255, 255, 0.4);
 }
 
-.voucher__toolbar {
+.tour__toolbar {
   max-width: 980px;
   margin: 0 auto;
   padding: 16px 24px 0;
@@ -234,7 +238,7 @@ const additionalServicesTotal = computed(() => {
   justify-content: flex-end;
 }
 
-.voucher__body {
+.tour__body {
   max-width: 980px;
   margin: 0 auto;
   padding: 48px 24px 80px;
@@ -243,12 +247,12 @@ const additionalServicesTotal = computed(() => {
   gap: 60px;
 }
 
-.voucher__section {
+.tour__section {
   display: flex;
   flex-direction: column;
 }
 
-.voucher__cards {
+.tour__cards {
   display: flex;
   flex-direction: column;
   gap: 12px;

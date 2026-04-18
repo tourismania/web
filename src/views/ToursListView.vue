@@ -60,7 +60,7 @@ function navigateToEdit(id: string) {
               <th class="tours-list__th">Название</th>
               <th class="tours-list__th">Клиент</th>
               <th class="tours-list__th">Дата создания</th>
-              <th class="tours-list__th tours-list__th--actions"></th>
+              <th class="tours-list__th tours-list__th--actions text-center"><v-icon icon="mdi-cog-outline" /></th>
             </tr>
           </thead>
           <tbody v-if="tourStore.tours.length > 0">

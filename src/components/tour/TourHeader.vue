@@ -77,10 +77,6 @@ function fmtDate(iso: string): string {
   padding: 72px 24px 56px;
   overflow: hidden;
   text-align: center;
-  background:
-    radial-gradient(ellipse 80% 60% at 20% 40%, rgba(54, 170, 184, 0.1) 0%, transparent 70%),
-    radial-gradient(ellipse 60% 80% at 80% 60%, rgba(239, 159, 59, 0.06) 0%, transparent 60%),
-    linear-gradient(160deg, #002724 0%, #001d1b 45%, #00201e 100%);
 
   &::before {
     content: '';

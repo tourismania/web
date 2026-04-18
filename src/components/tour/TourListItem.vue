@@ -26,6 +26,14 @@ function handleEdit(e: Event) {
   e.stopPropagation()
   if (props.tour.id) emit('edit', props.tour.id)
 }
+
+function handleCopyLink(e: Event) {
+  e.stopPropagation()
+  if (props.tour.id) {
+    const url = `${window.location.origin}/tour/${props.tour.id}`
+    navigator.clipboard.writeText(url)
+  }
+}
 </script>
 
 <template>
@@ -44,14 +52,22 @@ function handleEdit(e: Event) {
       {{ props.tour.createdAt ? fmtDate(props.tour.createdAt) : '—' }}
     </td>
     <td class="tour-list-item__td tour-list-item__td--actions">
-      <v-btn
-        icon="mdi-pencil-outline"
-        size="small"
-        variant="text"
-        color="primary"
-        title="Редактировать тур"
-        @click="handleEdit"
-      />
+      <div class="tour-list-item__td__actions-block">
+        <v-btn
+            icon="mdi-pencil-outline"
+            size="small"
+            variant="text"
+            title="Редактировать тур"
+            @click="handleEdit"
+        />
+        <v-btn
+            icon="mdi-share-outline"
+            size="small"
+            variant="text"
+            title="Поделиться"
+            @click="handleCopyLink"
+        />
+      </div>
     </td>
   </tr>
 </template>
@@ -105,6 +121,10 @@ function handleEdit(e: Event) {
     &--actions {
       width: 56px;
       text-align: center;
+
+      & .tour-list-item__td__actions-block {
+        display: flex;
+      }
     }
   }
 

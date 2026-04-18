@@ -55,6 +55,7 @@ function blankService(): AdditionalService {
 function blankTour(): Tour {
   return {
     title: '',
+    clients: [],
     welcomeText: '',
     startDate: '',
     endDate: '',
