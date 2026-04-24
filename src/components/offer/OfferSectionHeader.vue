@@ -14,7 +14,6 @@ defineProps<{
     </div>
     <div>
       <h2 class="section-header__title">{{ title }}</h2>
-      <div v-if="count" class="section-header__count">{{ count }}</div>
     </div>
     <div v-if="total" class="section-header__total">{{ total }}</div>
   </div>

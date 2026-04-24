@@ -2161,7 +2161,7 @@ export const useOfferStore = defineStore('offer', {
       this.loading = true
       this.error = null
       try {
-        await OfferApi.delete(id)
+        // TODO: await OfferApi.delete(id)
         this.offers = this.offers.filter((t) => t.id !== id)
         if (this.currentOffer?.id === id) this.currentOffer = null
         return true

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { Offer } from '@/api/types/offer'
 
 const props = defineProps<{
@@ -12,6 +13,17 @@ function fmtDate(iso: string): string {
     year: 'numeric',
   })
 }
+
+const stats = computed(() => {
+  const all = [
+    { count: props.offer.flights?.length ?? 0, label: 'перелётов' },
+    { count: props.offer.hotels?.length ?? 0, label: 'отелей' },
+    { count: props.offer.cruises?.length ?? 0, label: 'круизов' },
+    { count: props.offer.excursions?.length ?? 0, label: 'экскурсий' },
+    { count: props.offer.additionalServices?.length ?? 0, label: 'услуг' },
+  ]
+  return all.filter(s => s.count > 0)
+})
 </script>
 
 <template>
@@ -39,31 +51,14 @@ function fmtDate(iso: string): string {
       </div>
       <p v-if="props.offer.welcomeText" class="tour-hero__disclaimer">{{ props.offer.welcomeText }}</p>
 
-      <div class="tour-hero__stats">
-        <div class="tour-hero__stat">
-          <span class="stat-num">{{ props.offer.flights.length }}</span>
-          <span class="stat-label">перелётов</span>
-        </div>
-        <div class="tour-hero__stat-divider" />
-        <div class="tour-hero__stat">
-          <span class="stat-num">{{ props.offer.hotels.length }}</span>
-          <span class="stat-label">отелей</span>
-        </div>
-        <div class="tour-hero__stat-divider" />
-        <div class="tour-hero__stat">
-          <span class="stat-num">{{ props.offer.cruises.length }}</span>
-          <span class="stat-label">круизов</span>
-        </div>
-        <div class="tour-hero__stat-divider" />
-        <div class="tour-hero__stat">
-          <span class="stat-num">{{ props.offer.excursions.length }}</span>
-          <span class="stat-label">экскурсий</span>
-        </div>
-        <div class="tour-hero__stat-divider" />
-        <div class="tour-hero__stat">
-          <span class="stat-num">{{ props.offer.additionalServices.length }}</span>
-          <span class="stat-label">услуг</span>
-        </div>
+      <div v-if="stats.length" class="tour-hero__stats">
+        <template v-for="(stat, i) in stats" :key="stat.label">
+          <div v-if="i > 0" class="tour-hero__stat-divider" />
+          <div class="tour-hero__stat">
+            <span class="stat-num">{{ stat.count }}</span>
+            <span class="stat-label">{{ stat.label }}</span>
+          </div>
+        </template>
       </div>
     </div>
   </section>

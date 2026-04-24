@@ -22,6 +22,13 @@ function navigateToEdit() {
   router.push({ name: 'offerEdit', params: { id: route.params.id } })
 }
 
+function deleteOffer() {
+  const id = route.params.id as string || ''
+  if (id === '') return
+  offerStore.deleteOffer(id)
+  router.push({name: 'offers'})
+}
+
 onMounted(() => {
   const id = route.params.id as string
   offerStore.loadOfferById(id)
@@ -66,65 +73,75 @@ const additionalServicesTotal = computed(() => {
 
 <template>
   <div class="tour">
-    <div v-if="offerStore.loading" class="tour__loading">
+    <div v-if="offerStore.loading" class="offer__loading">
       <v-progress-circular indeterminate color="primary" size="48" />
     </div>
 
-    <div v-else-if="offerStore.error || !offer" class="tour__error">
+    <div v-else-if="offerStore.error || !offer" class="offer__error">
       <v-icon icon="mdi-alert-circle-outline" size="48" color="error" class="mb-3" />
       <div>{{ offerStore.error ?? 'Предложение не найдено' }}</div>
     </div>
 
     <template v-else>
-      <OfferHeader :offer="offer" />
 
-      <div class="tour__toolbar">
+      <div class="offer__toolbar">
         <v-btn
-          prepend-icon="mdi-pencil-outline"
-          variant="tonal"
-          color="primary"
-          size="small"
-          @click="navigateToEdit"
+            prepend-icon="mdi-pencil-outline"
+            variant="tonal"
+            color="primary"
+            size="small"
+            @click="navigateToEdit"
         >
           Редактировать
         </v-btn>
+        <v-btn
+            prepend-icon="mdi-trash-can"
+            variant="tonal"
+            color="error"
+            size="small"
+            @click="deleteOffer"
+        >
+          Удалить
+        </v-btn>
       </div>
 
-      <div class="tour__body">
+      <OfferHeader :offer="offer" />
+
+      <div class="offer__body">
         <!-- Перелёты -->
-        <section v-if="offer.flights.length > 0" class="tour__section">
+        <section v-if="offer.flights.length > 0" class="offer__section">
           <OfferSectionHeader
             icon="mdi-airplane"
             title="Перелёты"
             :count="`${offer.flights.length} рейсов в маршруте`"
             :total="fmt(offer.totalFlightsCost)"
           />
-          <div class="tour__cards">
+          <div class="offer__cards">
             <FlightCard v-for="(flight, i) in offer.flights" :key="i" :flight="flight" :index="i" />
           </div>
         </section>
 
         <!-- Отели -->
-        <section v-if="offer.hotels.length > 0" class="tour__section">
+        <section v-if="offer.hotels.length > 0" class="offer__section">
           <OfferSectionHeader
             icon="mdi-bed-outline"
             title="Отели и жильё"
             :count="`${offer.hotels.length} объекта размещения`"
             :total="fmt(offer.totalHotelsCost)"
           />
-          <div class="tour__cards tour__cards--grid">
+          <div class="offer__cards offer__cards--grid">
             <HotelCard v-for="(hotel, i) in offer.hotels" :key="i" :hotel="hotel" :index="i" />
           </div>
         </section>
 
         <!-- Аренда авто -->
-        <section v-if="offer.carRentals.length > 0" class="tour__section">
+        <section v-if="offer.carRentals.length > 0" class="offer__section">
           <OfferSectionHeader
             icon="mdi-car-outline"
             title="Аренда автомобилей"
             :total="`от ${fmt(carRentalMin)}`"
           />
-          <div class="tour__cards">
+          <div class="offer__cards">
             <CarRentalCard
               v-for="(car, i) in offer.carRentals"
               :key="i"
@@ -135,26 +152,26 @@ const additionalServicesTotal = computed(() => {
         </section>
 
         <!-- Круизы -->
-        <section v-if="offer.cruises.length > 0" class="tour__section">
+        <section v-if="offer.cruises.length > 0" class="offer__section">
           <OfferSectionHeader
             icon="mdi-ferry"
             title="Круиз"
             :total="fmt(cruiseTotal)"
           />
-          <div class="tour__cards tour__cards--grid">
+          <div class="offer__cards offer__cards--grid">
             <CruiseCard v-for="(cruise, i) in offer.cruises" :key="i" :cruise="cruise" :index="i" />
           </div>
         </section>
 
         <!-- Экскурсии -->
-        <section v-if="offer.excursions.length > 0" class="tour__section">
+        <section v-if="offer.excursions.length > 0" class="offer__section">
           <OfferSectionHeader
             icon="mdi-binoculars"
             title="Экскурсии"
             :count="`${offer.excursions.length} экскурсии в маршруте`"
             :total="fmt(excursionTotal)"
           />
-          <div class="tour__cards tour__cards--grid">
+          <div class="offer__cards offer__cards--grid">
             <ExcursionCard
               v-for="(excursion, i) in offer.excursions"
               :key="i"
@@ -165,14 +182,14 @@ const additionalServicesTotal = computed(() => {
         </section>
 
         <!-- Транспорт -->
-        <section v-if="offer.transport.length > 0" class="tour__section">
+        <section v-if="offer.transport.length > 0" class="offer__section">
           <OfferSectionHeader
             icon="mdi-bus-clock"
             title="Транспорт"
             :count="`${offer.transport.length} поездки в маршруте`"
             :total="fmt(transportTotal)"
           />
-          <div class="tour__cards">
+          <div class="offer__cards">
             <TransportCard
               v-for="(item, i) in offer.transport"
               :key="i"
@@ -183,14 +200,14 @@ const additionalServicesTotal = computed(() => {
         </section>
 
         <!-- Дополнительные услуги -->
-        <section v-if="offer.additionalServices.length > 0" class="tour__section">
+        <section v-if="offer.additionalServices.length > 0" class="offer__section">
           <OfferSectionHeader
             icon="mdi-plus-box-multiple"
             title="Дополнительные услуги"
             :count="`${offer.additionalServices.length} услуги в маршруте`"
             :total="fmt(additionalServicesTotal)"
           />
-          <div class="tour__cards">
+          <div class="offer__cards">
             <AdditionalServiceCard
               v-for="(service, i) in offer.additionalServices"
               :key="i"
@@ -219,8 +236,8 @@ const additionalServicesTotal = computed(() => {
       linear-gradient(160deg, #002724 0%, #001d1b 45%, #00201e 100%);
 }
 
-.tour__loading,
-.tour__error {
+.offer__loading,
+.offer__error {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -230,15 +247,17 @@ const additionalServicesTotal = computed(() => {
   color: rgba(255, 255, 255, 0.4);
 }
 
-.tour__toolbar {
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 16px 24px 0;
+.offer__toolbar {
+  padding: 10px 0;
   display: flex;
   justify-content: flex-end;
+
+  &  button {
+    margin-right: 10px;
+  }
 }
 
-.tour__body {
+.offer__body {
   max-width: 980px;
   margin: 0 auto;
   padding: 48px 24px 80px;
@@ -247,12 +266,12 @@ const additionalServicesTotal = computed(() => {
   gap: 60px;
 }
 
-.tour__section {
+.offer__section {
   display: flex;
   flex-direction: column;
 }
 
-.tour__cards {
+.offer__cards {
   display: flex;
   flex-direction: column;
   gap: 12px;

@@ -107,8 +107,8 @@ function handleCopyLink(e: Event) {
 
     &--clients {
       span {
-        margin-bottom: 4px;
-        margin-right: 4px;
+        margin-bottom: 8px;
+        margin-right: 8px;
       }
     }
 
