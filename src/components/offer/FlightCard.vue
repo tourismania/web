@@ -29,17 +29,51 @@ function formatPrice(price: number, currency: string): string {
   return `${price.toLocaleString('ru-RU')} ${currencySymbol[currency] ?? currency}`
 }
 
-const departureFmt = computed(() => formatDateTime(props.flight.departure.dateTime))
-const arrivalFmt = computed(() => formatDateTime(props.flight.arrival.dateTime))
+/**
+ * Converts a naive local ISO datetime string (e.g. "2026-05-14T10:00:00",
+ * without any TZ suffix) interpreted as wall-clock time in `timeZone` into
+ * absolute UTC milliseconds. Uses Intl to resolve the zone's offset at that
+ * instant, so it handles DST correctly.
+ */
+function zonedToUtcMs(localIso: string, timeZone: string): number {
+  const match = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/.exec(localIso)
+  if (!match) {
+    // Fall back to native parser when the string isn't the expected shape
+    return new Date(localIso).getTime()
+  }
+  const [, y, mo, d, h, mi, s] = match
+  // First, pretend the wall-clock components are UTC.
+  const asIfUtc = Date.UTC(+y, +mo - 1, +d, +h, +mi, s ? +s : 0)
+  // Now ask what those UTC ms look like rendered in `timeZone`.
+  const dtf = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
+  const parts: Record<string, string> = {}
+  for (const p of dtf.formatToParts(new Date(asIfUtc))) {
+    if (p.type !== 'literal') parts[p.type] = p.value
+  }
+  const shownInTz = Date.UTC(
+    +parts.year,
+    +parts.month - 1,
+    +parts.day,
+    +parts.hour,
+    +parts.minute,
+    +parts.second,
+  )
+  // Offset of the target zone from UTC at this moment (ms).
+  const offset = shownInTz - asIfUtc
+  // The true UTC ms for the local wall-clock time in that zone.
+  return asIfUtc - offset
+}
 
-const hasLayover = computed(
-  () => props.flight.departure.hasLayovers || props.flight.arrival.hasLayovers,
-)
-
-const duration = computed(() => {
-  const ms =
-    new Date(props.flight.arrival.dateTime).getTime() -
-    new Date(props.flight.departure.dateTime).getTime()
+function formatDurationMs(ms: number): string {
   if (!Number.isFinite(ms) || ms <= 0) return ''
   const totalMinutes = Math.round(ms / 60000)
   const days = Math.floor(totalMinutes / (60 * 24))
@@ -50,6 +84,21 @@ const duration = computed(() => {
     return minutes > 0 ? `${hours}ч ${minutes}мин в пути` : `${hours}ч в пути`
   }
   return `${minutes} мин в пути`
+}
+
+const departureFmt = computed(() => formatDateTime(props.flight.departure.dateTime))
+const arrivalFmt = computed(() => formatDateTime(props.flight.arrival.dateTime))
+
+const hasLayover = computed(
+  () => props.flight.departure.hasLayovers || props.flight.arrival.hasLayovers,
+)
+
+const duration = computed(() => {
+  const dep = props.flight.departure
+  const arr = props.flight.arrival
+  const depMs = zonedToUtcMs(dep.dateTime, dep.timezone)
+  const arrMs = zonedToUtcMs(arr.dateTime, arr.timezone)
+  return formatDurationMs(arrMs - depMs)
 })
 
 const flightStatus = computed(() => (hasLayover.value ? '1 пересадка' : 'прямой'))
@@ -76,7 +125,6 @@ const flightStatus = computed(() => (hasLayover.value ? '1 пересадка' :
           <span class="flight-card__meta-item">Рейс {{ flight.departure.flight }}</span>
         </div>
       </div>
-      <div class="flight-card__index">#{{ index + 1 }}</div>
     </div>
 
     <!-- Route block -->

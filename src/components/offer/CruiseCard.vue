@@ -28,14 +28,12 @@ function formatPrice(price: number, currency: string): string {
         hide-delimiters
         :show-arrows="cruise.gallery.length > 1"
       >
-        <v-carousel-item v-for="(img, i) in cruise.gallery" :key="i" :src="img" cover />
+        <v-carousel-item v-for="(img, i) in cruise.gallery" :key="i" :src="img.url" cover />
       </v-carousel>
     </div>
 
     <div class="cruise-card__info">
       <div class="cruise-card__header">
-        <div class="cruise-card__index">#{{ index + 1 }}</div>
-        <v-icon icon="mdi-ferry" class="mr-2" color="teal-lighten-1" />
         <h3 class="cruise-card__name">{{ cruise.name }}</h3>
       </div>
 

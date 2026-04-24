@@ -18,9 +18,7 @@ function formatPrice(price: number, currency: string): string {
 <template>
   <div class="car-rental-card">
     <div class="car-rental-card__header">
-      <div class="car-rental-card__index">#{{ index + 1 }}</div>
       <div class="car-rental-card__title">
-        <v-icon icon="mdi-car-outline" class="mr-2" color="teal-lighten-1" />
         {{ carRental.name }}
       </div>
     </div>
@@ -45,7 +43,7 @@ function formatPrice(price: number, currency: string): string {
     <div class="car-rental-card__vehicles">
       <div v-for="(vehicle, i) in carRental.vehicles" :key="i" class="car-rental-card__vehicle">
         <div class="car-rental-card__vehicle-info">
-          <v-icon icon="mdi-car" size="small" class="mr-2" color="rgba(255,255,255,0.5)" />
+          <span class="car-rental-card__vehicle-name">{{ i + 1 }}.</span>
           <span class="car-rental-card__vehicle-name">{{ vehicle.name }}</span>
           <span class="car-rental-card__vehicle-model">{{ vehicle.vehicle }}</span>
         </div>
@@ -115,8 +113,11 @@ function formatPrice(price: number, currency: string): string {
   &__location {
     flex: 1;
     display: flex;
-    flex-direction: column;
     gap: 2px;
+    flex-direction: row;
+    align-content: center;
+    justify-content: flex-start;
+    align-items: center;
   }
 
   &__location-label {
@@ -138,11 +139,10 @@ function formatPrice(price: number, currency: string): string {
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    gap: 4px;
 
     .line {
       width: 24px;
-      height: 1px;
+      height: 2px;
       background: rgba(255, 255, 255, 0.15);
     }
   }

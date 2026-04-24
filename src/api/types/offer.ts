@@ -3,7 +3,8 @@ export type Currency = 'RUB' | 'USD' | 'EUR' | 'TRY'
 
 export interface FlightEndpoint {
   city: string
-  dateTime: string         // ISO datetime string
+  dateTime: string         // local wall-clock datetime in the airport's timezone, e.g. "2026-05-14T10:00:00"
+  timezone: string         // IANA timezone name of the airport, e.g. "Europe/Moscow", "Asia/Tokyo"
   flight: string           // e.g. "U6 773"
   airport: string          // e.g. "Кольцово"
   airportCode: string      // e.g. "SVX"
@@ -20,9 +21,8 @@ export interface Flight {
   arrival: FlightEndpoint
 }
 
-export interface HotelImage {
+export interface Image {
   url: string
-  alt?: string
 }
 
 export interface Hotel {
@@ -36,7 +36,7 @@ export interface Hotel {
   occupancyType: string
   price: number
   currency: Currency
-  images: HotelImage[]
+  gallery: Image[]
   serviceFee: number
   serviceFeeCurrency?: Currency
   checkIn: string   // ISO date string
@@ -66,7 +66,7 @@ export interface CruiseCabin {
 }
 
 export interface Cruise {
-  gallery: string[]
+  gallery: Image[]
   name: string
   managerComment?: string
   cabins: CruiseCabin[]
@@ -75,10 +75,11 @@ export interface Cruise {
 export interface Excursion {
   date?: Date | null
   city?: string | null
+  name: string
   price: number
   currency: Currency
   managerComment: string
-  gallery: HotelImage[]
+  gallery: Image[]
 }
 
 export type TransportCategory = 'taxi' | 'bus' | 'transfer'

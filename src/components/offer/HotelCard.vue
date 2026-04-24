@@ -25,11 +25,11 @@ function formatDate(iso: string): string {
 <template>
   <div class="hotel-card">
     <!-- Image Gallery -->
-    <div class="hotel-card__gallery" v-if="hotel.images.length > 0">
+    <div class="hotel-card__gallery" v-if="hotel.gallery.length > 0">
       <div class="hotel-card__image-wrap">
         <img
-          :src="hotel.images[currentImage]?.url"
-          :alt="hotel.images[currentImage]?.alt ?? hotel.name"
+          :src="hotel.gallery[currentImage]?.url"
+          :alt="hotel.name"
           class="hotel-card__image"
         />
         <div class="hotel-card__stars">
@@ -40,15 +40,15 @@ function formatDate(iso: string): string {
           <span class="hotel-card__nights">{{ hotel.nights }} ночей</span>
         </div>
       </div>
-      <div v-if="hotel.images.length > 1" class="hotel-card__thumbs">
+      <div v-if="hotel.gallery.length > 1" class="hotel-card__thumbs">
         <div
-          v-for="(img, i) in hotel.images"
+          v-for="(img, i) in hotel.gallery"
           :key="i"
           class="hotel-card__thumb"
           :class="{ active: i === currentImage }"
           @click="currentImage = i"
         >
-          <img :src="img.url" :alt="img.alt ?? `Фото ${i + 1}`" />
+          <img :src="img.url" :alt="`Фото ${i + 1}`" />
         </div>
       </div>
     </div>
@@ -57,7 +57,6 @@ function formatDate(iso: string): string {
     <div class="hotel-card__info">
       <div class="hotel-card__header">
         <div>
-          <div class="hotel-card__index">#{{ index + 1 }}</div>
           <h3 class="hotel-card__name">{{ hotel.name }}</h3>
           <div class="hotel-card__address">
             <v-icon icon="mdi-map-marker-outline" size="small" class="mr-1" />

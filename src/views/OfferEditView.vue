@@ -22,7 +22,7 @@ const TRANSPORT_CATEGORIES: TransportCategory[] = ['taxi', 'bus', 'transfer']
 const STARS = [1, 2, 3, 4, 5]
 
 function blankEndpoint(): FlightEndpoint {
-  return { city: '', dateTime: '', flight: '', airport: '', airportCode: '', hasLayovers: false, flightClass: 'economy', price: 0, currency: 'RUB' }
+  return { city: '', dateTime: '', timezone: 'Europe/Moscow', flight: '', airport: '', airportCode: '', hasLayovers: false, flightClass: 'economy', price: 0, currency: 'RUB' }
 }
 function blankFlight(): Flight {
   return { airline: '', departure: blankEndpoint(), arrival: blankEndpoint() }
@@ -466,7 +466,8 @@ async function submitOffer() {
             <div class="text-caption font-weight-medium mb-1 text-primary">Вылет</div>
             <v-row dense>
               <v-col cols="12"><v-text-field v-model="draftFlight.departure.city" label="Город" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="12"><v-text-field v-model="draftFlight.departure.dateTime" label="Дата и время" type="datetime-local" density="compact" variant="outlined" hide-details /></v-col>
+              <v-col cols="12"><v-text-field v-model="draftFlight.departure.dateTime" label="Дата и время (местное)" type="datetime-local" density="compact" variant="outlined" hide-details /></v-col>
+              <v-col cols="12"><v-text-field v-model="draftFlight.departure.timezone" label="Часовой пояс (IANA)" placeholder="Europe/Moscow" density="compact" variant="outlined" hide-details /></v-col>
               <v-col cols="6"><v-text-field v-model="draftFlight.departure.flight" label="Рейс" density="compact" variant="outlined" hide-details /></v-col>
               <v-col cols="6"><v-select v-model="draftFlight.departure.flightClass" :items="FLIGHT_CLASSES" label="Класс" density="compact" variant="outlined" hide-details /></v-col>
               <v-col cols="8"><v-text-field v-model="draftFlight.departure.airport" label="Аэропорт" density="compact" variant="outlined" hide-details /></v-col>
@@ -480,7 +481,8 @@ async function submitOffer() {
             <div class="text-caption font-weight-medium mb-1 text-primary">Прилёт</div>
             <v-row dense>
               <v-col cols="12"><v-text-field v-model="draftFlight.arrival.city" label="Город" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="12"><v-text-field v-model="draftFlight.arrival.dateTime" label="Дата и время" type="datetime-local" density="compact" variant="outlined" hide-details /></v-col>
+              <v-col cols="12"><v-text-field v-model="draftFlight.arrival.dateTime" label="Дата и время (местное)" type="datetime-local" density="compact" variant="outlined" hide-details /></v-col>
+              <v-col cols="12"><v-text-field v-model="draftFlight.arrival.timezone" label="Часовой пояс (IANA)" placeholder="Asia/Tokyo" density="compact" variant="outlined" hide-details /></v-col>
               <v-col cols="6"><v-text-field v-model="draftFlight.arrival.flight" label="Рейс" density="compact" variant="outlined" hide-details /></v-col>
               <v-col cols="6"><v-select v-model="draftFlight.arrival.flightClass" :items="FLIGHT_CLASSES" label="Класс" density="compact" variant="outlined" hide-details /></v-col>
               <v-col cols="8"><v-text-field v-model="draftFlight.arrival.airport" label="Аэропорт" density="compact" variant="outlined" hide-details /></v-col>

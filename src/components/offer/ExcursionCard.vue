@@ -33,7 +33,7 @@ function formatDate(date: Date): string {
       <div class="excursion-card__image-wrap">
         <img
           :src="excursion.gallery[currentImage]?.url"
-          :alt="excursion.gallery[currentImage]?.alt ?? `Экскурсия #${index + 1}`"
+          :alt="`${excursion.name} #${index + 1}`"
           class="excursion-card__image"
         />
         <!-- Date badge -->
@@ -56,7 +56,7 @@ function formatDate(date: Date): string {
           :class="{ active: i === currentImage }"
           @click="currentImage = i"
         >
-          <img :src="img.url" :alt="img.alt ?? `Фото ${i + 1}`" />
+          <img :src="img.url" :alt="`Фото ${i + 1}`" />
         </div>
       </div>
     </div>
@@ -66,10 +66,8 @@ function formatDate(date: Date): string {
       <!-- Header row: index + meta + price -->
       <div class="excursion-card__header">
         <div class="excursion-card__meta">
-          <div class="excursion-card__index">#{{ index + 1 }}</div>
           <div class="excursion-card__title-row">
-            <v-icon icon="mdi-binoculars" size="18" color="teal-lighten-1" class="mr-2" />
-            <span class="excursion-card__label">Экскурсия</span>
+            <span class="excursion-card__label">{{ excursion.name }}</span>
           </div>
           <!-- City (text fallback when no gallery) -->
           <div
@@ -94,32 +92,6 @@ function formatDate(date: Date): string {
           </div>
           <div class="excursion-card__price-label">стоимость</div>
         </div>
-      </div>
-
-      <!-- Chips row: city + date when gallery exists -->
-      <div
-        v-if="excursion.gallery.length > 0 && (excursion.city || excursion.date)"
-        class="excursion-card__chips"
-      >
-        <v-chip
-          v-if="excursion.city"
-          size="small"
-          variant="tonal"
-          color="teal-lighten-1"
-          prepend-icon="mdi-map-marker"
-        >
-          {{ excursion.city }}
-        </v-chip>
-        <v-chip
-          v-if="excursion.date"
-          size="small"
-          variant="tonal"
-          color="teal-lighten-2"
-          prepend-icon="mdi-calendar"
-          class="ml-2"
-        >
-          {{ formatDate(excursion.date) }}
-        </v-chip>
       </div>
 
       <!-- Manager comment -->
@@ -268,6 +240,7 @@ function formatDate(date: Date): string {
   &__label {
     font-size: 17px;
     font-weight: 700;
+    line-height: normal;
     color: #fff;
   }
 

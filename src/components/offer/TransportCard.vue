@@ -105,14 +105,21 @@ function formatDuration(minutes: number): string {
 
       <!-- Connector line -->
       <div class="transport-card__connector">
-        <div class="transport-card__connector-line"></div>
-        <v-icon
-          :icon="categoryConfig[transport.category].icon"
-          class="transport-card__connector-icon"
-          :style="{ color: categoryConfig[transport.category].color }"
-          size="20"
-        />
-        <div class="transport-card__connector-line"></div>
+        <div class="transport-card__connector__body">
+          <div class="transport-card__connector__body-line"></div>
+          <v-icon
+              :icon="categoryConfig[transport.category].icon"
+              class="transport-card__connector__body-icon"
+              :style="{ color: categoryConfig[transport.category].color }"
+              size="20"
+          />
+          <div class="transport-card__connector__body-line"></div>
+        </div>
+        <div class="transport-card__connector__description">
+          <div class="transport-card__connector__description__duration">
+            {{ formatDuration(transport.duration) }}
+          </div>
+        </div>
       </div>
 
       <!-- Dropoff -->
@@ -124,14 +131,6 @@ function formatDuration(minutes: number): string {
         <div class="transport-card__location-pin transport-card__location-pin--end">
           <v-icon icon="mdi-map-marker-check" size="16" />
         </div>
-      </div>
-    </div>
-
-    <!-- Footer row: duration -->
-    <div class="transport-card__footer">
-      <div class="transport-card__duration">
-        <v-icon icon="mdi-timer-outline" size="14" class="mr-1" />
-        {{ formatDuration(transport.duration) }}
       </div>
     </div>
 
@@ -278,21 +277,41 @@ function formatDuration(minutes: number): string {
   // ── Connector ───────────────────────────────────────────────────────────────
 
   &__connector {
-    flex: 0 0 auto;
-    width: 80px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
 
-  &__connector-line {
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(90deg, rgba(54, 170, 184, 0.15), rgba(54, 170, 184, 0.4));
-  }
+    &__body {
+      flex: 0 0 auto;
+      width: 160px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
 
-  &__connector-icon {
-    flex-shrink: 0;
+      &-line {
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(54, 170, 184, 0.15), rgba(54, 170, 184, 0.4));
+      }
+
+      &-icon {
+        flex-shrink: 0;
+      }
+    }
+
+    &__description {
+
+      display: flex;
+      align-items: center;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.5);
+
+      &__duration {
+
+        .v-icon {
+          color: variables.$color-blue;
+          opacity: 0.8;
+        }
+      }
+
+    }
   }
 
   // ── Footer ──────────────────────────────────────────────────────────────────
@@ -303,18 +322,6 @@ function formatDuration(minutes: number): string {
     gap: 16px;
     padding-top: 12px;
     border-top: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  &__duration {
-    display: flex;
-    align-items: center;
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.5);
-
-    .v-icon {
-      color: variables.$color-blue;
-      opacity: 0.8;
-    }
   }
 
   // ── Comment ─────────────────────────────────────────────────────────────────
