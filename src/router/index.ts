@@ -2,10 +2,10 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import LoginView from "@/views/LoginView.vue";
-import OfferView from "@/views/Offers/OfferView.vue";
-import TourView from "@/views/TourView.vue";
-import ToursListView from "@/views/ToursListView.vue";
-import TourEditView from "@/views/TourEditView.vue";
+import DealView from "@/views/Deals/DealView.vue";
+import OfferView from "@/views/OfferView.vue";
+import OffersListView from "@/views/OffersListView.vue";
+import OfferEditView from "@/views/OfferEditView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -16,29 +16,29 @@ const router = createRouter({
       component: HomeView,
     },
     {
-      path: '/tours',
-      name: 'tours',
-      component: ToursListView,
-    },
-    {
-      path: '/tour/new',
-      name: 'tourNew',
-      component: TourEditView,
-    },
-    {
-      path: '/tour/:id/edit',
-      name: 'tourEdit',
-      component: TourEditView,
-    },
-    {
-      path: '/tour/:id',
-      name: 'tour',
-      component: TourView,
-    },
-    {
       path: '/offers',
       name: 'offers',
+      component: OffersListView,
+    },
+    {
+      path: '/offer/new',
+      name: 'offerNew',
+      component: OfferEditView,
+    },
+    {
+      path: '/offer/:id/edit',
+      name: 'offerEdit',
+      component: OfferEditView,
+    },
+    {
+      path: '/offer/:id',
+      name: 'offer',
       component: OfferView,
+    },
+    {
+      path: '/deals',
+      name: 'deals',
+      component: DealView,
     },
     {
       path: '/login',

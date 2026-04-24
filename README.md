@@ -119,44 +119,44 @@ npm run lint
 
 ---
 
-## Tour Domain
+## Offer Domain
 
 ### Архитектура
 
 | Слой | Файл | Описание |
 |---|---|---|
-| Types | `src/api/types/tour.ts` | Все типы доменной сущности Tour |
-| API | `src/api/tour.ts` | `TourApi` — CRUD через `/api/v1/tours` |
-| Store | `src/stores/tour.ts` | `useTourStore` — состояние + mock-данные как fallback |
-| Views | `src/views/TourView.vue` | Просмотр тура (ид из маршрута) |
-| Views | `src/views/ToursListView.vue` | Список туров |
-| Views | `src/views/TourEditView.vue` | Создание / редактирование тура |
+| Types | `src/api/types/offer.ts` | Все типы доменной сущности Offer |
+| API | `src/api/offer.ts` | `OfferApi` — CRUD через `/api/v1/offers` |
+| Store | `src/stores/offer.ts` | `useOfferStore` — состояние + mock-данные как fallback |
+| Views | `src/views/OfferView.vue` | Просмотр предложения (ид из маршрута) |
+| Views | `src/views/OffersListView.vue` | Список предложений |
+| Views | `src/views/OfferEditView.vue` | Создание / редактирование предложения |
 
-### Tour-компоненты (`src/components/tour/`)
+### Offer-компоненты (`src/components/offer/`)
 
 | Компонент | Назначение |
 |---|---|
-| `TourHeader.vue` | Hero-блок: SVG-карта мира, название, даты, статистика |
-| `TourPriceCard.vue` | Итоговая карточка с расчётом стоимости |
-| `TourSectionHeader.vue` | Заголовок секции (иконка + название + счётчик + итог) |
-| `TourListItem.vue` | Строка тура в таблице списка |
-| `TourBasicInfoForm.vue` | Форма редактирования основных данных тура |
+| `OfferHeader.vue` | Hero-блок: SVG-карта мира, название, даты, статистика |
+| `OfferPriceCard.vue` | Итоговая карточка с расчётом стоимости |
+| `OfferSectionHeader.vue` | Заголовок секции (иконка + название + счётчик + итог) |
+| `OfferListItem.vue` | Строка предложения в таблице списка |
+| `OfferBasicInfoForm.vue` | Форма редактирования основных данных предложения |
 | `FlightCard.vue` | Карточка перелёта |
 | `HotelCard.vue` | Карточка отеля с галереей |
 | `CarRentalCard.vue` | Карточка аренды авто |
 | `CruiseCard.vue` | Карточка круиза с галереей |
 
-### Store (`useTourStore`)
+### Store (`useOfferStore`)
 
-**State:** `tours`, `currentTour`, `loading`, `error`  
-**Getters:** `tourById`, `toursCount`  
-**Actions:** `loadTours`, `loadTourById`, `createTour`, `updateTour`, `deleteTour`
+**State:** `offers`, `currentOffer`, `loading`, `error`  
+**Getters:** `offerById`, `offersCount`  
+**Actions:** `loadOffers`, `loadOfferById`, `createOffer`, `updateOffer`, `deleteOffer`, `clearCurrentOffer`
 
-При недоступности API автоматически используются mock-данные (5 туров с полным набором вложенных сущностей).
+При недоступности API автоматически используются mock-данные с полным набором вложенных сущностей.
 
 ---
 
-## Модель данных (`src/api/types/tour.ts`)
+## Модель данных (`src/api/types/offer.ts`)
 
 ### Вспомогательные типы
 
@@ -166,17 +166,17 @@ npm run lint
 | `Currency` | `'RUB'` \| `'USD'` \| `'EUR'` \| `'TRY'` |
 | `TransportCategory` | `'taxi'` \| `'bus'` \| `'transfer'` |
 
-> Типы ранее были в `src/api/types/voucher.ts`, теперь в `src/api/types/tour.ts`.
+> Типы ранее были в `src/api/types/tour.ts`, теперь в `src/api/types/offer.ts`.
 
 ---
 
-### `Tour` — корневая сущность ваучера
+### `Offer` — корневая сущность предложения
 
 Объединяет все составляющие поездки.
 
 | Поле | Тип | Описание |
 |---|---|---|
-| `title` | `string` | Название тура |
+| `title` | `string` | Название предложения |
 | `welcomeText` | `string` | Приветственный текст от менеджера |
 | `startDate` | `string` | Дата начала (ISO) |
 | `endDate` | `string` | Дата окончания (ISO) |
