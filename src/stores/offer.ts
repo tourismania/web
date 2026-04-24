@@ -32,11 +32,11 @@ const MOCK_OFFERS: Offer[] = [
     startDate: '2025-09-26',
     endDate: '2025-10-28',
     welcomeText:
-      'Уважаемые Сергей и Анастасия, рада предложить для вас расчёт по маршруту в США: ' +
-      'Нью-Йорк, Орландо, Майами + круиз. ' +
-      '* Стоимость в рублях актуальна на день получения предложения и зависит от курса доллара. ' +
-      'Стоимость и наличие не гарантируются до момента бронирования. ' +
-      'При изменении дат бронирования стоимость может меняться.',
+        'Уважаемые Сергей и Анастасия, рада предложить для вас расчёт по маршруту в США: ' +
+        'Нью-Йорк, Орландо, Майами + круиз. ' +
+        '* Стоимость в рублях актуальна на день получения предложения и зависит от курса доллара. ' +
+        'Стоимость и наличие не гарантируются до момента бронирования. ' +
+        'При изменении дат бронирования стоимость может меняться.',
     flights: [
       {
         airline: 'Ural Airlines',
@@ -69,7 +69,7 @@ const MOCK_OFFERS: Offer[] = [
       {
         airline: 'Turkish Airlines',
         managerComment:
-          'Группа 2 (туда-обратно): 272 691 ₽ · TK-11 / Boeing 777-300ER · 10ч 55м · без багажа',
+            'Группа 2 (туда-обратно): 272 691 ₽ · TK-11 / Boeing 777-300ER · 10ч 55м · без багажа',
         departure: {
           city: 'Стамбул',
           dateTime: '2025-09-27T18:45:00',
@@ -124,16 +124,14 @@ const MOCK_OFFERS: Offer[] = [
         },
       },
     ],
-    totalFlightsCost: 444656,
-    flightsCurrency: 'RUB',
     hotels: [
       {
         name: 'The Haze Karaköy',
         stars: 4,
         address: 'Karaköy, Istanbul, Турция',
         description:
-          'Бутик-отель в историческом здании рядом с Галатской башней и набережной. ' +
-          'Современный дизайн, уютные номера, вкусные завтраки.',
+            'Бутик-отель в историческом здании рядом с Галатской башней и набережной. ' +
+            'Современный дизайн, уютные номера, вкусные завтраки.',
         roomType: 'Superior Room',
         roomDescription: 'Просторный номер с видом на Босфор, двуспальная кровать king-size.',
         occupancyType: 'Breakfast buffet',
@@ -155,7 +153,7 @@ const MOCK_OFFERS: Offer[] = [
         stars: 4,
         address: '155 East 50th Street, New York, NY 10022',
         description:
-          'Стильный бутик-отель в Мидтауне. Самый тихий и спокойный район из возможных.',
+            'Стильный бутик-отель в Мидтауне. Самый тихий и спокойный район из возможных.',
         roomType: 'Studio, 2 Queen Beds',
         roomDescription: 'Студия с двумя двуспальными кроватями, кухонным уголком.',
         occupancyType: 'RO — без питания',
@@ -173,8 +171,7 @@ const MOCK_OFFERS: Offer[] = [
         managerComment: 'Обязательный сервисный сбор на месте: 224 $ / 19 593 ₽',
       },
     ],
-    totalHotelsCost: 623327,
-    hotelsCurrency: 'RUB',
+
     carRentals: [
       {
         name: 'Аренда автомобиля',
@@ -195,11 +192,11 @@ const MOCK_OFFERS: Offer[] = [
           { url: '/src/assets/images/examples/cruise_4.jpg',},
         ],
         managerComment:
-          '18 октября — 25 октября 2025 · 7 ночей · Royal Caribbean · 5★ · Майами — Карибы — Майами',
+            '18 октября — 25 октября 2025 · 7 ночей · Royal Caribbean · 5★ · Майами — Карибы — Майами',
         cabins: [
           {
             description:
-              'Каюта с балконом и видом на море · Тариф "Фортуна" · Питание "Всё включено" без алкоголя',
+                'Каюта с балконом и видом на море · Тариф "Фортуна" · Питание "Всё включено" без алкоголя',
             price: 306774,
             currency: 'RUB',
           },
@@ -214,7 +211,7 @@ const MOCK_OFFERS: Offer[] = [
         currency: 'RUB',
         name: 'Обзорная экскурсия по Манхэттену',
         managerComment:
-          'Обзорная экскурсия по Манхэттену: Статуя Свободы, Таймс-сквер, Центральный парк. ~8 часов · Гид на русском',
+            'Обзорная экскурсия по Манхэттену: Статуя Свободы, Таймс-сквер, Центральный парк. ~8 часов · Гид на русском',
         gallery: [
           { url: '/src/assets/images/examples/exc_1.jpeg',},
           { url: '/src/assets/images/examples/exc_3.jpg',},
@@ -227,7 +224,7 @@ const MOCK_OFFERS: Offer[] = [
         currency: 'RUB',
         name: 'Walt Disney World',
         managerComment:
-          'Однодневный визит в Walt Disney World — Magic Kingdom и EPCOT. Park Hopper билеты.',
+            'Однодневный визит в Walt Disney World — Magic Kingdom и EPCOT. Park Hopper билеты.',
         gallery: [
           { url: '/src/assets/images/examples/exc_5.jpeg',},
           { url: '/src/assets/images/examples/exc_6.jpeg',},
@@ -262,7 +259,7 @@ const MOCK_OFFERS: Offer[] = [
         price: 18600,
         currency: 'RUB',
         managerComment:
-          'Комплексная страховка для двух человек · Покрытие: медицина до $100 000, отмена поездки',
+            'Комплексная страховка для двух человек · Покрытие: медицина до $100 000, отмена поездки',
       },
       {
         name: 'SIM-карта США (T-Mobile)',
@@ -280,9 +277,9 @@ const MOCK_OFFERS: Offer[] = [
     startDate: '2025-11-05',
     endDate: '2025-11-22',
     welcomeText:
-      'Дорогие путешественники, представляю вам маршрут по Японии: Токио, Никко, Киото, Нара. ' +
-      'Оптимальное время для посещения — сезон осенних кленов (момидзи). ' +
-      'Стоимость актуальна на дату формирования предложения.',
+        'Дорогие путешественники, представляю вам маршрут по Японии: Токио, Никко, Киото, Нара. ' +
+        'Оптимальное время для посещения — сезон осенних кленов (момидзи). ' +
+        'Стоимость актуальна на дату формирования предложения.',
     flights: [
       {
         airline: 'Japan Airlines',
@@ -341,8 +338,6 @@ const MOCK_OFFERS: Offer[] = [
         },
       },
     ],
-    totalFlightsCost: 398000,
-    flightsCurrency: 'RUB',
     hotels: [
       {
         name: 'Shinjuku Granbell Hotel',
@@ -384,8 +379,7 @@ const MOCK_OFFERS: Offer[] = [
         managerComment: 'Сервисный сбор включён в стоимость размещения',
       },
     ],
-    totalHotelsCost: 346000,
-    hotelsCurrency: 'RUB',
+
     carRentals: [],
     cruises: [],
     excursions: [
@@ -465,9 +459,9 @@ const MOCK_OFFERS: Offer[] = [
     startDate: '2025-07-10',
     endDate: '2025-07-24',
     welcomeText:
-      'Роскошный круиз по Средиземному морю с заходами в лучшие порты Европы: ' +
-      'Барселона, Марсель, Генуя, Рим (Чивитавеккья), Неаполь, Валлетта (Мальта). ' +
-      'Класс каюты можно обсудить индивидуально.',
+        'Роскошный круиз по Средиземному морю с заходами в лучшие порты Европы: ' +
+        'Барселона, Марсель, Генуя, Рим (Чивитавеккья), Неаполь, Валлетта (Мальта). ' +
+        'Класс каюты можно обсудить индивидуально.',
     flights: [
       {
         airline: 'Аэрофлот',
@@ -498,8 +492,6 @@ const MOCK_OFFERS: Offer[] = [
         },
       },
     ],
-    totalFlightsCost: 68500,
-    flightsCurrency: 'RUB',
     hotels: [
       {
         name: 'Hotel Arts Barcelona',
@@ -520,8 +512,7 @@ const MOCK_OFFERS: Offer[] = [
         nights: 1,
       },
     ],
-    totalHotelsCost: 62000,
-    hotelsCurrency: 'RUB',
+
     carRentals: [],
     cruises: [
       {
@@ -596,9 +587,9 @@ const MOCK_OFFERS: Offer[] = [
     startDate: '2025-12-01',
     endDate: '2025-12-10',
     welcomeText:
-      'Откройте для себя великолепие Дубая — города будущего на берегу Персидского залива. ' +
-      'В программе: Бурдж-Халифа, пустынное сафари, шоппинг в Mall of the Emirates и Dubai Mall. ' +
-      'Декабрь — лучший месяц: комфортные +28°C.',
+        'Откройте для себя великолепие Дубая — города будущего на берегу Персидского залива. ' +
+        'В программе: Бурдж-Халифа, пустынное сафари, шоппинг в Mall of the Emirates и Dubai Mall. ' +
+        'Декабрь — лучший месяц: комфортные +28°C.',
     flights: [
       {
         airline: 'Emirates',
@@ -629,15 +620,13 @@ const MOCK_OFFERS: Offer[] = [
         },
       },
     ],
-    totalFlightsCost: 112000,
-    flightsCurrency: 'RUB',
     hotels: [
       {
         name: 'Atlantis The Palm',
         stars: 5,
         address: 'Crescent Road, The Palm, Dubai',
         description:
-          'Легендарный курортный отель на острове Пальм-Джумейра. Аквапарк Aquaventure, частный пляж, 17 ресторанов.',
+            'Легендарный курортный отель на острове Пальм-Джумейра. Аквапарк Aquaventure, частный пляж, 17 ресторанов.',
         roomType: 'King Room Lagoon View',
         occupancyType: 'BB',
         price: 298000,
@@ -653,8 +642,7 @@ const MOCK_OFFERS: Offer[] = [
         managerComment: 'Включён бесплатный доступ в аквапарк Aquaventure',
       },
     ],
-    totalHotelsCost: 298000,
-    hotelsCurrency: 'RUB',
+
     carRentals: [],
     cruises: [],
     excursions: [
@@ -718,9 +706,9 @@ const MOCK_OFFERS: Offer[] = [
     startDate: '2026-02-15',
     endDate: '2026-02-28',
     welcomeText:
-      'Уникальное сафари-приключение в сердце африканской дикой природы. ' +
-      'Масаи-Мара, Амбосели у подножия Килиманджаро, озеро Найваша с фламинго. ' +
-      'Февраль — сезон сухих трав, идеальная видимость для фотосафари.',
+        'Уникальное сафари-приключение в сердце африканской дикой природы. ' +
+        'Масаи-Мара, Амбосели у подножия Килиманджаро, озеро Найваша с фламинго. ' +
+        'Февраль — сезон сухих трав, идеальная видимость для фотосафари.',
     flights: [
       {
         airline: 'Kenya Airways',
@@ -751,15 +739,13 @@ const MOCK_OFFERS: Offer[] = [
         },
       },
     ],
-    totalFlightsCost: 187000,
-    flightsCurrency: 'RUB',
     hotels: [
       {
         name: 'Angama Mara',
         stars: 5,
         address: 'Masai Mara, Kenya',
         description:
-          'Роскошный лодж на краю Великой Рифтовой долины с видом на Масаи-Мара. Всё включено, сафари-джипы.',
+            'Роскошный лодж на краю Великой Рифтовой долины с видом на Масаи-Мара. Всё включено, сафари-джипы.',
         roomType: 'Tented Suite',
         occupancyType: 'All Inclusive',
         price: 425000,
@@ -793,8 +779,7 @@ const MOCK_OFFERS: Offer[] = [
         nights: 5,
       },
     ],
-    totalHotelsCost: 623000,
-    hotelsCurrency: 'RUB',
+
     carRentals: [],
     cruises: [],
     excursions: [
@@ -852,8 +837,8 @@ const MOCK_OFFERS: Offer[] = [
     clients: [],
     endDate: '2025-10-08',
     welcomeText:
-      'Классический тур в Париж: Эйфелева башня, Лувр, Версаль, романтические ужины на Сене. ' +
-      'Октябрь — золотая осень, минимум туристов.',
+        'Классический тур в Париж: Эйфелева башня, Лувр, Версаль, романтические ужины на Сене. ' +
+        'Октябрь — золотая осень, минимум туристов.',
     flights: [
       {
         airline: 'Air France',
@@ -884,8 +869,6 @@ const MOCK_OFFERS: Offer[] = [
         },
       },
     ],
-    totalFlightsCost: 56000,
-    flightsCurrency: 'RUB',
     hotels: [
       {
         name: 'Hotel Le Marais Paris',
@@ -906,8 +889,7 @@ const MOCK_OFFERS: Offer[] = [
         nights: 7,
       },
     ],
-    totalHotelsCost: 148000,
-    hotelsCurrency: 'RUB',
+
     carRentals: [],
     cruises: [],
     excursions: [
@@ -959,8 +941,8 @@ const MOCK_OFFERS: Offer[] = [
     endDate: '2025-12-30',
     clients: [],
     welcomeText:
-      'Двухнедельный тур по Таиланду: Бангкок, Чиангмай, острова Самуи. ' +
-      'Декабрь — пик сезона, лучшее время для посещения.',
+        'Двухнедельный тур по Таиланду: Бангкок, Чиангмай, острова Самуи. ' +
+        'Декабрь — пик сезона, лучшее время для посещения.',
     flights: [
       {
         airline: 'Thai Airways',
@@ -991,8 +973,6 @@ const MOCK_OFFERS: Offer[] = [
         },
       },
     ],
-    totalFlightsCost: 278000,
-    flightsCurrency: 'RUB',
     hotels: [
       {
         name: 'Mandarin Oriental Bangkok',
@@ -1031,8 +1011,7 @@ const MOCK_OFFERS: Offer[] = [
         nights: 8,
       },
     ],
-    totalHotelsCost: 292000,
-    hotelsCurrency: 'RUB',
+
     carRentals: [],
     cruises: [],
     excursions: [
@@ -1100,8 +1079,8 @@ const MOCK_OFFERS: Offer[] = [
     endDate: '2026-01-20',
     clients: [],
     welcomeText:
-      'Эксклюзивный отдых на Мальдивах: вилла над водой, приватный пляж, снорклинг прямо от ступенек. ' +
-      'Январь — идеальный сезон, солнечно и безветренно.',
+        'Эксклюзивный отдых на Мальдивах: вилла над водой, приватный пляж, снорклинг прямо от ступенек. ' +
+        'Январь — идеальный сезон, солнечно и безветренно.',
     flights: [
       {
         airline: 'Emirates',
@@ -1132,15 +1111,13 @@ const MOCK_OFFERS: Offer[] = [
         },
       },
     ],
-    totalFlightsCost: 445000,
-    flightsCurrency: 'RUB',
     hotels: [
       {
         name: 'One&Only Reethi Rah',
         stars: 5,
         address: 'North Malé Atoll, Maldives',
         description:
-          'Один из самых эксклюзивных курортов Мальдив. 130 вилл над водой и на берегу. 9 ресторанов.',
+            'Один из самых эксклюзивных курортов Мальдив. 130 вилл над водой и на берегу. 9 ресторанов.',
         roomType: 'Overwater Villa with Pool',
         occupancyType: 'AI',
         price: 1240000,
@@ -1156,8 +1133,7 @@ const MOCK_OFFERS: Offer[] = [
         managerComment: 'Включён трансфер на гидросамолёте Мале → курорт и обратно',
       },
     ],
-    totalHotelsCost: 1240000,
-    hotelsCurrency: 'RUB',
+
     carRentals: [],
     cruises: [],
     excursions: [],
@@ -1191,8 +1167,8 @@ const MOCK_OFFERS: Offer[] = [
     endDate: '2025-09-26',
     clients: [],
     welcomeText:
-      'Классический тур по Италии по маршруту Рим → Флоренция → Венеция. ' +
-      'Сентябрь — лучшее время: жара спала, туристов меньше, виноградники золотые.',
+        'Классический тур по Италии по маршруту Рим → Флоренция → Венеция. ' +
+        'Сентябрь — лучшее время: жара спала, туристов меньше, виноградники золотые.',
     flights: [
       {
         airline: 'Alitalia',
@@ -1251,8 +1227,6 @@ const MOCK_OFFERS: Offer[] = [
         },
       },
     ],
-    totalFlightsCost: 78000,
-    flightsCurrency: 'RUB',
     hotels: [
       {
         name: 'Hotel de Russie, Rome',
@@ -1309,8 +1283,7 @@ const MOCK_OFFERS: Offer[] = [
         nights: 4,
       },
     ],
-    totalHotelsCost: 678000,
-    hotelsCurrency: 'RUB',
+
     carRentals: [
       {
         name: 'Hertz Italy — Tuscany Drive',
@@ -1361,8 +1334,8 @@ const MOCK_OFFERS: Offer[] = [
     endDate: '2026-01-30',
     clients: [],
     welcomeText:
-      'Зимний тур в Исландию: северное сияние, горячие гейзеры, ледниковые пещеры. ' +
-      'Январь — наилучшие шансы увидеть Aurora Borealis.',
+        'Зимний тур в Исландию: северное сияние, горячие гейзеры, ледниковые пещеры. ' +
+        'Январь — наилучшие шансы увидеть Aurora Borealis.',
     flights: [
       {
         airline: 'Icelandair',
@@ -1393,8 +1366,6 @@ const MOCK_OFFERS: Offer[] = [
         },
       },
     ],
-    totalFlightsCost: 94000,
-    flightsCurrency: 'RUB',
     hotels: [
       {
         name: 'Hotel Borg by Keahotels',
@@ -1433,8 +1404,7 @@ const MOCK_OFFERS: Offer[] = [
         nights: 5,
       },
     ],
-    totalHotelsCost: 216000,
-    hotelsCurrency: 'RUB',
+
     carRentals: [
       {
         name: 'Hertz Iceland — 4WD Package',
@@ -1485,9 +1455,9 @@ const MOCK_OFFERS: Offer[] = [
     endDate: '2025-12-12',
     clients: [],
     welcomeText:
-      'Культурный тур по Золотому треугольнику: Дели → Агра → Джайпур. ' +
-      'Тадж-Махал, форт Амбер, Хумаюнова гробница. ' +
-      'Ноябрь–декабрь — идеальный климат, нет дождей.',
+        'Культурный тур по Золотому треугольнику: Дели → Агра → Джайпур. ' +
+        'Тадж-Махал, форт Амбер, Хумаюнова гробница. ' +
+        'Ноябрь–декабрь — идеальный климат, нет дождей.',
     flights: [
       {
         airline: 'IndiGo / Air India',
@@ -1518,8 +1488,6 @@ const MOCK_OFFERS: Offer[] = [
         },
       },
     ],
-    totalFlightsCost: 89000,
-    flightsCurrency: 'RUB',
     hotels: [
       {
         name: 'The Imperial New Delhi',
@@ -1559,8 +1527,7 @@ const MOCK_OFFERS: Offer[] = [
         managerComment: 'Sunrise view of the Taj — рекомендуем встать в 5:30',
       },
     ],
-    totalHotelsCost: 336000,
-    hotelsCurrency: 'RUB',
+
     carRentals: [],
     cruises: [],
     excursions: [
@@ -1646,8 +1613,8 @@ const MOCK_OFFERS: Offer[] = [
     endDate: '2026-03-20',
     clients: [],
     welcomeText:
-      'Тур в Аргентину: столица танго Буэнос-Айрес и дикая Патагония (Эль-Калафате, ледник Перито-Морено). ' +
-      'Март — конец аргентинского лета, лучшая погода для Патагонии.',
+        'Тур в Аргентину: столица танго Буэнос-Айрес и дикая Патагония (Эль-Калафате, ледник Перито-Морено). ' +
+        'Март — конец аргентинского лета, лучшая погода для Патагонии.',
     flights: [
       {
         airline: 'Aerolíneas Argentinas',
@@ -1706,8 +1673,6 @@ const MOCK_OFFERS: Offer[] = [
         },
       },
     ],
-    totalFlightsCost: 540000,
-    flightsCurrency: 'RUB',
     hotels: [
       {
         name: 'Alvear Palace Hotel',
@@ -1746,8 +1711,7 @@ const MOCK_OFFERS: Offer[] = [
         nights: 7,
       },
     ],
-    totalHotelsCost: 320000,
-    hotelsCurrency: 'RUB',
+
     carRentals: [],
     cruises: [],
     excursions: [
@@ -1787,8 +1751,8 @@ const MOCK_OFFERS: Offer[] = [
     endDate: '2026-04-16',
     clients: [],
     welcomeText:
-      'Тур в Австралию: Сидней (Опера, Бонди-бич, Голубые горы) + дайвинг на Большом Барьерном рифе в Кэрнсе. ' +
-      'Апрель — золотая осень в Австралии, +22–26°C.',
+        'Тур в Австралию: Сидней (Опера, Бонди-бич, Голубые горы) + дайвинг на Большом Барьерном рифе в Кэрнсе. ' +
+        'Апрель — золотая осень в Австралии, +22–26°C.',
     flights: [
       {
         airline: 'Qantas',
@@ -1847,8 +1811,6 @@ const MOCK_OFFERS: Offer[] = [
         },
       },
     ],
-    totalFlightsCost: 730000,
-    flightsCurrency: 'RUB',
     hotels: [
       {
         name: 'Park Hyatt Sydney',
@@ -1887,8 +1849,7 @@ const MOCK_OFFERS: Offer[] = [
         nights: 8,
       },
     ],
-    totalHotelsCost: 466000,
-    hotelsCurrency: 'RUB',
+
     carRentals: [],
     cruises: [
       {
@@ -1941,8 +1902,8 @@ const MOCK_OFFERS: Offer[] = [
     endDate: '2025-12-30',
     clients: [],
     welcomeText:
-      'Рождественский тур: Прага со знаменитыми рождественскими ярмарками + Вена с балами и Штраусом. ' +
-      'Снег, глинтвейн, старинные замки — идеально для Нового года!',
+        'Рождественский тур: Прага со знаменитыми рождественскими ярмарками + Вена с балами и Штраусом. ' +
+        'Снег, глинтвейн, старинные замки — идеально для Нового года!',
     flights: [
       {
         airline: 'Czech Airlines',
@@ -1973,8 +1934,6 @@ const MOCK_OFFERS: Offer[] = [
         },
       },
     ],
-    totalFlightsCost: 48000,
-    flightsCurrency: 'RUB',
     hotels: [
       {
         name: 'Four Seasons Hotel Prague',
@@ -2013,8 +1972,7 @@ const MOCK_OFFERS: Offer[] = [
         nights: 5,
       },
     ],
-    totalHotelsCost: 422000,
-    hotelsCurrency: 'RUB',
+
     carRentals: [],
     cruises: [],
     excursions: [
@@ -2082,8 +2040,8 @@ const MOCK_OFFERS: Offer[] = [
     endDate: '2026-06-30',
     clients: [],
     welcomeText:
-      'Летний тур в Канаду: космополитичный Ванкувер + захватывающий роуд-трип по Скалистым горам (Банф, Джаспер, Йо-хо). ' +
-      'Июнь — парки в полном цвету, минимум туристов.',
+        'Летний тур в Канаду: космополитичный Ванкувер + захватывающий роуд-трип по Скалистым горам (Банф, Джаспер, Йо-хо). ' +
+        'Июнь — парки в полном цвету, минимум туристов.',
     flights: [
       {
         airline: 'Air Canada',
@@ -2114,8 +2072,6 @@ const MOCK_OFFERS: Offer[] = [
         },
       },
     ],
-    totalFlightsCost: 580000,
-    flightsCurrency: 'RUB',
     hotels: [
       {
         name: 'Fairmont Pacific Rim',
@@ -2154,8 +2110,7 @@ const MOCK_OFFERS: Offer[] = [
         nights: 10,
       },
     ],
-    totalHotelsCost: 492000,
-    hotelsCurrency: 'RUB',
+
     carRentals: [
       {
         name: 'Hertz Canada — Rocky Mountain Drive',

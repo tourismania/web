@@ -111,11 +111,7 @@ export interface Offer {
   title: string
   welcomeText: string
   flights: Flight[]
-  totalFlightsCost: number
-  flightsCurrency: Currency
   hotels: Hotel[]
-  totalHotelsCost: number
-  hotelsCurrency: Currency
   carRentals: CarRental[]
   cruises: Cruise[]
   excursions: Excursion[]
