@@ -55,6 +55,16 @@ const cruiseTotal = computed(() => {
   return offer.value.cruises.reduce((sum, cr) => sum + cr.cabins.reduce((s, c) => s + c.price, 0), 0)
 })
 
+const hotelTotal = computed(() => {
+  if (!offer.value) return 0
+  return offer.value.hotels.reduce((sum, ex) => sum + ex.price, 0)
+})
+
+const flightTotal = computed(() => {
+  if (!offer.value) return 0
+  return offer.value.flights.reduce((sum, ex) => sum + ex.price, 0)
+})
+
 const excursionTotal = computed(() => {
   if (!offer.value) return 0
   return offer.value.excursions.reduce((sum, ex) => sum + ex.price, 0)
@@ -114,7 +124,7 @@ const additionalServicesTotal = computed(() => {
             icon="mdi-airplane"
             title="Перелёты"
             :count="`${offer.flights.length} рейсов в маршруте`"
-            :total="fmt(offer.totalFlightsCost)"
+            :total="fmt(flightTotal)"
           />
           <div class="offer__cards">
             <FlightCard v-for="(flight, i) in offer.flights" :key="i" :flight="flight" :index="i" />
@@ -127,7 +137,7 @@ const additionalServicesTotal = computed(() => {
             icon="mdi-bed-outline"
             title="Отели и жильё"
             :count="`${offer.hotels.length} объекта размещения`"
-            :total="fmt(offer.totalHotelsCost)"
+            :total="fmt(hotelTotal)"
           />
           <div class="offer__cards offer__cards--grid">
             <HotelCard v-for="(hotel, i) in offer.hotels" :key="i" :hotel="hotel" :index="i" />

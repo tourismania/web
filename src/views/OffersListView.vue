@@ -91,7 +91,6 @@ function navigateToEdit(id: string) {
 
 .offers-list {
   min-height: 100vh;
-  font-family: 'Roboto', sans-serif;
   padding: 48px 24px 80px;
 
   &__container {

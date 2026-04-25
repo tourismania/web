@@ -35,10 +35,18 @@ const additionalServicesTotal = computed(() =>
   props.offer.additionalServices.reduce((sum, s) => sum + s.price, 0),
 )
 
+const hotelTotal = computed(() => {
+  return props.offer.hotels.reduce((sum, ex) => sum + ex.price, 0)
+})
+
+const flightTotal = computed(() => {
+  return props.offer.flights.reduce((sum, ex) => sum + ex.price, 0)
+})
+
 const grandTotal = computed(
   () =>
-    props.offer.totalFlightsCost +
-    props.offer.totalHotelsCost +
+    hotelTotal.value +
+    flightTotal.value +
     carRentalMin.value +
     cruiseTotal.value +
     excursionTotal.value +
@@ -51,13 +59,13 @@ const grandTotal = computed(
   <section class="price-card">
     <div class="price-card__title">Итоговая стоимость</div>
     <div class="price-card__rows">
-      <div v-if="props.offer.totalFlightsCost > 0" class="price-card__row">
+      <div v-if="flightTotal > 0" class="price-card__row">
         <span><v-icon icon="mdi-airplane" size="16" class="mr-2" />Перелёты ({{ props.offer.flights.length }} рейсов)</span>
-        <span>{{ fmt(props.offer.totalFlightsCost) }}</span>
+        <span>{{ fmt(flightTotal) }}</span>
       </div>
-      <div v-if="props.offer.totalHotelsCost > 0" class="price-card__row">
+      <div v-if="hotelTotal > 0" class="price-card__row">
         <span><v-icon icon="mdi-bed-outline" size="16" class="mr-2" />Отели и жильё ({{ props.offer.hotels.length }} объектов)</span>
-        <span>{{ fmt(props.offer.totalHotelsCost) }}</span>
+        <span>{{ fmt(hotelTotal) }}</span>
       </div>
       <div v-if="carRentalMin > 0" class="price-card__row">
         <span><v-icon icon="mdi-car-outline" size="16" class="mr-2" />Аренда авто (от)</span>

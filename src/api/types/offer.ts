@@ -8,10 +8,6 @@ export interface FlightEndpoint {
   flight: string           // e.g. "U6 773"
   airport: string          // e.g. "Кольцово"
   airportCode: string      // e.g. "SVX"
-  hasLayovers: boolean
-  flightClass: FlightClass
-  price: number
-  currency: Currency
 }
 
 export interface Flight {
@@ -19,6 +15,10 @@ export interface Flight {
   managerComment?: string
   departure: FlightEndpoint
   arrival: FlightEndpoint
+  price: number
+  currency: Currency
+  flightClass: FlightClass
+  hasLayovers: boolean
 }
 
 export interface Image {

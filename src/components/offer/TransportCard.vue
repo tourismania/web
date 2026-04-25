@@ -302,6 +302,7 @@ function formatDuration(minutes: number): string {
       align-items: center;
       font-size: 13px;
       color: rgba(255, 255, 255, 0.5);
+      justify-content: center;
 
       &__duration {
 

@@ -89,10 +89,6 @@ function formatDurationMs(ms: number): string {
 const departureFmt = computed(() => formatDateTime(props.flight.departure.dateTime))
 const arrivalFmt = computed(() => formatDateTime(props.flight.arrival.dateTime))
 
-const hasLayover = computed(
-  () => props.flight.departure.hasLayovers || props.flight.arrival.hasLayovers,
-)
-
 const duration = computed(() => {
   const dep = props.flight.departure
   const arr = props.flight.arrival
@@ -101,7 +97,7 @@ const duration = computed(() => {
   return formatDurationMs(arrMs - depMs)
 })
 
-const flightStatus = computed(() => (hasLayover.value ? '1 пересадка' : 'прямой'))
+const flightStatus = computed(() => (props.flight.hasLayovers ? '1 пересадка' : 'прямой'))
 </script>
 
 <template>
@@ -110,7 +106,7 @@ const flightStatus = computed(() => (hasLayover.value ? '1 пересадка' :
     <div class="flight-card__top">
       <div class="flight-card__price-block">
         <div class="flight-card__price">
-          {{ formatPrice(flight.departure.price, flight.departure.currency) }}
+          {{ formatPrice(flight.price, flight.currency) }}
         </div>
         <div class="flight-card__meta">
           <span class="flight-card__meta-item">
@@ -119,7 +115,7 @@ const flightStatus = computed(() => (hasLayover.value ? '1 пересадка' :
           </span>
           <span class="flight-card__meta-sep">·</span>
           <span class="flight-card__meta-item flight-card__meta-item--accent">
-            {{ classLabel[flight.departure.flightClass] ?? flight.departure.flightClass }}
+            {{ classLabel[flight.flightClass] ?? flight.flightClass }}
           </span>
           <span class="flight-card__meta-sep">·</span>
           <span class="flight-card__meta-item">Рейс {{ flight.departure.flight }}</span>
@@ -145,14 +141,14 @@ const flightStatus = computed(() => (hasLayover.value ? '1 пересадка' :
         <div class="flight-card__line">
           <v-icon class="flight-card__plane" icon="mdi-airplane-takeoff" size="18" />
           <div class="flight-card__line-track">
-            <span v-if="hasLayover" class="flight-card__layover-dot" />
+            <span v-if="flight.hasLayovers" class="flight-card__layover-dot" />
           </div>
           <v-icon class="flight-card__plane" icon="mdi-airplane-landing" size="18" />
         </div>
 
         <div class="flight-card__codes">
           <span class="flight-card__code">{{ flight.departure.airportCode }}</span>
-          <span v-if="hasLayover" class="flight-card__code flight-card__code--layover">
+          <span v-if="flight.hasLayovers" class="flight-card__code flight-card__code--layover">
             пересадка
           </span>
           <span class="flight-card__code">{{ flight.arrival.airportCode }}</span>

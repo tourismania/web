@@ -3,7 +3,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useOfferStore } from '@/stores/offer'
 import type {
-  Offer, Flight, FlightEndpoint, Hotel, HotelImage,
+  Offer, Flight, FlightEndpoint, Hotel, Image,
   CarRental, CarRentalVehicle, Cruise, CruiseCabin,
   Excursion, PublicTransport, AdditionalService,
   FlightClass, Currency, TransportCategory,
@@ -28,7 +28,7 @@ function blankFlight(): Flight {
   return { airline: '', departure: blankEndpoint(), arrival: blankEndpoint() }
 }
 function blankHotel(): Hotel {
-  return { name: '', stars: 3, address: '', description: '', roomType: '', occupancyType: '', price: 0, currency: 'RUB', images: [], serviceFee: 0, checkIn: '', checkOut: '', nights: 1 }
+  return { name: '', stars: 3, address: '', description: '', roomType: '', occupancyType: '', price: 0, currency: 'RUB', gallery: [], serviceFee: 0, checkIn: '', checkOut: '', nights: 1 }
 }
 function blankCarRental(): CarRental {
   return { name: '', startLocation: '', endLocation: '', vehicles: [] }
@@ -43,7 +43,7 @@ function blankCabin(): CruiseCabin {
   return { description: '', price: 0, currency: 'USD' }
 }
 function blankExcursion(): Excursion {
-  return { date: null, city: '', price: 0, currency: 'RUB', managerComment: '', gallery: [] }
+  return { date: null, city: '', price: 0, name: '', currency: 'RUB', managerComment: '', gallery: [] }
 }
 function blankTransport(): PublicTransport {
   return { datetime: '', category: 'transfer', pickupLocation: '', dropoffLocation: '', duration: 0, price: 0, currency: 'RUB' }
@@ -60,11 +60,7 @@ function blankOffer(): Offer {
     startDate: '',
     endDate: '',
     flights: [],
-    totalFlightsCost: 0,
-    flightsCurrency: 'RUB',
     hotels: [],
-    totalHotelsCost: 0,
-    hotelsCurrency: 'RUB',
     carRentals: [],
     cruises: [],
     excursions: [],
@@ -170,10 +166,10 @@ function addVehicle() { draftCarRental.value.vehicles.push(blankVehicle()) }
 function removeVehicle(i: number) { draftCarRental.value.vehicles.splice(i, 1) }
 function addCabin() { draftCruise.value.cabins.push(blankCabin()) }
 function removeCabin(i: number) { draftCruise.value.cabins.splice(i, 1) }
-function addCruiseGallery() { draftCruise.value.gallery.push('') }
+function addCruiseGallery() { draftCruise.value.gallery.push({ url: ''}) }
 function removeCruiseGallery(i: number) { draftCruise.value.gallery.splice(i, 1) }
-function addHotelImage() { draftHotel.value.images.push({ url: '' }) }
-function removeHotelImage(i: number) { draftHotel.value.images.splice(i, 1) }
+function addHotelImage() { draftHotel.value.gallery.push({ url: '' }) }
+function removeHotelImage(i: number) { draftHotel.value.gallery.splice(i, 1) }
 
 async function submitOffer() {
   const data = JSON.parse(JSON.stringify(offer)) as Offer
@@ -195,7 +191,7 @@ async function submitOffer() {
   <v-container class="py-4" max-width="900">
     <div class="d-flex align-center mb-4 ga-2">
       <v-icon color="primary" size="28">mdi-map-marker-path</v-icon>
-      <h1 class="text-h5 font-weight-bold">{{ isEdit ? 'Редактирование тура' : 'Настройка тура' }}</h1>
+      <h1 class=" font-weight-bold">{{ isEdit ? 'Редактирование тура' : 'Настройка тура' }}</h1>
       <v-spacer />
       <v-btn
         v-if="isEdit && tourId"
@@ -259,10 +255,6 @@ async function submitOffer() {
           </div>
           <div class="d-flex align-center ga-3 mt-2">
             <v-btn size="small" variant="tonal" prepend-icon="mdi-plus" @click="openAdd('flight')">Добавить перелёт</v-btn>
-            <div class="d-flex align-center ga-2">
-              <v-text-field v-model.number="offer.totalFlightsCost" label="Итого" density="compact" variant="outlined" type="number" hide-details style="width:130px" />
-              <v-select v-model="offer.flightsCurrency" :items="CURRENCIES" label="Валюта" density="compact" variant="outlined" hide-details style="width:100px" />
-            </div>
           </div>
         </v-expansion-panel-text>
       </v-expansion-panel>
@@ -290,10 +282,6 @@ async function submitOffer() {
           </div>
           <div class="d-flex align-center ga-3 mt-2">
             <v-btn size="small" variant="tonal" prepend-icon="mdi-plus" @click="openAdd('hotel')">Добавить отель</v-btn>
-            <div class="d-flex align-center ga-2">
-              <v-text-field v-model.number="offer.totalHotelsCost" label="Итого" density="compact" variant="outlined" type="number" hide-details style="width:130px" />
-              <v-select v-model="offer.hotelsCurrency" :items="CURRENCIES" label="Валюта" density="compact" variant="outlined" hide-details style="width:100px" />
-            </div>
           </div>
         </v-expansion-panel-text>
       </v-expansion-panel>
@@ -527,9 +515,8 @@ async function submitOffer() {
           <v-col cols="12"><v-textarea v-model="draftHotel.managerComment" label="Комментарий менеджера" density="compact" variant="outlined" rows="2" hide-details auto-grow /></v-col>
         </v-row>
         <div class="text-caption font-weight-medium mt-3 mb-1">Фотографии</div>
-        <div v-for="(img, i) in draftHotel.images" :key="i" class="d-flex align-center ga-2 mb-1">
+        <div v-for="(img, i) in draftHotel.gallery" :key="i" class="d-flex align-center ga-2 mb-1">
           <v-text-field v-model="img.url" label="URL фото" density="compact" variant="outlined" hide-details class="flex-grow-1" />
-          <v-text-field v-model="img.alt" label="Alt" density="compact" variant="outlined" hide-details style="width:120px" />
           <v-btn icon size="x-small" variant="text" color="error" @click="removeHotelImage(i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
         </div>
         <v-btn size="x-small" variant="text" prepend-icon="mdi-plus" @click="addHotelImage">Добавить фото</v-btn>
@@ -602,7 +589,7 @@ async function submitOffer() {
         <v-btn size="x-small" variant="text" prepend-icon="mdi-plus" @click="addCabin">Добавить каюту</v-btn>
         <div class="text-caption font-weight-medium mt-3 mb-1">Галерея (URL)</div>
         <div v-for="(url, i) in draftCruise.gallery" :key="i" class="d-flex align-center ga-2 mb-1">
-          <v-text-field v-model="draftCruise.gallery[i]" label="URL" density="compact" variant="outlined" hide-details class="flex-grow-1" />
+          <v-text-field v-model="draftCruise.gallery[i].url" label="URL" density="compact" variant="outlined" hide-details class="flex-grow-1" />
           <v-btn icon size="x-small" variant="text" color="error" @click="removeCruiseGallery(i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
         </div>
         <v-btn size="x-small" variant="text" prepend-icon="mdi-plus" @click="addCruiseGallery">Добавить фото</v-btn>
@@ -632,7 +619,6 @@ async function submitOffer() {
         <div class="text-caption font-weight-medium mt-3 mb-1">Галерея</div>
         <div v-for="(img, i) in draftExcursion.gallery" :key="i" class="d-flex align-center ga-2 mb-1">
           <v-text-field v-model="img.url" label="URL" density="compact" variant="outlined" hide-details class="flex-grow-1" />
-          <v-text-field v-model="img.alt" label="Alt" density="compact" variant="outlined" hide-details style="width:100px" />
           <v-btn icon size="x-small" variant="text" color="error" @click="draftExcursion.gallery.splice(i,1)"><v-icon size="14">mdi-delete</v-icon></v-btn>
         </div>
         <v-btn size="x-small" variant="text" prepend-icon="mdi-plus" @click="draftExcursion.gallery.push({ url: '' })">Добавить фото</v-btn>
