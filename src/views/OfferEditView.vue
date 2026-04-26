@@ -22,10 +22,10 @@ const TRANSPORT_CATEGORIES: TransportCategory[] = ['taxi', 'bus', 'transfer']
 const STARS = [1, 2, 3, 4, 5]
 
 function blankEndpoint(): FlightEndpoint {
-  return { city: '', dateTime: '', timezone: 'Europe/Moscow', flight: '', airport: '', airportCode: '', hasLayovers: false, flightClass: 'economy', price: 0, currency: 'RUB' }
+  return { city: '', dateTime: '', timezone: 'Europe/Moscow', flight: '', airport: '', airportCode: '' }
 }
 function blankFlight(): Flight {
-  return { airline: '', departure: blankEndpoint(), arrival: blankEndpoint() }
+  return { airline: '', departure: blankEndpoint(), arrival: blankEndpoint(), price: 0, currency: 'RUB', flightClass: 'economy', hasLayovers: false }
 }
 function blankHotel(): Hotel {
   return { name: '', stars: 3, address: '', description: '', roomType: '', occupancyType: '', price: 0, currency: 'RUB', gallery: [], serviceFee: 0, checkIn: '', checkOut: '', nights: 1 }
@@ -189,14 +189,19 @@ async function submitOffer() {
 
 <template>
   <v-container class="py-4" max-width="900">
-    <div class="d-flex align-center mb-4 ga-2">
-      <v-icon color="primary" size="28">mdi-map-marker-path</v-icon>
-      <h1 class=" font-weight-bold">{{ isEdit ? 'Редактирование тура' : 'Настройка тура' }}</h1>
-      <v-spacer />
+
+    <!-- Заголовок страницы -->
+    <div class="edit-header mb-5">
+      <div class="edit-header__icon">
+        <v-icon icon="mdi-map-marker-path" size="26" />
+      </div>
+      <div class="flex-grow-1">
+        <h1 class="edit-header__title">{{ isEdit ? 'Редактирование тура' : 'Настройка тура' }}</h1>
+      </div>
       <v-btn
         v-if="isEdit && tourId"
-        variant="text"
-        size="small"
+        variant="tonal"
+        size="default"
         prepend-icon="mdi-eye"
         :to="{ name: 'offer', params: { id: tourId } }"
       >
@@ -208,10 +213,12 @@ async function submitOffer() {
       {{ offerStore.error }}
     </v-alert>
 
-    <!-- Основная информация -->
-    <v-card class="mb-3 section-card">
-      <v-card-text class="pb-2">
-        <div class="section-label mb-2">Основное</div>
+    <!-- Единая карточка: основное + секции сущностей -->
+    <div class="unified-card mb-4 pa-4">
+
+      <!-- Основная информация -->
+      <div class="unified-card__section pb-3">
+        <h3 class="mb-4">Основное</h3>
         <v-row dense>
           <v-col cols="12">
             <v-text-field v-model="offer.title" label="Название тура" density="compact" variant="outlined" hide-details />
@@ -226,191 +233,185 @@ async function submitOffer() {
             <v-textarea v-model="offer.welcomeText" label="Приветственный текст" density="compact" variant="outlined" rows="3" hide-details auto-grow />
           </v-col>
         </v-row>
-      </v-card-text>
-    </v-card>
+      </div>
 
-    <!-- Секции сущностей -->
-    <v-expansion-panels variant="accordion" class="mb-4">
+      <v-divider class="unified-card__divider" />
+      <h3 class="mb-4">Настроить позиции</h3>
+      <!-- Секции сущностей -->
+      <v-expansion-panels variant="accordion">
+        <!-- Перелёты -->
+        <v-expansion-panel>
+          <v-expansion-panel-title>
+            <div class="d-flex align-center ga-2">
+              <v-icon size="18">mdi-airplane</v-icon>
+              <span class="text-body-2 font-weight-medium">Перелёты</span>
+              <v-chip v-if="offer.flights.length" size="x-small" color="primary" class="ml-1">{{ offer.flights.length }}</v-chip>
+            </div>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
+            <div v-for="(f, i) in offer.flights" :key="i" class="entity-row">
+              <div class="entity-info">
+                <span class="text-body-2">{{ i + 1 }}. {{ f.airline || '—' }}</span>
+                <span class="text-caption text-medium-emphasis ml-2">{{ f.departure.city }} → {{ f.arrival.city }}</span>
+              </div>
+              <div class="entity-actions">
+                <v-btn icon size="x-small" variant="text" @click="openEdit('flight', i)"><v-icon size="14">mdi-pencil</v-icon></v-btn>
+                <v-btn icon size="x-small" variant="text" color="error" @click="removeItem('flight', i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
+              </div>
+            </div>
+            <div class="d-flex align-center ga-3 mt-2">
+              <v-btn size="small" variant="tonal" prepend-icon="mdi-plus" @click="openAdd('flight')">Добавить перелёт</v-btn>
+            </div>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
 
-      <!-- Перелёты -->
-      <v-expansion-panel>
-        <v-expansion-panel-title>
-          <div class="d-flex align-center ga-2">
-            <v-icon size="18">mdi-airplane</v-icon>
-            <span class="text-body-2 font-weight-medium">Перелёты</span>
-            <v-chip v-if="offer.flights.length" size="x-small" color="primary" class="ml-1">{{ offer.flights.length }}</v-chip>
-          </div>
-        </v-expansion-panel-title>
-        <v-expansion-panel-text>
-          <div v-for="(f, i) in offer.flights" :key="i" class="entity-row">
-            <div class="entity-info">
-              <v-icon size="14" class="mr-1">mdi-airplane-takeoff</v-icon>
-              <span class="text-body-2">{{ f.airline || '—' }}</span>
-              <span class="text-caption text-medium-emphasis ml-2">{{ f.departure.city }} → {{ f.arrival.city }}</span>
+        <!-- Отели -->
+        <v-expansion-panel>
+          <v-expansion-panel-title>
+            <div class="d-flex align-center ga-2">
+              <v-icon size="18">mdi-bed</v-icon>
+              <span class="text-body-2 font-weight-medium">Отели</span>
+              <v-chip v-if="offer.hotels.length" size="x-small" color="primary" class="ml-1">{{ offer.hotels.length }}</v-chip>
             </div>
-            <div class="entity-actions">
-              <v-btn icon size="x-small" variant="text" @click="openEdit('flight', i)"><v-icon size="14">mdi-pencil</v-icon></v-btn>
-              <v-btn icon size="x-small" variant="text" color="error" @click="removeItem('flight', i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
+            <div v-for="(h, i) in offer.hotels" :key="i" class="entity-row">
+              <div class="entity-info">
+                <span class="text-body-2">{{ i + 1 }}. {{ h.name || '—' }}</span>
+                <span class="text-caption text-medium-emphasis ml-2">{{ h.checkIn }} — {{ h.checkOut }} · {{ h.nights }} н.</span>
+              </div>
+              <div class="entity-actions">
+                <v-btn icon size="x-small" variant="text" @click="openEdit('hotel', i)"><v-icon size="14">mdi-pencil</v-icon></v-btn>
+                <v-btn icon size="x-small" variant="text" color="error" @click="removeItem('hotel', i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
+              </div>
             </div>
-          </div>
-          <div class="d-flex align-center ga-3 mt-2">
-            <v-btn size="small" variant="tonal" prepend-icon="mdi-plus" @click="openAdd('flight')">Добавить перелёт</v-btn>
-          </div>
-        </v-expansion-panel-text>
-      </v-expansion-panel>
+            <div class="d-flex align-center ga-3 mt-2">
+              <v-btn size="small" variant="tonal" prepend-icon="mdi-plus" @click="openAdd('hotel')">Добавить отель</v-btn>
+            </div>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
 
-      <!-- Отели -->
-      <v-expansion-panel>
-        <v-expansion-panel-title>
-          <div class="d-flex align-center ga-2">
-            <v-icon size="18">mdi-bed</v-icon>
-            <span class="text-body-2 font-weight-medium">Отели</span>
-            <v-chip v-if="offer.hotels.length" size="x-small" color="primary" class="ml-1">{{ offer.hotels.length }}</v-chip>
-          </div>
-        </v-expansion-panel-title>
-        <v-expansion-panel-text>
-          <div v-for="(h, i) in offer.hotels" :key="i" class="entity-row">
-            <div class="entity-info">
-              <v-icon size="14" class="mr-1">mdi-bed</v-icon>
-              <span class="text-body-2">{{ h.name || '—' }}</span>
-              <span class="text-caption text-medium-emphasis ml-2">{{ h.checkIn }} — {{ h.checkOut }} · {{ h.nights }} н.</span>
+        <!-- Аренда авто -->
+        <v-expansion-panel>
+          <v-expansion-panel-title>
+            <div class="d-flex align-center ga-2">
+              <v-icon size="18">mdi-car</v-icon>
+              <span class="text-body-2 font-weight-medium">Аренда авто</span>
+              <v-chip v-if="offer.carRentals.length" size="x-small" color="primary" class="ml-1">{{ offer.carRentals.length }}</v-chip>
             </div>
-            <div class="entity-actions">
-              <v-btn icon size="x-small" variant="text" @click="openEdit('hotel', i)"><v-icon size="14">mdi-pencil</v-icon></v-btn>
-              <v-btn icon size="x-small" variant="text" color="error" @click="removeItem('hotel', i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
+            <div v-for="(c, i) in offer.carRentals" :key="i" class="entity-row">
+              <div class="entity-info">
+                <span class="text-body-2">{{ i + 1 }}. {{ c.name || '—' }}</span>
+                <span class="text-caption text-medium-emphasis ml-2">{{ c.startLocation }} → {{ c.endLocation }}</span>
+              </div>
+              <div class="entity-actions">
+                <v-btn icon size="x-small" variant="text" @click="openEdit('carRental', i)"><v-icon size="14">mdi-pencil</v-icon></v-btn>
+                <v-btn icon size="x-small" variant="text" color="error" @click="removeItem('carRental', i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
+              </div>
             </div>
-          </div>
-          <div class="d-flex align-center ga-3 mt-2">
-            <v-btn size="small" variant="tonal" prepend-icon="mdi-plus" @click="openAdd('hotel')">Добавить отель</v-btn>
-          </div>
-        </v-expansion-panel-text>
-      </v-expansion-panel>
+            <v-btn size="small" variant="tonal" prepend-icon="mdi-plus" class="mt-2" @click="openAdd('carRental')">Добавить аренду</v-btn>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
 
-      <!-- Аренда авто -->
-      <v-expansion-panel>
-        <v-expansion-panel-title>
-          <div class="d-flex align-center ga-2">
-            <v-icon size="18">mdi-car</v-icon>
-            <span class="text-body-2 font-weight-medium">Аренда авто</span>
-            <v-chip v-if="offer.carRentals.length" size="x-small" color="primary" class="ml-1">{{ offer.carRentals.length }}</v-chip>
-          </div>
-        </v-expansion-panel-title>
-        <v-expansion-panel-text>
-          <div v-for="(c, i) in offer.carRentals" :key="i" class="entity-row">
-            <div class="entity-info">
-              <v-icon size="14" class="mr-1">mdi-car</v-icon>
-              <span class="text-body-2">{{ c.name || '—' }}</span>
-              <span class="text-caption text-medium-emphasis ml-2">{{ c.startLocation }} → {{ c.endLocation }}</span>
+        <!-- Круизы -->
+        <v-expansion-panel>
+          <v-expansion-panel-title>
+            <div class="d-flex align-center ga-2">
+              <v-icon size="18">mdi-ferry</v-icon>
+              <span class="text-body-2 font-weight-medium">Круизы</span>
+              <v-chip v-if="offer.cruises.length" size="x-small" color="primary" class="ml-1">{{ offer.cruises.length }}</v-chip>
             </div>
-            <div class="entity-actions">
-              <v-btn icon size="x-small" variant="text" @click="openEdit('carRental', i)"><v-icon size="14">mdi-pencil</v-icon></v-btn>
-              <v-btn icon size="x-small" variant="text" color="error" @click="removeItem('carRental', i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
+            <div v-for="(c, i) in offer.cruises" :key="i" class="entity-row">
+              <div class="entity-info">
+                <span class="text-body-2">{{ i + 1 }}. {{ c.name || '—' }}</span>
+                <span class="text-caption text-medium-emphasis ml-2">{{ c.cabins.length }} кают</span>
+              </div>
+              <div class="entity-actions">
+                <v-btn icon size="x-small" variant="text" @click="openEdit('cruise', i)"><v-icon size="14">mdi-pencil</v-icon></v-btn>
+                <v-btn icon size="x-small" variant="text" color="error" @click="removeItem('cruise', i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
+              </div>
             </div>
-          </div>
-          <v-btn size="small" variant="tonal" prepend-icon="mdi-plus" class="mt-2" @click="openAdd('carRental')">Добавить аренду</v-btn>
-        </v-expansion-panel-text>
-      </v-expansion-panel>
+            <v-btn size="small" variant="tonal" prepend-icon="mdi-plus" class="mt-2" @click="openAdd('cruise')">Добавить круиз</v-btn>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
 
-      <!-- Круизы -->
-      <v-expansion-panel>
-        <v-expansion-panel-title>
-          <div class="d-flex align-center ga-2">
-            <v-icon size="18">mdi-ferry</v-icon>
-            <span class="text-body-2 font-weight-medium">Круизы</span>
-            <v-chip v-if="offer.cruises.length" size="x-small" color="primary" class="ml-1">{{ offer.cruises.length }}</v-chip>
-          </div>
-        </v-expansion-panel-title>
-        <v-expansion-panel-text>
-          <div v-for="(c, i) in offer.cruises" :key="i" class="entity-row">
-            <div class="entity-info">
-              <v-icon size="14" class="mr-1">mdi-ferry</v-icon>
-              <span class="text-body-2">{{ c.name || '—' }}</span>
-              <span class="text-caption text-medium-emphasis ml-2">{{ c.cabins.length }} кают</span>
+        <!-- Экскурсии -->
+        <v-expansion-panel>
+          <v-expansion-panel-title>
+            <div class="d-flex align-center ga-2">
+              <v-icon size="18">mdi-camera</v-icon>
+              <span class="text-body-2 font-weight-medium">Экскурсии</span>
+              <v-chip v-if="offer.excursions.length" size="x-small" color="primary" class="ml-1">{{ offer.excursions.length }}</v-chip>
             </div>
-            <div class="entity-actions">
-              <v-btn icon size="x-small" variant="text" @click="openEdit('cruise', i)"><v-icon size="14">mdi-pencil</v-icon></v-btn>
-              <v-btn icon size="x-small" variant="text" color="error" @click="removeItem('cruise', i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
+            <div v-for="(e, i) in offer.excursions" :key="i" class="entity-row">
+              <div class="entity-info">
+                <span class="text-body-2">{{ i + 1 }}. {{ e.city || '—' }}</span>
+                <span class="text-caption text-medium-emphasis ml-2">{{ e.price }} {{ e.currency }}</span>
+              </div>
+              <div class="entity-actions">
+                <v-btn icon size="x-small" variant="text" @click="openEdit('excursion', i)"><v-icon size="14">mdi-pencil</v-icon></v-btn>
+                <v-btn icon size="x-small" variant="text" color="error" @click="removeItem('excursion', i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
+              </div>
             </div>
-          </div>
-          <v-btn size="small" variant="tonal" prepend-icon="mdi-plus" class="mt-2" @click="openAdd('cruise')">Добавить круиз</v-btn>
-        </v-expansion-panel-text>
-      </v-expansion-panel>
+            <v-btn size="small" variant="tonal" prepend-icon="mdi-plus" class="mt-2" @click="openAdd('excursion')">Добавить экскурсию</v-btn>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
 
-      <!-- Экскурсии -->
-      <v-expansion-panel>
-        <v-expansion-panel-title>
-          <div class="d-flex align-center ga-2">
-            <v-icon size="18">mdi-camera</v-icon>
-            <span class="text-body-2 font-weight-medium">Экскурсии</span>
-            <v-chip v-if="offer.excursions.length" size="x-small" color="primary" class="ml-1">{{ offer.excursions.length }}</v-chip>
-          </div>
-        </v-expansion-panel-title>
-        <v-expansion-panel-text>
-          <div v-for="(e, i) in offer.excursions" :key="i" class="entity-row">
-            <div class="entity-info">
-              <v-icon size="14" class="mr-1">mdi-camera</v-icon>
-              <span class="text-body-2">{{ e.city || '—' }}</span>
-              <span class="text-caption text-medium-emphasis ml-2">{{ e.price }} {{ e.currency }}</span>
+        <!-- Транспорт -->
+        <v-expansion-panel>
+          <v-expansion-panel-title>
+            <div class="d-flex align-center ga-2">
+              <v-icon size="18">mdi-bus</v-icon>
+              <span class="text-body-2 font-weight-medium">Транспорт</span>
+              <v-chip v-if="offer.transport.length" size="x-small" color="primary" class="ml-1">{{ offer.transport.length }}</v-chip>
             </div>
-            <div class="entity-actions">
-              <v-btn icon size="x-small" variant="text" @click="openEdit('excursion', i)"><v-icon size="14">mdi-pencil</v-icon></v-btn>
-              <v-btn icon size="x-small" variant="text" color="error" @click="removeItem('excursion', i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
+            <div v-for="(t, i) in offer.transport" :key="i" class="entity-row">
+              <div class="entity-info">
+                <span class="text-body-2">{{ i + 1 }}. {{ t.category }}</span>
+                <span class="text-caption text-medium-emphasis ml-2">{{ t.pickupLocation }} → {{ t.dropoffLocation }}</span>
+              </div>
+              <div class="entity-actions">
+                <v-btn icon size="x-small" variant="text" @click="openEdit('transport', i)"><v-icon size="14">mdi-pencil</v-icon></v-btn>
+                <v-btn icon size="x-small" variant="text" color="error" @click="removeItem('transport', i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
+              </div>
             </div>
-          </div>
-          <v-btn size="small" variant="tonal" prepend-icon="mdi-plus" class="mt-2" @click="openAdd('excursion')">Добавить экскурсию</v-btn>
-        </v-expansion-panel-text>
-      </v-expansion-panel>
+            <v-btn size="small" variant="tonal" prepend-icon="mdi-plus" class="mt-2" @click="openAdd('transport')">Добавить транспорт</v-btn>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
 
-      <!-- Транспорт -->
-      <v-expansion-panel>
-        <v-expansion-panel-title>
-          <div class="d-flex align-center ga-2">
-            <v-icon size="18">mdi-bus</v-icon>
-            <span class="text-body-2 font-weight-medium">Транспорт</span>
-            <v-chip v-if="offer.transport.length" size="x-small" color="primary" class="ml-1">{{ offer.transport.length }}</v-chip>
-          </div>
-        </v-expansion-panel-title>
-        <v-expansion-panel-text>
-          <div v-for="(t, i) in offer.transport" :key="i" class="entity-row">
-            <div class="entity-info">
-              <v-icon size="14" class="mr-1">mdi-bus</v-icon>
-              <span class="text-body-2">{{ t.category }}</span>
-              <span class="text-caption text-medium-emphasis ml-2">{{ t.pickupLocation }} → {{ t.dropoffLocation }}</span>
+        <!-- Доп. услуги -->
+        <v-expansion-panel>
+          <v-expansion-panel-title>
+            <div class="d-flex align-center ga-2">
+              <v-icon size="18">mdi-star-plus</v-icon>
+              <span class="text-body-2 font-weight-medium">Доп. услуги</span>
+              <v-chip v-if="offer.additionalServices.length" size="x-small" color="primary" class="ml-1">{{ offer.additionalServices.length }}</v-chip>
             </div>
-            <div class="entity-actions">
-              <v-btn icon size="x-small" variant="text" @click="openEdit('transport', i)"><v-icon size="14">mdi-pencil</v-icon></v-btn>
-              <v-btn icon size="x-small" variant="text" color="error" @click="removeItem('transport', i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
+            <div v-for="(s, i) in offer.additionalServices" :key="i" class="entity-row">
+              <div class="entity-info">
+                <span class="text-body-2">{{ i + 1 }}.  {{ s.name || '—' }}</span>
+                <span class="text-caption text-medium-emphasis ml-2">{{ s.price }} {{ s.currency }}</span>
+              </div>
+              <div class="entity-actions">
+                <v-btn icon size="x-small" variant="text" @click="openEdit('service', i)"><v-icon size="14">mdi-pencil</v-icon></v-btn>
+                <v-btn icon size="x-small" variant="text" color="error" @click="removeItem('service', i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
+              </div>
             </div>
-          </div>
-          <v-btn size="small" variant="tonal" prepend-icon="mdi-plus" class="mt-2" @click="openAdd('transport')">Добавить транспорт</v-btn>
-        </v-expansion-panel-text>
-      </v-expansion-panel>
-
-      <!-- Доп. услуги -->
-      <v-expansion-panel>
-        <v-expansion-panel-title>
-          <div class="d-flex align-center ga-2">
-            <v-icon size="18">mdi-star-plus</v-icon>
-            <span class="text-body-2 font-weight-medium">Доп. услуги</span>
-            <v-chip v-if="offer.additionalServices.length" size="x-small" color="primary" class="ml-1">{{ offer.additionalServices.length }}</v-chip>
-          </div>
-        </v-expansion-panel-title>
-        <v-expansion-panel-text>
-          <div v-for="(s, i) in offer.additionalServices" :key="i" class="entity-row">
-            <div class="entity-info">
-              <v-icon size="14" class="mr-1">mdi-star-plus</v-icon>
-              <span class="text-body-2">{{ s.name || '—' }}</span>
-              <span class="text-caption text-medium-emphasis ml-2">{{ s.price }} {{ s.currency }}</span>
-            </div>
-            <div class="entity-actions">
-              <v-btn icon size="x-small" variant="text" @click="openEdit('service', i)"><v-icon size="14">mdi-pencil</v-icon></v-btn>
-              <v-btn icon size="x-small" variant="text" color="error" @click="removeItem('service', i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
-            </div>
-          </div>
-          <v-btn size="small" variant="tonal" prepend-icon="mdi-plus" class="mt-2" @click="openAdd('service')">Добавить услугу</v-btn>
-        </v-expansion-panel-text>
-      </v-expansion-panel>
-    </v-expansion-panels>
+            <v-btn size="small" variant="tonal" prepend-icon="mdi-plus" class="mt-2" @click="openAdd('service')">Добавить услугу</v-btn>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+      </v-expansion-panels>
+    </div>
 
     <!-- Сохранить -->
     <div class="d-flex justify-end ga-2">
@@ -445,6 +446,12 @@ async function submitOffer() {
           <v-col cols="8">
             <v-text-field v-model="draftFlight.airline" label="Авиакомпания" density="compact" variant="outlined" hide-details />
           </v-col>
+          <v-col cols="4"><v-select v-model="draftFlight.flightClass" :items="FLIGHT_CLASSES" label="Класс" density="compact" variant="outlined" hide-details /></v-col>
+          <v-col cols="5"><v-text-field v-model.number="draftFlight.price" label="Цена" type="number" density="compact" variant="outlined" hide-details /></v-col>
+          <v-col cols="4"><v-select v-model="draftFlight.currency" :items="CURRENCIES" label="Валюта" density="compact" variant="outlined" hide-details /></v-col>
+          <v-col cols="3" class="d-flex align-center">
+            <v-checkbox v-model="draftFlight.hasLayovers" label="Пересадки" density="compact" hide-details />
+          </v-col>
           <v-col cols="12">
             <v-textarea v-model="draftFlight.managerComment" label="Комментарий менеджера" density="compact" variant="outlined" rows="2" hide-details auto-grow />
           </v-col>
@@ -457,12 +464,8 @@ async function submitOffer() {
               <v-col cols="12"><v-text-field v-model="draftFlight.departure.dateTime" label="Дата и время (местное)" type="datetime-local" density="compact" variant="outlined" hide-details /></v-col>
               <v-col cols="12"><v-text-field v-model="draftFlight.departure.timezone" label="Часовой пояс (IANA)" placeholder="Europe/Moscow" density="compact" variant="outlined" hide-details /></v-col>
               <v-col cols="6"><v-text-field v-model="draftFlight.departure.flight" label="Рейс" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="6"><v-select v-model="draftFlight.departure.flightClass" :items="FLIGHT_CLASSES" label="Класс" density="compact" variant="outlined" hide-details /></v-col>
               <v-col cols="8"><v-text-field v-model="draftFlight.departure.airport" label="Аэропорт" density="compact" variant="outlined" hide-details /></v-col>
               <v-col cols="4"><v-text-field v-model="draftFlight.departure.airportCode" label="Код" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="6"><v-text-field v-model.number="draftFlight.departure.price" label="Цена" type="number" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="6"><v-select v-model="draftFlight.departure.currency" :items="CURRENCIES" label="Валюта" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="12"><v-checkbox v-model="draftFlight.departure.hasLayovers" label="Пересадки" density="compact" hide-details /></v-col>
             </v-row>
           </v-col>
           <v-col cols="6">
@@ -472,12 +475,8 @@ async function submitOffer() {
               <v-col cols="12"><v-text-field v-model="draftFlight.arrival.dateTime" label="Дата и время (местное)" type="datetime-local" density="compact" variant="outlined" hide-details /></v-col>
               <v-col cols="12"><v-text-field v-model="draftFlight.arrival.timezone" label="Часовой пояс (IANA)" placeholder="Asia/Tokyo" density="compact" variant="outlined" hide-details /></v-col>
               <v-col cols="6"><v-text-field v-model="draftFlight.arrival.flight" label="Рейс" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="6"><v-select v-model="draftFlight.arrival.flightClass" :items="FLIGHT_CLASSES" label="Класс" density="compact" variant="outlined" hide-details /></v-col>
               <v-col cols="8"><v-text-field v-model="draftFlight.arrival.airport" label="Аэропорт" density="compact" variant="outlined" hide-details /></v-col>
               <v-col cols="4"><v-text-field v-model="draftFlight.arrival.airportCode" label="Код" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="6"><v-text-field v-model.number="draftFlight.arrival.price" label="Цена" type="number" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="6"><v-select v-model="draftFlight.arrival.currency" :items="CURRENCIES" label="Валюта" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="12"><v-checkbox v-model="draftFlight.arrival.hasLayovers" label="Пересадки" density="compact" hide-details /></v-col>
             </v-row>
           </v-col>
         </v-row>
@@ -610,6 +609,7 @@ async function submitOffer() {
       <v-divider />
       <v-card-text class="dialog-body">
         <v-row dense>
+          <v-col cols="12"><v-text-field v-model="draftExcursion.name" label="Название" density="compact" variant="outlined" hide-details /></v-col>
           <v-col cols="6"><v-text-field v-model="draftExcursion.city" label="Город" density="compact" variant="outlined" hide-details /></v-col>
           <v-col cols="6"><v-text-field v-model="draftExcursion.date" label="Дата" type="date" density="compact" variant="outlined" hide-details /></v-col>
           <v-col cols="6"><v-text-field v-model.number="draftExcursion.price" label="Цена" type="number" density="compact" variant="outlined" hide-details /></v-col>
@@ -684,10 +684,45 @@ async function submitOffer() {
 <style scoped lang="scss">
 @use '@/assets/variables.scss' as variables;
 
-.section-card {
-  background: rgba(0, 22, 21, 0.92) !important;
-  border: 1px solid rgba(54, 170, 184, 0.2) !important;
-  font-family: var(--v-font-family, Roboto, sans-serif) !important;
+// ─── Edit Header ─────────────────────────────────────────────────────────────
+.edit-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(54, 170, 184, 0.15);
+
+  &__icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: rgba(54, 170, 184, 0.1);
+    border: 1px solid rgba(54, 170, 184, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: variables.$color-blue;
+    flex-shrink: 0;
+  }
+
+  &__title {
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+  }
+}
+
+// ─── Unified form card ────────────────────────────────────────────────────────
+.unified-card {
+  background: rgba(0, 22, 21, 0.92);
+  border: 1px solid rgba(54, 170, 184, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+
+  &__divider {
+    border-color: rgba(54, 170, 184, 0.15) !important;
+  }
 }
 
 .section-label {
