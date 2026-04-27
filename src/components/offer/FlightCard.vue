@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Flight } from '@/api/types/offer'
+import type { Flight, FlightSegment } from '@/api/types/offer'
 
 const props = defineProps<{ flight: Flight; index: number }>()
 
@@ -86,18 +86,90 @@ function formatDurationMs(ms: number): string {
   return `${minutes} мин в пути`
 }
 
-const departureFmt = computed(() => formatDateTime(props.flight.departure.dateTime))
-const arrivalFmt = computed(() => formatDateTime(props.flight.arrival.dateTime))
+/** Время ожидания между двумя соседними сегментами (в .layover-tooltip-row). */
+function layoverWait(prev: FlightSegment, next: FlightSegment): string {
+  const arrMs = zonedToUtcMs(prev.arrivalDateTime, prev.to.timezone)
+  const depMs = zonedToUtcMs(next.departureDateTime, next.from.timezone)
+  const waitMs = depMs - arrMs
+  if (!Number.isFinite(waitMs) || waitMs <= 0) return ''
+  const totalMinutes = Math.round(waitMs / 60000)
+  const days = Math.floor(totalMinutes / (60 * 24))
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60)
+  const minutes = totalMinutes % 60
+  if (days > 0) return `${days}д ${hours}ч`
+  if (hours > 0) {
+    return minutes > 0 ? `${hours}ч ${minutes}мин` : `${hours}ч`
+  }
+  return `${minutes} мин`
+}
+
+const firstSegment = computed<FlightSegment>(() => props.flight.segments[0])
+const lastSegment = computed<FlightSegment>(
+  () => props.flight.segments[props.flight.segments.length - 1],
+)
+
+const departureFmt = computed(() => formatDateTime(firstSegment.value.departureDateTime))
+const arrivalFmt = computed(() => formatDateTime(lastSegment.value.arrivalDateTime))
 
 const duration = computed(() => {
-  const dep = props.flight.departure
-  const arr = props.flight.arrival
-  const depMs = zonedToUtcMs(dep.dateTime, dep.timezone)
-  const arrMs = zonedToUtcMs(arr.dateTime, arr.timezone)
-  return formatDurationMs(arrMs - depMs)
+  const segments = props.flight.segments
+  let totalMs = 0
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i]
+    const depMs = zonedToUtcMs(seg.departureDateTime, seg.from.timezone)
+    const arrMs = zonedToUtcMs(seg.arrivalDateTime, seg.to.timezone)
+    if (Number.isFinite(arrMs - depMs) && arrMs > depMs) {
+      totalMs += arrMs - depMs
+    }
+    if (i < segments.length - 1) {
+      const next = segments[i + 1]
+      const nextDepMs = zonedToUtcMs(next.departureDateTime, next.from.timezone)
+      const waitMs = nextDepMs - arrMs
+      if (Number.isFinite(waitMs) && waitMs > 0) {
+        totalMs += waitMs
+      }
+    }
+  }
+  return formatDurationMs(totalMs)
 })
 
-const flightStatus = computed(() => (props.flight.hasLayovers ? '1 пересадка' : 'прямой'))
+const flightStatus = computed(() => {
+  const n = props.flight.segments.length - 1
+  if (n <= 0) return 'прямой'
+  if (n === 1) return '1 пересадка'
+  // 2..4 — пересадки, 5+ — пересадок (упрощённое русское склонение)
+  const mod10 = n % 10
+  const mod100 = n % 100
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+    return `${n} пересадки`
+  }
+  return `${n} пересадок`
+})
+
+/** Индексы стыков между сегментами: для перелёта из K сегментов это [0, K-2]. */
+const layoverIndices = computed<number[]>(() => {
+  const len = props.flight.segments.length
+  const out: number[] = []
+  for (let i = 0; i <= len - 2; i++) out.push(i)
+  return out
+})
+
+const codes = computed<string[]>(() => {
+  const segments = props.flight.segments
+  const out: string[] = [segments[0].from.code]
+  for (let i = 0; i <= segments.length - 2; i++) {
+    out.push(segments[i].to.code)
+  }
+  out.push(segments[segments.length - 1].to.code)
+  return out
+})
+
+function layoverPositionPercent(i: number): number {
+  // Равномерно распределяем точки пересадок по линии; для одной пересадки — 50%.
+  const total = layoverIndices.value.length
+  if (total <= 0) return 50
+  return ((i + 1) / (total + 1)) * 100
+}
 </script>
 
 <template>
@@ -108,17 +180,23 @@ const flightStatus = computed(() => (props.flight.hasLayovers ? '1 переса�
         <div class="flight-card__price">
           {{ formatPrice(flight.price, flight.currency) }}
         </div>
-        <div class="flight-card__meta">
-          <span class="flight-card__meta-item">
+        <div
+          v-for="(segment, si) in flight.segments"
+          :key="si"
+          class="flight-card__meta"
+        >
+          <span v-if="segment.airline" class="flight-card__meta-item">
             <v-icon icon="mdi-airplane" size="14" class="mr-1" />
-            {{ flight.airline }}
+            {{ segment.airline }}
           </span>
-          <span class="flight-card__meta-sep">·</span>
+          <span v-if="segment.airline" class="flight-card__meta-sep">·</span>
           <span class="flight-card__meta-item flight-card__meta-item--accent">
-            {{ classLabel[flight.flightClass] ?? flight.flightClass }}
+            {{ classLabel[segment.flightClass] ?? segment.flightClass }}
           </span>
-          <span class="flight-card__meta-sep">·</span>
-          <span class="flight-card__meta-item">Рейс {{ flight.departure.flight }}</span>
+          <template v-if="segment.flightNumber">
+            <span class="flight-card__meta-sep">·</span>
+            <span class="flight-card__meta-item">Рейс {{ segment.flightNumber }}</span>
+          </template>
         </div>
       </div>
     </div>
@@ -128,7 +206,7 @@ const flightStatus = computed(() => (props.flight.hasLayovers ? '1 переса�
       <!-- Departure -->
       <div class="flight-card__endpoint">
         <div class="flight-card__time">{{ departureFmt.time }}</div>
-        <div class="flight-card__city">{{ flight.departure.city }}</div>
+        <div class="flight-card__city">{{ firstSegment.from.city }}</div>
         <div class="flight-card__date">{{ departureFmt.date }}, {{ departureFmt.weekday }}</div>
       </div>
 
@@ -141,24 +219,68 @@ const flightStatus = computed(() => (props.flight.hasLayovers ? '1 переса�
         <div class="flight-card__line">
           <v-icon class="flight-card__plane" icon="mdi-airplane-takeoff" size="18" />
           <div class="flight-card__line-track">
-            <span v-if="flight.hasLayovers" class="flight-card__layover-dot" />
+            <v-tooltip
+              v-for="i in layoverIndices"
+              :key="i"
+              location="top"
+              interactive
+            >
+              <template #activator="{ props: tooltipProps }">
+                <span
+                  v-bind="tooltipProps"
+                  class="flight-card__layover-dot"
+                  :style="{ left: `${layoverPositionPercent(i)}%` }"
+                />
+              </template>
+              <div class="layover-tooltip-content">
+                <div class="layover-tooltip-row">
+                  <span class="layover-tooltip-label">Аэропорт:</span>
+                  {{ flight.segments[i].to.city }} ({{ flight.segments[i].to.code }}),
+                  {{ flight.segments[i].to.name }}
+                </div>
+                <div class="layover-tooltip-row">
+                  <span class="layover-tooltip-label">Прилёт:</span>
+                  {{ formatDateTime(flight.segments[i].arrivalDateTime).time }},
+                  {{ formatDateTime(flight.segments[i].arrivalDateTime).date }}
+                </div>
+                <div
+                  v-if="layoverWait(flight.segments[i], flight.segments[i + 1])"
+                  class="layover-tooltip-row layover-tooltip-row--wait"
+                >
+                  <span class="layover-tooltip-label">Ожидание:</span>
+                  {{ layoverWait(flight.segments[i], flight.segments[i + 1]) }}
+                </div>
+                <div class="layover-tooltip-row">
+                  <span class="layover-tooltip-label">Вылет:</span>
+                  {{ formatDateTime(flight.segments[i + 1].departureDateTime).time }},
+                  {{ formatDateTime(flight.segments[i + 1].departureDateTime).date }}
+                </div>
+                <div class="layover-tooltip-row">
+                  <span class="layover-tooltip-label">Рейс:</span>
+                  {{ flight.segments[i + 1].flightNumber }}
+                </div>
+              </div>
+            </v-tooltip>
           </div>
           <v-icon class="flight-card__plane" icon="mdi-airplane-landing" size="18" />
         </div>
 
         <div class="flight-card__codes">
-          <span class="flight-card__code">{{ flight.departure.airportCode }}</span>
-          <span v-if="flight.hasLayovers" class="flight-card__code flight-card__code--layover">
-            пересадка
+          <span
+            v-for="(code, ci) in codes"
+            :key="ci"
+            class="flight-card__code"
+            :class="{ 'flight-card__code--layover': ci > 0 && ci < codes.length - 1 }"
+          >
+            {{ code }}
           </span>
-          <span class="flight-card__code">{{ flight.arrival.airportCode }}</span>
         </div>
       </div>
 
       <!-- Arrival -->
       <div class="flight-card__endpoint flight-card__endpoint--right">
         <div class="flight-card__time">{{ arrivalFmt.time }}</div>
-        <div class="flight-card__city">{{ flight.arrival.city }}</div>
+        <div class="flight-card__city">{{ lastSegment.to.city }}</div>
         <div class="flight-card__date">{{ arrivalFmt.date }}, {{ arrivalFmt.weekday }}</div>
       </div>
     </div>
@@ -212,6 +334,10 @@ const flightStatus = computed(() => (props.flight.hasLayovers ? '1 переса�
     align-items: center;
     flex-wrap: wrap;
     gap: 6px;
+
+    & + & {
+      margin-top: 4px;
+    }
   }
 
   &__meta-item {
@@ -336,13 +462,22 @@ const flightStatus = computed(() => (props.flight.hasLayovers ? '1 переса�
   &__layover-dot {
     position: absolute;
     top: 50%;
-    left: 50%;
     width: 8px;
     height: 8px;
     background: variables.$color-yellow;
     border-radius: 50%;
     transform: translate(-50%, -50%);
     box-shadow: 0 0 0 3px rgba(239, 159, 59, 0.18);
+    cursor: pointer;
+    transition:
+      transform 0.2s,
+      box-shadow 0.2s;
+    z-index: 2;
+
+    &:hover {
+      transform: translate(-50%, -50%) scale(1.25);
+      box-shadow: 0 0 0 5px rgba(239, 159, 59, 0.28);
+    }
   }
 
   &__codes {
@@ -362,7 +497,6 @@ const flightStatus = computed(() => (props.flight.hasLayovers ? '1 переса�
       color: variables.$color-yellow;
       font-weight: 600;
       letter-spacing: 0.3px;
-      text-transform: lowercase;
       font-size: 11px;
     }
   }
@@ -378,6 +512,30 @@ const flightStatus = computed(() => (props.flight.hasLayovers ? '1 переса�
     align-items: flex-start;
     line-height: 1.45;
   }
+}
+
+// ---------- Layover tooltip ----------
+.layover-tooltip-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  min-width: 200px;
+}
+
+.layover-tooltip-row {
+  display: flex;
+  gap: 6px;
+
+  &--wait {
+    color: variables.$color-yellow;
+    font-weight: 600;
+  }
+}
+
+.layover-tooltip-label {
+  flex-shrink: 0;
 }
 
 @media (max-width: 720px) {

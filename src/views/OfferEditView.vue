@@ -3,7 +3,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useOfferStore } from '@/stores/offer'
 import type {
-  Offer, Flight, FlightEndpoint, Hotel, Image,
+  Offer, Flight, FlightSegment, Airport, Hotel,
   CarRental, CarRentalVehicle, Cruise, CruiseCabin,
   Excursion, PublicTransport, AdditionalService,
   FlightClass, Currency, TransportCategory,
@@ -21,11 +21,22 @@ const FLIGHT_CLASSES: FlightClass[] = ['economy', 'comfort', 'business']
 const TRANSPORT_CATEGORIES: TransportCategory[] = ['taxi', 'bus', 'transfer']
 const STARS = [1, 2, 3, 4, 5]
 
-function blankEndpoint(): FlightEndpoint {
-  return { city: '', dateTime: '', timezone: 'Europe/Moscow', flight: '', airport: '', airportCode: '' }
+function blankAirport(): Airport {
+  return { city: '', name: '', code: '', timezone: 'Europe/Moscow' }
+}
+function blankSegment(): FlightSegment {
+  return {
+    airline: '',
+    flightNumber: '',
+    flightClass: 'economy',
+    from: blankAirport(),
+    to: blankAirport(),
+    departureDateTime: '',
+    arrivalDateTime: '',
+  }
 }
 function blankFlight(): Flight {
-  return { airline: '', departure: blankEndpoint(), arrival: blankEndpoint(), price: 0, currency: 'RUB', flightClass: 'economy', hasLayovers: false }
+  return { segments: [blankSegment()], price: 0, currency: 'RUB' }
 }
 function blankHotel(): Hotel {
   return { name: '', stars: 3, address: '', description: '', roomType: '', occupancyType: '', price: 0, currency: 'RUB', gallery: [], serviceFee: 0, checkIn: '', checkOut: '', nights: 1 }
@@ -162,6 +173,19 @@ function removeItem(type: DialogType, index: number) {
   if (type === 'service') offer.additionalServices.splice(index, 1)
 }
 
+function addSegment(afterIndex?: number) {
+  const seg = blankSegment()
+  if (typeof afterIndex === 'number') {
+    draftFlight.value.segments.splice(afterIndex + 1, 0, seg)
+  } else {
+    draftFlight.value.segments.push(seg)
+  }
+}
+function removeSegment(index: number) {
+  if (draftFlight.value.segments.length <= 1) return
+  draftFlight.value.segments.splice(index, 1)
+}
+
 function addVehicle() { draftCarRental.value.vehicles.push(blankVehicle()) }
 function removeVehicle(i: number) { draftCarRental.value.vehicles.splice(i, 1) }
 function addCabin() { draftCruise.value.cabins.push(blankCabin()) }
@@ -251,8 +275,8 @@ async function submitOffer() {
           <v-expansion-panel-text>
             <div v-for="(f, i) in offer.flights" :key="i" class="entity-row">
               <div class="entity-info">
-                <span class="text-body-2">{{ i + 1 }}. {{ f.airline || '—' }}</span>
-                <span class="text-caption text-medium-emphasis ml-2">{{ f.departure.city }} → {{ f.arrival.city }}</span>
+                <span class="text-body-2">{{ i + 1 }}. {{ f.segments[0]?.airline || '—' }}</span>
+                <span class="text-caption text-medium-emphasis ml-2">{{ f.segments[0]?.from.city }} → {{ f.segments.at(-1)?.to.city }}</span>
               </div>
               <div class="entity-actions">
                 <v-btn icon size="x-small" variant="text" @click="openEdit('flight', i)"><v-icon size="14">mdi-pencil</v-icon></v-btn>
@@ -443,43 +467,72 @@ async function submitOffer() {
       <v-divider />
       <v-card-text class="dialog-body">
         <v-row dense>
-          <v-col cols="8">
-            <v-text-field v-model="draftFlight.airline" label="Авиакомпания" density="compact" variant="outlined" hide-details />
-          </v-col>
-          <v-col cols="4"><v-select v-model="draftFlight.flightClass" :items="FLIGHT_CLASSES" label="Класс" density="compact" variant="outlined" hide-details /></v-col>
           <v-col cols="5"><v-text-field v-model.number="draftFlight.price" label="Цена" type="number" density="compact" variant="outlined" hide-details /></v-col>
           <v-col cols="4"><v-select v-model="draftFlight.currency" :items="CURRENCIES" label="Валюта" density="compact" variant="outlined" hide-details /></v-col>
-          <v-col cols="3" class="d-flex align-center">
-            <v-checkbox v-model="draftFlight.hasLayovers" label="Пересадки" density="compact" hide-details />
-          </v-col>
           <v-col cols="12">
             <v-textarea v-model="draftFlight.managerComment" label="Комментарий менеджера" density="compact" variant="outlined" rows="2" hide-details auto-grow />
           </v-col>
         </v-row>
-        <v-row dense class="mt-3">
-          <v-col cols="6">
-            <div class="text-caption font-weight-medium mb-1 text-primary">Вылет</div>
-            <v-row dense>
-              <v-col cols="12"><v-text-field v-model="draftFlight.departure.city" label="Город" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="12"><v-text-field v-model="draftFlight.departure.dateTime" label="Дата и время (местное)" type="datetime-local" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="12"><v-text-field v-model="draftFlight.departure.timezone" label="Часовой пояс (IANA)" placeholder="Europe/Moscow" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="6"><v-text-field v-model="draftFlight.departure.flight" label="Рейс" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="8"><v-text-field v-model="draftFlight.departure.airport" label="Аэропорт" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="4"><v-text-field v-model="draftFlight.departure.airportCode" label="Код" density="compact" variant="outlined" hide-details /></v-col>
-            </v-row>
-          </v-col>
-          <v-col cols="6">
-            <div class="text-caption font-weight-medium mb-1 text-primary">Прилёт</div>
-            <v-row dense>
-              <v-col cols="12"><v-text-field v-model="draftFlight.arrival.city" label="Город" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="12"><v-text-field v-model="draftFlight.arrival.dateTime" label="Дата и время (местное)" type="datetime-local" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="12"><v-text-field v-model="draftFlight.arrival.timezone" label="Часовой пояс (IANA)" placeholder="Asia/Tokyo" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="6"><v-text-field v-model="draftFlight.arrival.flight" label="Рейс" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="8"><v-text-field v-model="draftFlight.arrival.airport" label="Аэропорт" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="4"><v-text-field v-model="draftFlight.arrival.airportCode" label="Код" density="compact" variant="outlined" hide-details /></v-col>
-            </v-row>
-          </v-col>
-        </v-row>
+
+        <div
+          v-for="(seg, sIdx) in draftFlight.segments"
+          :key="sIdx"
+          class="segment-card mt-3"
+        >
+          <div class="d-flex align-center justify-space-between mb-2">
+            <div class="text-caption font-weight-medium text-primary">
+              Сегмент {{ sIdx + 1 }}
+            </div>
+            <v-btn
+              v-if="draftFlight.segments.length > 1"
+              icon
+              size="x-small"
+              variant="text"
+              color="error"
+              @click="removeSegment(sIdx)"
+            >
+              <v-icon size="14">mdi-delete</v-icon>
+            </v-btn>
+          </div>
+          <v-row dense>
+            <v-col cols="6"><v-text-field v-model="seg.airline" label="Авиакомпания" density="compact" variant="outlined" hide-details /></v-col>
+            <v-col cols="3"><v-text-field v-model="seg.flightNumber" label="Рейс" density="compact" variant="outlined" hide-details /></v-col>
+            <v-col cols="3"><v-select v-model="seg.flightClass" :items="FLIGHT_CLASSES" label="Класс" density="compact" variant="outlined" hide-details /></v-col>
+          </v-row>
+
+          <v-row dense class="mt-2">
+            <v-col cols="6">
+              <div class="text-caption font-weight-medium mb-1 text-primary">Откуда</div>
+              <v-row dense>
+                <v-col cols="12"><v-text-field v-model="seg.from.city" label="Город" density="compact" variant="outlined" hide-details /></v-col>
+                <v-col cols="8"><v-text-field v-model="seg.from.name" label="Аэропорт" density="compact" variant="outlined" hide-details /></v-col>
+                <v-col cols="4"><v-text-field v-model="seg.from.code" label="Код" density="compact" variant="outlined" hide-details /></v-col>
+                <v-col cols="12"><v-text-field v-model="seg.from.timezone" label="Часовой пояс (IANA)" placeholder="Europe/Moscow" density="compact" variant="outlined" hide-details /></v-col>
+                <v-col cols="12"><v-text-field v-model="seg.departureDateTime" label="Вылет (местное)" type="datetime-local" density="compact" variant="outlined" hide-details /></v-col>
+              </v-row>
+            </v-col>
+            <v-col cols="6">
+              <div class="text-caption font-weight-medium mb-1 text-primary">Куда</div>
+              <v-row dense>
+                <v-col cols="12"><v-text-field v-model="seg.to.city" label="Город" density="compact" variant="outlined" hide-details /></v-col>
+                <v-col cols="8"><v-text-field v-model="seg.to.name" label="Аэропорт" density="compact" variant="outlined" hide-details /></v-col>
+                <v-col cols="4"><v-text-field v-model="seg.to.code" label="Код" density="compact" variant="outlined" hide-details /></v-col>
+                <v-col cols="12"><v-text-field v-model="seg.to.timezone" label="Часовой пояс (IANA)" placeholder="Asia/Tokyo" density="compact" variant="outlined" hide-details /></v-col>
+                <v-col cols="12"><v-text-field v-model="seg.arrivalDateTime" label="Прилёт (местное)" type="datetime-local" density="compact" variant="outlined" hide-details /></v-col>
+              </v-row>
+            </v-col>
+          </v-row>
+        </div>
+
+        <v-btn
+          size="small"
+          variant="tonal"
+          prepend-icon="mdi-plus"
+          class="mt-3"
+          @click="addSegment()"
+        >
+          Добавить сегмент
+        </v-btn>
       </v-card-text>
       <v-divider />
       <v-card-actions class="pa-3 ga-2">
@@ -786,5 +839,11 @@ async function submitOffer() {
 }
 .dialog-body {
   padding: 16px !important;
+}
+.segment-card {
+  padding: 12px;
+  border: 1px solid rgba(54, 170, 184, 0.2);
+  border-radius: 8px;
+  background: rgba(54, 170, 184, 0.04);
 }
 </style>

@@ -1,24 +1,28 @@
 export type FlightClass = 'economy' | 'business' | 'comfort'
 export type Currency = 'RUB' | 'USD' | 'EUR' | 'TRY'
 
-export interface FlightEndpoint {
+export interface Airport {
   city: string
-  dateTime: string         // local wall-clock datetime in the airport's timezone, e.g. "2026-05-14T10:00:00"
-  timezone: string         // IANA timezone name of the airport, e.g. "Europe/Moscow", "Asia/Tokyo"
-  flight: string           // e.g. "U6 773"
-  airport: string          // e.g. "Кольцово"
-  airportCode: string      // e.g. "SVX"
+  name: string         // e.g. "Кольцово"
+  code: string         // IATA, e.g. "SVX"
+  timezone: string     // IANA, e.g. "Asia/Yekaterinburg"
+}
+
+export interface FlightSegment {
+  airline: string                 // авиакомпания, выполняющая сегмент
+  flightNumber: string            // e.g. "U6-773"
+  flightClass: FlightClass        // класс перелёта на сегменте
+  from: Airport
+  to: Airport
+  departureDateTime: string       // local wall-clock в from.timezone, e.g. "2026-05-14T10:00:00"
+  arrivalDateTime: string         // local wall-clock в to.timezone
 }
 
 export interface Flight {
-  airline: string
   managerComment?: string
-  departure: FlightEndpoint
-  arrival: FlightEndpoint
+  segments: FlightSegment[]       // длина >= 1; перелёт с N пересадками = N+1 сегмент
   price: number
   currency: Currency
-  flightClass: FlightClass
-  hasLayovers: boolean
 }
 
 export interface Image {
