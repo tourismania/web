@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useOfferStore } from '@/stores/offer'
+import { useClientStore } from '@/stores/client'
 import type {
   Offer, Flight, FlightSegment, Airport, Hotel,
   CarRental, CarRentalVehicle, Cruise, CruiseCabin,
@@ -12,6 +13,7 @@ import type {
 const route = useRoute()
 const router = useRouter()
 const offerStore = useOfferStore()
+const clientStore = useClientStore()
 
 const isEdit = ref(false)
 const tourId = ref<string | null>(null)
@@ -83,6 +85,9 @@ function blankOffer(): Offer {
 const offer = reactive<Offer>(blankOffer())
 
 onMounted(async () => {
+  // Параллельно подгружаем список клиентов для мультиселекта
+  const clientsPromise = clientStore.loadClients()
+
   const id = route.params.id as string | undefined
   if (id) {
     isEdit.value = true
@@ -92,6 +97,18 @@ onMounted(async () => {
       Object.assign(offer, JSON.parse(JSON.stringify(offerStore.currentOffer)))
     }
   }
+
+  await clientsPromise
+})
+
+// Маппинг между Client[] (как хранится в Offer) и string[] email-ов (значение v-autocomplete)
+const selectedClientEmails = computed<string[]>({
+  get: () => offer.clients.map((c) => c.email),
+  set: (emails) => {
+    offer.clients = emails
+      .map((e) => clientStore.clients.find((c) => c.email === e))
+      .filter((c): c is NonNullable<typeof c> => Boolean(c))
+  },
 })
 
 type DialogType = 'flight' | 'hotel' | 'carRental' | 'cruise' | 'excursion' | 'transport' | 'service' | null
@@ -247,6 +264,37 @@ async function submitOffer() {
           <v-col cols="12">
             <v-text-field v-model="offer.title" label="Название тура" density="compact" variant="outlined" hide-details />
           </v-col>
+          <v-col cols="12">
+            <v-autocomplete
+              v-model="selectedClientEmails"
+              :items="clientStore.clients"
+              :item-title="(c) => `${c.name} ${c.surname} (${c.email})`"
+              item-value="email"
+              :loading="clientStore.loading"
+              label="Клиенты"
+              placeholder="Выберите клиентов, для которых это предложение"
+              density="compact"
+              variant="outlined"
+              hide-details
+              multiple
+              chips
+              closable-chips
+              clearable
+            >
+              <template #chip="{ props: chipProps, item }">
+                <v-chip
+                  v-bind="chipProps"
+                  size="small"
+                  variant="tonal"
+                >
+                  {{ item.raw.name }} {{ item.raw.surname }}
+                </v-chip>
+              </template>
+              <template #item="{ props: itemProps, item }">
+                <v-list-item v-bind="itemProps" :title="`${item.raw.name} ${item.raw.surname}`" :subtitle="item.raw.email" />
+              </template>
+            </v-autocomplete>
+          </v-col>
           <v-col cols="6">
             <v-text-field v-model="offer.startDate" label="Дата начала" type="date" density="compact" variant="outlined" hide-details />
           </v-col>
@@ -269,7 +317,7 @@ async function submitOffer() {
             <div class="d-flex align-center ga-2">
               <v-icon size="18">mdi-airplane</v-icon>
               <span class="text-body-2 font-weight-medium">Перелёты</span>
-              <v-chip v-if="offer.flights.length" size="x-small" color="primary" class="ml-1">{{ offer.flights.length }}</v-chip>
+              <v-chip v-if="offer.flights.length" size="x-small" class="ml-1">{{ offer.flights.length }}</v-chip>
             </div>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
@@ -295,7 +343,7 @@ async function submitOffer() {
             <div class="d-flex align-center ga-2">
               <v-icon size="18">mdi-bed</v-icon>
               <span class="text-body-2 font-weight-medium">Отели</span>
-              <v-chip v-if="offer.hotels.length" size="x-small" color="primary" class="ml-1">{{ offer.hotels.length }}</v-chip>
+              <v-chip v-if="offer.hotels.length" size="x-small" class="ml-1">{{ offer.hotels.length }}</v-chip>
             </div>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
@@ -321,7 +369,7 @@ async function submitOffer() {
             <div class="d-flex align-center ga-2">
               <v-icon size="18">mdi-car</v-icon>
               <span class="text-body-2 font-weight-medium">Аренда авто</span>
-              <v-chip v-if="offer.carRentals.length" size="x-small" color="primary" class="ml-1">{{ offer.carRentals.length }}</v-chip>
+              <v-chip v-if="offer.carRentals.length" size="x-small" class="ml-1">{{ offer.carRentals.length }}</v-chip>
             </div>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
@@ -345,7 +393,7 @@ async function submitOffer() {
             <div class="d-flex align-center ga-2">
               <v-icon size="18">mdi-ferry</v-icon>
               <span class="text-body-2 font-weight-medium">Круизы</span>
-              <v-chip v-if="offer.cruises.length" size="x-small" color="primary" class="ml-1">{{ offer.cruises.length }}</v-chip>
+              <v-chip v-if="offer.cruises.length" size="x-small" class="ml-1">{{ offer.cruises.length }}</v-chip>
             </div>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
@@ -369,7 +417,7 @@ async function submitOffer() {
             <div class="d-flex align-center ga-2">
               <v-icon size="18">mdi-camera</v-icon>
               <span class="text-body-2 font-weight-medium">Экскурсии</span>
-              <v-chip v-if="offer.excursions.length" size="x-small" color="primary" class="ml-1">{{ offer.excursions.length }}</v-chip>
+              <v-chip v-if="offer.excursions.length" size="x-small" class="ml-1">{{ offer.excursions.length }}</v-chip>
             </div>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
@@ -393,7 +441,7 @@ async function submitOffer() {
             <div class="d-flex align-center ga-2">
               <v-icon size="18">mdi-bus</v-icon>
               <span class="text-body-2 font-weight-medium">Транспорт</span>
-              <v-chip v-if="offer.transport.length" size="x-small" color="primary" class="ml-1">{{ offer.transport.length }}</v-chip>
+              <v-chip v-if="offer.transport.length" size="x-small" class="ml-1">{{ offer.transport.length }}</v-chip>
             </div>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
@@ -417,7 +465,7 @@ async function submitOffer() {
             <div class="d-flex align-center ga-2">
               <v-icon size="18">mdi-star-plus</v-icon>
               <span class="text-body-2 font-weight-medium">Доп. услуги</span>
-              <v-chip v-if="offer.additionalServices.length" size="x-small" color="primary" class="ml-1">{{ offer.additionalServices.length }}</v-chip>
+              <v-chip v-if="offer.additionalServices.length" size="x-small" class="ml-1">{{ offer.additionalServices.length }}</v-chip>
             </div>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
@@ -440,14 +488,16 @@ async function submitOffer() {
     <!-- Сохранить -->
     <div class="d-flex justify-end ga-2">
       <v-btn
-        variant="text"
+        elevation="2"
+        size="default"
+        prepend-icon="mdi-close"
         @click="router.back()"
       >
         Отмена
       </v-btn>
       <v-btn
-        color="primary"
-        size="large"
+        elevation="2"
+        size="default"
         prepend-icon="mdi-content-save"
         :loading="offerStore.loading"
         @click="submitOffer"
@@ -480,7 +530,7 @@ async function submitOffer() {
           class="segment-card mt-3"
         >
           <div class="d-flex align-center justify-space-between mb-2">
-            <div class="text-caption font-weight-medium text-primary">
+            <div class="segment-card__title">
               Сегмент {{ sIdx + 1 }}
             </div>
             <v-btn
@@ -502,7 +552,7 @@ async function submitOffer() {
 
           <v-row dense class="mt-2">
             <v-col cols="6">
-              <div class="text-caption font-weight-medium mb-1 text-primary">Откуда</div>
+              <div class="text-caption font-weight-medium mb-1 endpoint-label">Откуда</div>
               <v-row dense>
                 <v-col cols="12"><v-text-field v-model="seg.from.city" label="Город" density="compact" variant="outlined" hide-details /></v-col>
                 <v-col cols="8"><v-text-field v-model="seg.from.name" label="Аэропорт" density="compact" variant="outlined" hide-details /></v-col>
@@ -512,7 +562,7 @@ async function submitOffer() {
               </v-row>
             </v-col>
             <v-col cols="6">
-              <div class="text-caption font-weight-medium mb-1 text-primary">Куда</div>
+              <div class="text-caption font-weight-medium mb-1 endpoint-label">Куда</div>
               <v-row dense>
                 <v-col cols="12"><v-text-field v-model="seg.to.city" label="Город" density="compact" variant="outlined" hide-details /></v-col>
                 <v-col cols="8"><v-text-field v-model="seg.to.name" label="Аэропорт" density="compact" variant="outlined" hide-details /></v-col>
@@ -538,7 +588,7 @@ async function submitOffer() {
       <v-card-actions class="pa-3 ga-2">
         <v-spacer />
         <v-btn variant="text" @click="activeDialog = null">Отмена</v-btn>
-        <v-btn color="primary" variant="tonal" @click="saveDialog">Сохранить</v-btn>
+        <v-btn variant="tonal" @click="saveDialog">Сохранить</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -568,6 +618,10 @@ async function submitOffer() {
         </v-row>
         <div class="text-caption font-weight-medium mt-3 mb-1">Фотографии</div>
         <div v-for="(img, i) in draftHotel.gallery" :key="i" class="d-flex align-center ga-2 mb-1">
+          <div class="image-preview" :class="{ 'image-preview--empty': !img.url }">
+            <img v-if="img.url" :src="img.url" alt="превью" @error="(e) => ((e.target as HTMLImageElement).style.display = 'none')" />
+            <v-icon v-else size="20" color="rgba(255,255,255,.35)">mdi-image-outline</v-icon>
+          </div>
           <v-text-field v-model="img.url" label="URL фото" density="compact" variant="outlined" hide-details class="flex-grow-1" />
           <v-btn icon size="x-small" variant="text" color="error" @click="removeHotelImage(i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
         </div>
@@ -577,7 +631,7 @@ async function submitOffer() {
       <v-card-actions class="pa-3 ga-2">
         <v-spacer />
         <v-btn variant="text" @click="activeDialog = null">Отмена</v-btn>
-        <v-btn color="primary" variant="tonal" @click="saveDialog">Сохранить</v-btn>
+        <v-btn variant="tonal" @click="saveDialog">Сохранить</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -612,7 +666,7 @@ async function submitOffer() {
       <v-card-actions class="pa-3 ga-2">
         <v-spacer />
         <v-btn variant="text" @click="activeDialog = null">Отмена</v-btn>
-        <v-btn color="primary" variant="tonal" @click="saveDialog">Сохранить</v-btn>
+        <v-btn variant="tonal" @click="saveDialog">Сохранить</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -640,7 +694,11 @@ async function submitOffer() {
         </div>
         <v-btn size="x-small" variant="text" prepend-icon="mdi-plus" @click="addCabin">Добавить каюту</v-btn>
         <div class="text-caption font-weight-medium mt-3 mb-1">Галерея (URL)</div>
-        <div v-for="(url, i) in draftCruise.gallery" :key="i" class="d-flex align-center ga-2 mb-1">
+        <div v-for="(_url, i) in draftCruise.gallery" :key="i" class="d-flex align-center ga-2 mb-1">
+          <div class="image-preview" :class="{ 'image-preview--empty': !draftCruise.gallery[i].url }">
+            <img v-if="draftCruise.gallery[i].url" :src="draftCruise.gallery[i].url" alt="превью" @error="(e) => ((e.target as HTMLImageElement).style.display = 'none')" />
+            <v-icon v-else size="20" color="rgba(255,255,255,.35)">mdi-image-outline</v-icon>
+          </div>
           <v-text-field v-model="draftCruise.gallery[i].url" label="URL" density="compact" variant="outlined" hide-details class="flex-grow-1" />
           <v-btn icon size="x-small" variant="text" color="error" @click="removeCruiseGallery(i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
         </div>
@@ -650,7 +708,7 @@ async function submitOffer() {
       <v-card-actions class="pa-3 ga-2">
         <v-spacer />
         <v-btn variant="text" @click="activeDialog = null">Отмена</v-btn>
-        <v-btn color="primary" variant="tonal" @click="saveDialog">Сохранить</v-btn>
+        <v-btn variant="tonal" @click="saveDialog">Сохранить</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -671,6 +729,10 @@ async function submitOffer() {
         </v-row>
         <div class="text-caption font-weight-medium mt-3 mb-1">Галерея</div>
         <div v-for="(img, i) in draftExcursion.gallery" :key="i" class="d-flex align-center ga-2 mb-1">
+          <div class="image-preview" :class="{ 'image-preview--empty': !img.url }">
+            <img v-if="img.url" :src="img.url" alt="превью" @error="(e) => ((e.target as HTMLImageElement).style.display = 'none')" />
+            <v-icon v-else size="20" color="rgba(255,255,255,.35)">mdi-image-outline</v-icon>
+          </div>
           <v-text-field v-model="img.url" label="URL" density="compact" variant="outlined" hide-details class="flex-grow-1" />
           <v-btn icon size="x-small" variant="text" color="error" @click="draftExcursion.gallery.splice(i,1)"><v-icon size="14">mdi-delete</v-icon></v-btn>
         </div>
@@ -680,7 +742,7 @@ async function submitOffer() {
       <v-card-actions class="pa-3 ga-2">
         <v-spacer />
         <v-btn variant="text" @click="activeDialog = null">Отмена</v-btn>
-        <v-btn color="primary" variant="tonal" @click="saveDialog">Сохранить</v-btn>
+        <v-btn variant="tonal" @click="saveDialog">Сохранить</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -706,7 +768,7 @@ async function submitOffer() {
       <v-card-actions class="pa-3 ga-2">
         <v-spacer />
         <v-btn variant="text" @click="activeDialog = null">Отмена</v-btn>
-        <v-btn color="primary" variant="tonal" @click="saveDialog">Сохранить</v-btn>
+        <v-btn variant="tonal" @click="saveDialog">Сохранить</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -728,7 +790,7 @@ async function submitOffer() {
       <v-card-actions class="pa-3 ga-2">
         <v-spacer />
         <v-btn variant="text" @click="activeDialog = null">Отмена</v-btn>
-        <v-btn color="primary" variant="tonal" @click="saveDialog">Сохранить</v-btn>
+        <v-btn variant="tonal" @click="saveDialog">Сохранить</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -743,18 +805,18 @@ async function submitOffer() {
   align-items: center;
   gap: 16px;
   padding-bottom: 24px;
-  border-bottom: 1px solid rgba(54, 170, 184, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 
   &__icon {
     width: 52px;
     height: 52px;
     border-radius: 14px;
-    background: rgba(54, 170, 184, 0.1);
-    border: 1px solid rgba(54, 170, 184, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: variables.$color-blue;
+    color: #fff;
     flex-shrink: 0;
   }
 
@@ -769,12 +831,12 @@ async function submitOffer() {
 // ─── Unified form card ────────────────────────────────────────────────────────
 .unified-card {
   background: rgba(0, 22, 21, 0.92);
-  border: 1px solid rgba(54, 170, 184, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
   overflow: hidden;
 
   &__divider {
-    border-color: rgba(54, 170, 184, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
   }
 }
 
@@ -842,8 +904,45 @@ async function submitOffer() {
 }
 .segment-card {
   padding: 12px;
-  border: 1px solid rgba(54, 170, 184, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
-  background: rgba(54, 170, 184, 0.04);
+  background: rgba(255, 255, 255, 0.04);
+
+  &__title {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #fff;
+    letter-spacing: 0.04em;
+  }
+}
+
+.endpoint-label {
+  color: #fff !important;
+}
+
+// ─── Превью изображения рядом с полем URL ────────────────────────────────────
+.image-preview {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  &--empty {
+    background: rgba(255, 255, 255, 0.03);
+    border-style: dashed;
+  }
 }
 </style>

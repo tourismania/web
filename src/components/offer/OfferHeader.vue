@@ -104,7 +104,11 @@ const stats = computed(() => {
   &__content {
     position: relative;
     max-width: 760px;
+    display: flex;
     margin: 0 auto;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
   }
 
   &__label {

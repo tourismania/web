@@ -284,6 +284,50 @@ const MOCK_OFFERS: Offer[] = [
   },
 ]
 
+// ─── localStorage-персист (фолбэк, пока нет реального бэкенда) ───────────────
+const STORAGE_KEY = 'tourismania:offers'
+
+function readPersistedOffers(): Offer[] | null {
+  try {
+    if (typeof localStorage === 'undefined') return null
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? (parsed as Offer[]) : null
+  } catch (e) {
+    console.error('[offer-store] failed to read offers from localStorage', e)
+    return null
+  }
+}
+
+function writePersistedOffers(offers: Offer[]): void {
+  try {
+    if (typeof localStorage === 'undefined') return
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(offers))
+  } catch (e) {
+    console.error('[offer-store] failed to persist offers to localStorage', e)
+  }
+}
+
+/**
+ * Возвращает список из localStorage; при первом запуске сидим mock-данными,
+ * чтобы пользователь видел пример, но дальше данные живут только в storage.
+ */
+function ensureSeededOffers(): Offer[] {
+  const existing = readPersistedOffers()
+  if (existing !== null) return existing
+  const seeded: Offer[] = JSON.parse(JSON.stringify(MOCK_OFFERS))
+  writePersistedOffers(seeded)
+  return seeded
+}
+
+function newOfferId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return 'offer-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8)
+}
+
 export const useOfferStore = defineStore('offer', {
   state: () => ({
     offers: [] as Offer[],
@@ -304,7 +348,8 @@ export const useOfferStore = defineStore('offer', {
       try {
         this.offers = await OfferApi.getAll()
       } catch {
-        this.offers = MOCK_OFFERS
+        // API недоступен — берём данные из localStorage (или сидим mock'ом при первом запуске)
+        this.offers = ensureSeededOffers()
       } finally {
         this.loading = false
       }
@@ -316,7 +361,9 @@ export const useOfferStore = defineStore('offer', {
       try {
         this.currentOffer = await OfferApi.getById(id)
       } catch {
-        this.currentOffer = MOCK_OFFERS.find((t) => t.id === id) ?? null
+        // Сначала ищем в локально сохранённых, потом — в дефолтном mock
+        const local = readPersistedOffers() ?? MOCK_OFFERS
+        this.currentOffer = local.find((o) => o.id === id) ?? null
         if (!this.currentOffer) {
           this.error = 'Оффер не найден'
         }
@@ -330,11 +377,23 @@ export const useOfferStore = defineStore('offer', {
       this.error = null
       try {
         const created = await OfferApi.create(data)
+        // Синхронизируем localStorage, чтобы offline-копия не разошлась
+        const persisted = readPersistedOffers() ?? []
+        writePersistedOffers([...persisted, created])
         this.offers.push(created)
         return created
       } catch {
-        this.error = 'Не удалось создать оффер'
-        return null
+        // Локальное создание: генерим id + createdAt и пишем в localStorage
+        const created: Offer = {
+          ...(data as Offer),
+          id: data.id ?? newOfferId(),
+          createdAt: data.createdAt ?? new Date().toISOString(),
+        }
+        const persisted = readPersistedOffers() ?? ensureSeededOffers()
+        const next = [...persisted, created]
+        writePersistedOffers(next)
+        this.offers = next
+        return created
       } finally {
         this.loading = false
       }
@@ -345,13 +404,27 @@ export const useOfferStore = defineStore('offer', {
       this.error = null
       try {
         const updated = await OfferApi.update(id, data)
-        const idx = this.offers.findIndex((t) => t.id === id)
+        const persisted = readPersistedOffers() ?? this.offers
+        const next = persisted.map((o) => (o.id === id ? updated : o))
+        writePersistedOffers(next)
+        const idx = this.offers.findIndex((o) => o.id === id)
         if (idx !== -1) this.offers[idx] = updated
         if (this.currentOffer?.id === id) this.currentOffer = updated
         return updated
       } catch {
-        this.error = 'Не удалось обновить оффер'
-        return null
+        // Локальное обновление
+        const persisted = readPersistedOffers() ?? ensureSeededOffers()
+        const idx = persisted.findIndex((o) => o.id === id)
+        if (idx === -1) {
+          this.error = 'Оффер не найден'
+          return null
+        }
+        const updated: Offer = { ...persisted[idx], ...(data as Offer), id }
+        persisted[idx] = updated
+        writePersistedOffers(persisted)
+        this.offers = [...persisted]
+        if (this.currentOffer?.id === id) this.currentOffer = updated
+        return updated
       } finally {
         this.loading = false
       }
@@ -361,13 +434,21 @@ export const useOfferStore = defineStore('offer', {
       this.loading = true
       this.error = null
       try {
-        // TODO: await OfferApi.delete(id)
-        this.offers = this.offers.filter((t) => t.id !== id)
+        await OfferApi.delete(id)
+        const persisted = readPersistedOffers() ?? this.offers
+        const next = persisted.filter((o) => o.id !== id)
+        writePersistedOffers(next)
+        this.offers = next
         if (this.currentOffer?.id === id) this.currentOffer = null
         return true
       } catch {
-        this.error = 'Не удалось удалить оффер'
-        return false
+        // Локальное удаление (API недоступен)
+        const persisted = readPersistedOffers() ?? ensureSeededOffers()
+        const next = persisted.filter((o) => o.id !== id)
+        writePersistedOffers(next)
+        this.offers = next
+        if (this.currentOffer?.id === id) this.currentOffer = null
+        return true
       } finally {
         this.loading = false
       }

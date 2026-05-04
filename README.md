@@ -125,9 +125,10 @@ npm run lint
 
 | Слой | Файл | Описание |
 |---|---|---|
-| Types | `src/api/types/offer.ts` | Все типы доменной сущности Offer |
+| Types | `src/api/types/offer.ts` | Все типы доменной сущности Offer (включая `Client`) |
 | API | `src/api/offer.ts` | `OfferApi` — CRUD через `/api/v1/offers` |
 | Store | `src/stores/offer.ts` | `useOfferStore` — состояние + mock-данные как fallback |
+| Store | `src/stores/client.ts` | `useClientStore` — список клиентов для мультиселекта (mock, до появления API) |
 | Views | `src/views/OfferView.vue` | Просмотр предложения (ид из маршрута) |
 | Views | `src/views/OffersListView.vue` | Список предложений |
 | Views | `src/views/OfferEditView.vue` | Создание / редактирование предложения |
@@ -152,7 +153,20 @@ npm run lint
 **Getters:** `offerById`, `offersCount`  
 **Actions:** `loadOffers`, `loadOfferById`, `createOffer`, `updateOffer`, `deleteOffer`, `clearCurrentOffer`
 
-При недоступности API автоматически используются mock-данные с полным набором вложенных сущностей.
+### Персистентность
+
+Каждое из действий `loadOffers`, `loadOfferById`, `createOffer`, `updateOffer`, `deleteOffer` сначала пытается обратиться к `OfferApi`. Если API недоступен — используется фолбэк на `localStorage` под ключом `tourismania:offers`:
+
+| Сценарий | Поведение |
+|---|---|
+| `loadOffers` (API ↓) | читает из localStorage; при первом запуске сидит mock-данными |
+| `loadOfferById` (API ↓) | ищет оффер в localStorage, затем — в дефолтном mock |
+| `createOffer` (API ↓) | генерит `id` (через `crypto.randomUUID`) + `createdAt`, пишет в localStorage |
+| `createOffer` (API ↑) | синхронизирует localStorage с ответом сервера |
+| `updateOffer` (любой) | обновляет запись и в state, и в localStorage |
+| `deleteOffer` (любой) | удаляет запись и в state, и в localStorage |
+
+Благодаря этому создание/редактирование/удаление переживают F5 даже без бэкенда.
 
 ---
 
@@ -177,6 +191,7 @@ npm run lint
 | Поле | Тип | Описание |
 |---|---|---|
 | `title` | `string` | Название предложения |
+| `clients` | `Client[]` | Клиенты, для которых составлено предложение (мультиселект в форме редактирования) |
 | `welcomeText` | `string` | Приветственный текст от менеджера |
 | `startDate` | `string` | Дата начала (ISO) |
 | `endDate` | `string` | Дата окончания (ISO) |
@@ -334,3 +349,15 @@ npm run lint
 | `price` | `number` | Стоимость |
 | `currency` | `Currency` | Валюта |
 | `managerComment` | `string?` | Комментарий менеджера |
+
+---
+
+### `Client` — клиент предложения
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `name` | `string` | Имя |
+| `surname` | `string` | Фамилия |
+| `email` | `string` | E-mail (используется как уникальный ключ при выборе в мультиселекте) |
+
+Список клиентов отдаётся через `useClientStore` (`src/stores/client.ts`). Сейчас стор отдаёт mock-данные; позже подключится бэкенд. В форме редактирования предложения клиенты выбираются через `v-autocomplete` с `multiple chips`; внутри формы работает с массивом email-ов, на сохранение преобразуется в `Client[]` для `Offer.clients`.
