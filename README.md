@@ -142,10 +142,18 @@ npm run lint
 | `OfferSectionHeader.vue` | Заголовок секции (иконка + название + счётчик + итог) |
 | `OfferListItem.vue` | Строка предложения в таблице списка |
 | `OfferBasicInfoForm.vue` | Форма редактирования основных данных предложения |
-| `FlightCard.vue` | Карточка перелёта |
+| `FlightCard.vue` | Карточка перелёта (поддерживает оба формата `Airport.timezone`: ISO offset и IANA) |
 | `HotelCard.vue` | Карточка отеля с галереей |
 | `CarRentalCard.vue` | Карточка аренды авто |
 | `CruiseCard.vue` | Карточка круиза с галереей |
+
+### Общие компоненты ввода (`src/components/common/`)
+
+| Компонент | Назначение |
+|---|---|
+| `DateField.vue` | Поле даты — `v-text-field` (readonly) с иконкой календаря справа; клик в любую точку открывает `v-date-picker` в `v-menu`. Принимает/возвращает строку `YYYY-MM-DD`. Поддерживает `min` / `max` |
+| `DateTimeField.vue` | Поле даты+времени — `v-date-picker` + два инпута часы/минуты в общем меню. Возвращает строку `YYYY-MM-DDTHH:mm:ss` |
+| `TimezoneOffsetSelect.vue` | Выпадающий список UTC-смещений (UTC-12 … UTC+14, включая `+03:30`, `+05:30`, `+05:45` и т.д.). Хранит `+HH:MM` / `-HH:MM`. Имеет fallback: legacy IANA-значения нормализуются в офсет через `Intl` |
 
 ### Store (`useOfferStore`)
 
@@ -239,7 +247,7 @@ npm run lint
 | `city` | `string` | Город |
 | `name` | `string` | Название аэропорта (напр. `Кольцово`) |
 | `code` | `string` | IATA-код (напр. `SVX`) |
-| `timezone` | `string` | IANA-зона (напр. `Asia/Yekaterinburg`). Нужна для корректного расчёта длительности перелёта и времени ожидания на пересадках |
+| `timezone` | `string` | UTC-смещение в ISO-формате (напр. `+03:00`, `-05:30`). Нужна для корректного расчёта длительности перелёта и времени ожидания на пересадках. Для обратной совместимости `FlightCard.zonedToUtcMs` также распознаёт legacy IANA-зоны (`Europe/Moscow`) — резолвится через `Intl` |
 
 ---
 

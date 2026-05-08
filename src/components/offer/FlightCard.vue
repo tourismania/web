@@ -32,8 +32,13 @@ function formatPrice(price: number, currency: string): string {
 /**
  * Converts a naive local ISO datetime string (e.g. "2026-05-14T10:00:00",
  * without any TZ suffix) interpreted as wall-clock time in `timeZone` into
- * absolute UTC milliseconds. Uses Intl to resolve the zone's offset at that
- * instant, so it handles DST correctly.
+ * absolute UTC milliseconds.
+ *
+ * Поддерживаются два формата `timeZone`:
+ *   1. Числовое UTC-смещение в ISO-нотации, напр. "+03:00" или "-05:30".
+ *      Используется в новом UI, не зависит от Intl и переходов на DST.
+ *   2. Legacy IANA-зона, напр. "Europe/Moscow". Резолвится через Intl —
+ *      оставлено для обратной совместимости с уже сохранёнными перелётами.
  */
 function zonedToUtcMs(localIso: string, timeZone: string): number {
   const match = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/.exec(localIso)
@@ -42,9 +47,20 @@ function zonedToUtcMs(localIso: string, timeZone: string): number {
     return new Date(localIso).getTime()
   }
   const [, y, mo, d, h, mi, s] = match
-  // First, pretend the wall-clock components are UTC.
   const asIfUtc = Date.UTC(+y, +mo - 1, +d, +h, +mi, s ? +s : 0)
-  // Now ask what those UTC ms look like rendered in `timeZone`.
+
+  // Format 1: ISO offset designator like "+03:00" or "-05:30".
+  const offsetMatch = /^([+-])(\d{2}):(\d{2})$/.exec((timeZone ?? '').trim())
+  if (offsetMatch) {
+    const sign = offsetMatch[1] === '-' ? -1 : 1
+    const hours = +offsetMatch[2]
+    const minutes = +offsetMatch[3]
+    const offsetMs = sign * (hours * 60 + minutes) * 60_000
+    // Wall-clock = UTC + offset, поэтому UTC = asIfUtc - offset.
+    return asIfUtc - offsetMs
+  }
+
+  // Format 2: IANA zone name (legacy). Resolve offset via Intl.
   const dtf = new Intl.DateTimeFormat('en-US', {
     timeZone,
     hourCycle: 'h23',
