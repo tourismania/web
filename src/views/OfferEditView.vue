@@ -12,6 +12,7 @@ import type {
 import DateField from '@/components/common/DateField.vue'
 import DateTimeField from '@/components/common/DateTimeField.vue'
 import TimezoneOffsetSelect from '@/components/common/TimezoneOffsetSelect.vue'
+import { computeNights, pluralizeNights } from '@/helpers/hotel'
 
 const route = useRoute()
 const router = useRouter()
@@ -46,7 +47,7 @@ function blankFlight(): Flight {
   return { segments: [blankSegment()], price: 0, currency: 'RUB' }
 }
 function blankHotel(): Hotel {
-  return { name: '', stars: 3, address: '', description: '', roomType: '', occupancyType: '', price: 0, currency: 'RUB', gallery: [], serviceFee: 0, checkIn: '', checkOut: '', nights: 1 }
+  return { name: '', stars: 3, address: '', description: '', roomType: '', occupancyType: '', price: 0, currency: 'RUB', gallery: [], serviceFee: 0, checkIn: '', checkOut: '',}
 }
 function blankCarRental(): CarRental {
   return { name: '', startLocation: '', endLocation: '', vehicles: [] }
@@ -396,7 +397,7 @@ async function submitOffer() {
             <div v-for="(h, i) in offer.hotels" :key="i" class="entity-row">
               <div class="entity-info">
                 <span class="text-body-2">{{ i + 1 }}. {{ h.name || '—' }}</span>
-                <span class="text-caption text-medium-emphasis ml-2">{{ h.checkIn }} — {{ h.checkOut }} · {{ h.nights }} н.</span>
+                <span class="text-caption text-medium-emphasis ml-2">{{ h.checkIn }} — {{ h.checkOut }} · {{ pluralizeNights(computeNights(h.checkIn, h.checkOut)) }}</span>
               </div>
               <div class="entity-actions">
                 <v-btn icon size="x-small" variant="text" @click="openEdit('hotel', i)"><v-icon size="14">mdi-pencil</v-icon></v-btn>
@@ -668,21 +669,20 @@ async function submitOffer() {
       <v-divider />
       <v-card-text class="dialog-body">
         <v-row dense>
-          <v-col cols="8"><v-text-field v-model="draftHotel.name" label="Название" density="compact" variant="outlined" hide-details /></v-col>
-          <v-col cols="4"><v-select v-model="draftHotel.stars" :items="STARS" label="Звёзды" density="compact" variant="outlined" hide-details /></v-col>
-          <v-col cols="12"><v-text-field v-model="draftHotel.address" label="Адрес" density="compact" variant="outlined" hide-details /></v-col>
-          <v-col cols="12"><v-textarea v-model="draftHotel.description" label="Описание" density="compact" variant="outlined" rows="2" hide-details auto-grow /></v-col>
-          <v-col cols="6"><v-text-field v-model="draftHotel.roomType" label="Тип номера" density="compact" variant="outlined" hide-details /></v-col>
-          <v-col cols="6"><v-text-field v-model="draftHotel.occupancyType" label="Размещение" density="compact" variant="outlined" hide-details /></v-col>
-          <v-col cols="12"><v-textarea v-model="draftHotel.roomDescription" label="Описание номера" density="compact" variant="outlined" rows="2" hide-details auto-grow /></v-col>
-          <v-col cols="6"><DateField v-model="draftHotel.checkIn" label="Заезд" /></v-col>
-          <v-col cols="6"><DateField v-model="draftHotel.checkOut" label="Выезд" :min="draftHotel.checkIn" /></v-col>
-          <v-col cols="4"><v-text-field v-model.number="draftHotel.nights" label="Ночей" type="number" density="compact" variant="outlined" hide-details /></v-col>
-          <v-col cols="4"><v-text-field v-model.number="draftHotel.price" label="Цена" type="number" density="compact" variant="outlined" hide-details /></v-col>
-          <v-col cols="4"><v-select v-model="draftHotel.currency" :items="CURRENCIES" label="Валюта" density="compact" variant="outlined" hide-details /></v-col>
-          <v-col cols="4"><v-text-field v-model.number="draftHotel.serviceFee" label="Сервисный сбор" type="number" density="compact" variant="outlined" hide-details /></v-col>
-          <v-col cols="4"><v-select v-model="draftHotel.serviceFeeCurrency" :items="CURRENCIES" label="Валюта сбора" density="compact" variant="outlined" hide-details /></v-col>
-          <v-col cols="12"><v-textarea v-model="draftHotel.managerComment" label="Комментарий менеджера" density="compact" variant="outlined" rows="2" hide-details auto-grow /></v-col>
+          <v-col class="mt-2" cols="8"><v-text-field v-model="draftHotel.name" label="Название" density="compact" variant="outlined" hide-details /></v-col>
+          <v-col class="mt-2" cols="4"><v-select v-model="draftHotel.stars" :items="STARS" label="Звёзды" density="compact" variant="outlined" hide-details /></v-col>
+          <v-col class="mt-2" cols="12"><v-text-field v-model="draftHotel.address" label="Адрес" density="compact" variant="outlined" hide-details /></v-col>
+          <v-col class="mt-2" cols="12"><v-textarea v-model="draftHotel.description" label="Описание" density="compact" variant="outlined" rows="2" hide-details auto-grow /></v-col>
+          <v-col class="mt-2" cols="6"><v-text-field v-model="draftHotel.roomType" label="Тип номера" density="compact" variant="outlined" hide-details /></v-col>
+          <v-col class="mt-2" cols="6"><v-text-field v-model="draftHotel.occupancyType" label="Размещение" density="compact" variant="outlined" hide-details /></v-col>
+          <v-col class="mt-2" cols="12"><v-textarea v-model="draftHotel.roomDescription" label="Описание номера" density="compact" variant="outlined" rows="2" hide-details auto-grow /></v-col>
+          <v-col class="mt-2" cols="6"><DateField v-model="draftHotel.checkIn" label="Заезд" /></v-col>
+          <v-col class="mt-2" cols="6"><DateField v-model="draftHotel.checkOut" label="Выезд" :min="draftHotel.checkIn" /></v-col>
+          <v-col class="mt-2" cols="6"><v-text-field v-model.number="draftHotel.price" label="Цена" type="number" density="compact" variant="outlined" hide-details /></v-col>
+          <v-col class="mt-2" cols="6"><v-select v-model="draftHotel.currency" :items="CURRENCIES" label="Валюта" density="compact" variant="outlined" hide-details /></v-col>
+          <v-col class="mt-2" cols="6"><v-text-field v-model.number="draftHotel.serviceFee" label="Сервисный сбор" type="number" density="compact" variant="outlined" hide-details /></v-col>
+          <v-col class="mt-2" cols="6"><v-select v-model="draftHotel.serviceFeeCurrency" :items="CURRENCIES" label="Валюта сбора" density="compact" variant="outlined" hide-details /></v-col>
+          <v-col class="mt-2" cols="12"><v-textarea v-model="draftHotel.managerComment" label="Комментарий менеджера" density="compact" variant="outlined" rows="2" hide-details auto-grow /></v-col>
         </v-row>
         <div class="text-caption font-weight-medium mt-3 mb-1">Фотографии</div>
         <div v-for="(img, i) in draftHotel.gallery" :key="i" class="d-flex align-center ga-2 mb-1">

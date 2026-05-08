@@ -45,7 +45,6 @@ export interface Hotel {
   serviceFeeCurrency?: Currency
   checkIn: string   // ISO date string
   checkOut: string  // ISO date string
-  nights: number
 }
 
 export interface CarRentalVehicle {

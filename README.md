@@ -264,7 +264,7 @@ npm run lint
 | `occupancyType` | `string` | Тип заселения |
 | `checkIn` | `string` | Дата заезда (ISO) |
 | `checkOut` | `string` | Дата выезда (ISO) |
-| `nights` | `number` | Количество ночей |
+| `nights` | `number` | Количество ночей. **Автоматически вычисляется по датам** в `OfferEditView` (см. `src/helpers/hotel.ts → computeNights`); поле остаётся в типе для обратной совместимости и заполняется в `saveDialog`. В `HotelCard.vue` отображается через `pluralizeNights(computeNights(checkIn, checkOut))` |
 | `price` | `number` | Стоимость проживания |
 | `currency` | `Currency` | Валюта |
 | `serviceFee` | `number` | Сервисный сбор |

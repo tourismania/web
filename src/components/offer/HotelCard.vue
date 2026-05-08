@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { Hotel } from '@/api/types/offer'
+import { computeNights, pluralizeNights } from '@/helpers/hotel'
 
-defineProps<{ hotel: Hotel; index: number }>()
+const props = defineProps<{ hotel: Hotel; index: number }>()
 
 const currentImage = ref(0)
 
@@ -20,6 +21,10 @@ function formatPrice(price: number, currency: string): string {
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' })
 }
+
+const nightsLabel = computed(() =>
+  pluralizeNights(computeNights(props.hotel.checkIn, props.hotel.checkOut)),
+)
 </script>
 
 <template>
@@ -37,7 +42,7 @@ function formatDate(iso: string): string {
         </div>
         <div class="hotel-card__dates-badge">
           {{ formatDate(hotel.checkIn) }} — {{ formatDate(hotel.checkOut) }}
-          <span class="hotel-card__nights">{{ hotel.nights }} ночей</span>
+          <span class="hotel-card__nights">{{ nightsLabel }}</span>
         </div>
       </div>
       <div v-if="hotel.gallery.length > 1" class="hotel-card__thumbs">
@@ -77,7 +82,7 @@ function formatDate(iso: string): string {
         <v-chip size="small" variant="tonal" color="teal-lighten-1" prepend-icon="mdi-bed-outline">
           {{ hotel.roomType }}
         </v-chip>
-        <v-chip
+        <v-chip v-if="hotel.occupancyType !== ''"
           size="small"
           variant="tonal"
           color="teal-lighten-1"
@@ -90,7 +95,7 @@ function formatDate(iso: string): string {
 
       <div v-if="hotel.roomDescription" class="hotel-card__room-description">
         <v-icon icon="mdi-door-open" size="small" class="mr-1" />
-        {{ hotel.roomDescription }}
+        <pre v-html="hotel.roomDescription"></pre>
       </div>
 
       <div v-if="hotel.managerComment" class="hotel-card__comment">
