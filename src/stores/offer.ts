@@ -151,8 +151,8 @@ const MOCK_OFFERS: Offer[] = [
         price: 17264,
         currency: 'RUB',
         gallery: [
-          { url: '/src/assets/images/examples/hotel_5.jpeg',},
-          { url: '/src/assets/images/examples/hotel_6.jpeg',},
+          { url: '/images/examples/hotel_5.jpeg',},
+          { url: '/images/examples/hotel_6.jpeg',},
         ],
         serviceFee: 200,
         serviceFeeCurrency: 'USD',
@@ -172,8 +172,8 @@ const MOCK_OFFERS: Offer[] = [
         price: 254709,
         currency: 'RUB',
         gallery: [
-          { url: '/src/assets/images/examples/hotel_7.jpeg',},
-          { url: '/src/assets/images/examples/hotel_8.jpeg',},
+          { url: '/images/examples/hotel_7.jpeg',},
+          { url: '/images/examples/hotel_8.jpeg',},
         ],
         serviceFee: 19593,
         serviceFeeCurrency: 'RUB',
@@ -199,8 +199,8 @@ const MOCK_OFFERS: Offer[] = [
       {
         name: 'Icon of the Seas — New Ship 2024',
         gallery: [
-          { url: '/src/assets/images/examples/cruise_1.jpeg',},
-          { url: '/src/assets/images/examples/cruise_4.jpg',},
+          { url: '/images/examples/cruise_1.jpeg',},
+          { url: '/images/examples/cruise_4.jpg',},
         ],
         managerComment:
             '18 октября — 25 октября 2025 · 7 ночей · Royal Caribbean · 5★ · Майами — Карибы — Майами',
@@ -222,8 +222,8 @@ const MOCK_OFFERS: Offer[] = [
         managerComment:
             'Обзорная экскурсия по Манхэттену: Статуя Свободы, Таймс-сквер, Центральный парк. ~8 часов · Гид на русском',
         gallery: [
-          { url: '/src/assets/images/examples/exc_1.jpeg',},
-          { url: '/src/assets/images/examples/exc_3.jpg',},
+          { url: '/images/examples/exc_1.jpeg',},
+          { url: '/images/examples/exc_3.jpg',},
         ],
       },
       {
@@ -235,8 +235,8 @@ const MOCK_OFFERS: Offer[] = [
         managerComment:
             'Однодневный визит в Walt Disney World — Magic Kingdom и EPCOT. Park Hopper билеты.',
         gallery: [
-          { url: '/src/assets/images/examples/exc_5.jpeg',},
-          { url: '/src/assets/images/examples/exc_6.jpeg',},
+          { url: '/images/examples/exc_5.jpeg',},
+          { url: '/images/examples/exc_6.jpeg',},
         ],
       },
     ],
