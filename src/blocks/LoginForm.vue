@@ -79,7 +79,7 @@ export default defineComponent({
       </template>
 
       <v-card-title>
-        <h2>Вход в личный кабинет</h2>
+        <h4>Вход в личный кабинет</h4>
       </v-card-title>
       <v-alert
           v-show="errorMessage !== ''"

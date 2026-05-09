@@ -46,7 +46,7 @@ function fetchCurrentUser(): void {
 @use '@/assets/fonts/amatic-sc';
 
 main.main__layout {
-  font-family: variables.$font-family-amatic;
+  font-family: 'Roboto', sans-serif;
   font-weight: 800!important;
   height: 100vh;
   background-position: center;

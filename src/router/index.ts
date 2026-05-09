@@ -1,9 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
-import TravelVoucherView from "@/views/TravelVoucherView.vue";
 import LoginView from "@/views/LoginView.vue";
-import OfferView from "@/views/Offers/OfferView.vue";
+import DealView from "@/views/Deals/DealView.vue";
+import OfferView from "@/views/OfferView.vue";
+import OffersListView from "@/views/OffersListView.vue";
+import OfferEditView from "@/views/OfferEditView.vue";
+import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -14,14 +17,33 @@ const router = createRouter({
       component: HomeView,
     },
     {
-      path: '/travel-voucher',
-      name: 'travel-voucher',
-      component: TravelVoucherView,
-    },
-    {
       path: '/offers',
       name: 'offers',
+      component: OffersListView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/offer/new',
+      name: 'offerNew',
+      component: OfferEditView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/offer/:id/edit',
+      name: 'offerEdit',
+      component: OfferEditView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/offer/:id',
+      name: 'offer',
       component: OfferView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/deals',
+      name: 'deals',
+      component: DealView,
     },
     {
       path: '/login',
@@ -34,6 +56,15 @@ const router = createRouter({
       component: NotFoundView,
     },
   ],
+})
+
+router.beforeEach((to) => {
+  if (to.meta.requiresAuth) {
+    const authStore = useAuthStore()
+    if (!authStore.token) {
+      return { name: 'login', query: { redirect: to.fullPath } }
+    }
+  }
 })
 
 export default router
