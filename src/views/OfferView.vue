@@ -52,7 +52,7 @@ const carRentalMin = computed(() => {
 
 const cruiseTotal = computed(() => {
   if (!offer.value) return 0
-  return offer.value.cruises.reduce((sum, cr) => sum + cr.cabins.reduce((s, c) => s + c.price, 0), 0)
+  return offer.value.cruises.reduce((sum, cr) => sum + cr.cabin.price, 0)
 })
 
 const hotelTotal = computed(() => {

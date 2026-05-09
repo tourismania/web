@@ -39,7 +39,7 @@ function formatDate(date: Date): string {
         <!-- Date badge -->
         <div v-if="excursion.date" class="excursion-card__date-badge">
           <v-icon icon="mdi-calendar" size="14" class="mr-1" />
-          {{ formatDate(excursion.date) }}
+          {{ excursion.date }}
         </div>
         <!-- City badge -->
         <div v-if="excursion.city" class="excursion-card__city-badge">
@@ -83,7 +83,7 @@ function formatDate(date: Date): string {
             class="excursion-card__date-text"
           >
             <v-icon icon="mdi-calendar" size="14" class="mr-1" />
-            {{ formatDate(excursion.date) }}
+            {{ excursion.date }}
           </div>
         </div>
         <div class="excursion-card__price-block">

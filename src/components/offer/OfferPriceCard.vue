@@ -20,7 +20,7 @@ const carRentalMin = computed(() =>
 )
 
 const cruiseTotal = computed(() =>
-  props.offer.cruises.reduce((sum, cr) => sum + cr.cabins.reduce((s, c) => s + c.price, 0), 0),
+  props.offer.cruises.reduce((sum, cr) => sum + cr.cabin.price, 0),
 )
 
 const excursionTotal = computed(() =>

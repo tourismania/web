@@ -37,18 +37,24 @@ function formatPrice(price: number, currency: string): string {
         <h3 class="cruise-card__name">{{ cruise.name }}</h3>
       </div>
 
-      <div v-if="cruise.cabins.length > 0" class="cruise-card__cabins">
-        <div class="cruise-card__cabins-title">Каюты</div>
-        <div v-for="(cabin, i) in cruise.cabins" :key="i" class="cruise-card__cabin">
-          <p class="cruise-card__cabin-desc">{{ cabin.description }}</p>
-          <div class="cruise-card__cabin-price">{{ formatPrice(cabin.price, cabin.currency) }}</div>
-        </div>
-      </div>
-
       <div v-if="cruise.managerComment" class="cruise-card__comment">
         <v-icon icon="mdi-comment-text-outline" size="small" class="mr-1" />
         {{ cruise.managerComment }}
       </div>
+
+      <div class="cruise-card__cabins mt-3">
+        <div class="cruise-card__cabins-title">Каюта</div>
+        <div class="cruise-card__cabin">
+          <p class="cruise-card__cabin-desc">{{ cruise.cabin.description }}</p>
+          <div class="cruise-card__cabin-price">{{ formatPrice(cruise.cabin.price, cruise.cabin.currency) }}</div>
+        </div>
+        <div v-if="cruise.cabin.managerComment" class="cruise-card__comment cruise-card__comment--cabin">
+          <v-icon icon="mdi-comment-text-outline" size="small" class="mr-1" />
+          {{ cruise.cabin.managerComment }}
+        </div>
+      </div>
+
+
     </div>
   </div>
 </template>
@@ -117,7 +123,6 @@ function formatPrice(price: number, currency: string): string {
     align-items: flex-start;
     gap: 12px;
     padding: 10px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 
     &:last-child {
       border-bottom: none;
@@ -147,6 +152,12 @@ function formatPrice(price: number, currency: string): string {
     color: rgba(255, 255, 255, 0.5);
     display: flex;
     align-items: flex-start;
+
+    &--cabin {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
   }
 }
 </style>

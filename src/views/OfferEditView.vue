@@ -56,7 +56,7 @@ function blankVehicle(): CarRentalVehicle {
   return { vehicle: '', name: '', price: 0, currency: 'RUB' }
 }
 function blankCruise(): Cruise {
-  return { gallery: [], name: '', cabins: [] }
+  return { gallery: [], name: '', cabin: blankCabin() }
 }
 function blankCabin(): CruiseCabin {
   return { description: '', price: 0, currency: 'USD' }
@@ -252,8 +252,7 @@ function syncTransferEndpoints() {
 
 function addVehicle() { draftCarRental.value.vehicles.push(blankVehicle()) }
 function removeVehicle(i: number) { draftCarRental.value.vehicles.splice(i, 1) }
-function addCabin() { draftCruise.value.cabins.push(blankCabin()) }
-function removeCabin(i: number) { draftCruise.value.cabins.splice(i, 1) }
+
 function addCruiseGallery() { draftCruise.value.gallery.push({ url: ''}) }
 function removeCruiseGallery(i: number) { draftCruise.value.gallery.splice(i, 1) }
 function addHotelImage() { draftHotel.value.gallery.push({ url: '' }) }
@@ -447,7 +446,7 @@ async function submitOffer() {
             <div v-for="(c, i) in offer.cruises" :key="i" class="entity-row">
               <div class="entity-info">
                 <span class="text-body-2">{{ i + 1 }}. {{ c.name || '—' }}</span>
-                <span class="text-caption text-medium-emphasis ml-2">{{ c.cabins.length }} кают</span>
+                <span class="text-caption text-medium-emphasis ml-2">{{ c.cabin.description || '—' }}</span>
               </div>
               <div class="entity-actions">
                 <v-btn icon size="x-small" variant="text" @click="openEdit('cruise', i)"><v-icon size="14">mdi-pencil</v-icon></v-btn>
@@ -749,18 +748,15 @@ async function submitOffer() {
           <v-col cols="12"><v-text-field v-model="draftCruise.name" label="Название круиза" density="compact" variant="outlined" hide-details /></v-col>
           <v-col cols="12"><v-textarea v-model="draftCruise.managerComment" label="Комментарий менеджера" density="compact" variant="outlined" rows="2" hide-details auto-grow /></v-col>
         </v-row>
-        <div class="text-caption font-weight-medium mt-3 mb-1">Каюты</div>
-        <div v-for="(cab, i) in draftCruise.cabins" :key="i" class="mb-2 pa-2 rounded" style="border:1px solid rgba(255,255,255,.12)">
+        <div class="text-caption font-weight-medium mt-3 mb-1">Каюта</div>
+        <div class="mb-2 pa-2 rounded" style="border:1px solid rgba(255,255,255,.12)">
           <v-row dense>
-            <v-col cols="10"><v-text-field v-model="cab.description" label="Описание каюты" density="compact" variant="outlined" hide-details /></v-col>
-            <v-col cols="2" class="d-flex align-center justify-end">
-              <v-btn icon size="x-small" variant="text" color="error" @click="removeCabin(i)"><v-icon size="14">mdi-delete</v-icon></v-btn>
-            </v-col>
-            <v-col cols="6"><v-text-field v-model.number="cab.price" label="Цена" type="number" density="compact" variant="outlined" hide-details /></v-col>
-            <v-col cols="6"><v-select v-model="cab.currency" :items="CURRENCIES" label="Валюта" density="compact" variant="outlined" hide-details /></v-col>
+            <v-col cols="12"><v-text-field v-model="draftCruise.cabin.description" label="Описание каюты" density="compact" variant="outlined" hide-details /></v-col>
+            <v-col cols="6"><v-text-field v-model.number="draftCruise.cabin.price" label="Цена" type="number" density="compact" variant="outlined" hide-details /></v-col>
+            <v-col cols="6"><v-select v-model="draftCruise.cabin.currency" :items="CURRENCIES" label="Валюта" density="compact" variant="outlined" hide-details /></v-col>
+            <v-col cols="12"><v-textarea v-model="draftCruise.cabin.managerComment" label="Комментарий менеджера (каюта)" density="compact" variant="outlined" rows="2" hide-details auto-grow /></v-col>
           </v-row>
         </div>
-        <v-btn size="x-small" variant="text" prepend-icon="mdi-plus" @click="addCabin">Добавить каюту</v-btn>
         <div class="text-caption font-weight-medium mt-3 mb-1">Галерея (URL)</div>
         <div v-for="(_url, i) in draftCruise.gallery" :key="i" class="d-flex align-center ga-2 mb-1">
           <div class="image-preview" :class="{ 'image-preview--empty': !draftCruise.gallery[i].url }">

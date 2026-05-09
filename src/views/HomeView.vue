@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import SocialLinksFooter from "@/blocks/SocialLinksFooter.vue";
+import { useUserStore } from "@/stores/user";
+
+const userStore = useUserStore()
 </script>
 
 <template>
@@ -8,6 +11,15 @@ import SocialLinksFooter from "@/blocks/SocialLinksFooter.vue";
       <div class="main__logo">
         <img src="@/assets/logos/logo_main_transparent.png" alt="" />
       </div>
+      <v-btn
+        v-if="userStore.isAuthenticated"
+        :to="{ name: 'offers' }"
+        size="large"
+        prepend-icon="mdi-briefcase-outline"
+        elevation="2"
+      >
+        Мои предложения
+      </v-btn>
     </div>
     <SocialLinksFooter />
   </main>

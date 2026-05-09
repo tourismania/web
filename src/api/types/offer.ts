@@ -66,13 +66,14 @@ export interface CruiseCabin {
   description: string
   price: number
   currency: Currency
+  managerComment?: string
 }
 
 export interface Cruise {
   gallery: Image[]
   name: string
   managerComment?: string
-  cabins: CruiseCabin[]
+  cabin: CruiseCabin
 }
 
 export interface Excursion {

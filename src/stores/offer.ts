@@ -158,7 +158,6 @@ const MOCK_OFFERS: Offer[] = [
         serviceFeeCurrency: 'USD',
         checkIn: '2025-09-26',
         checkOut: '2025-09-27',
-        nights: 1,
         managerComment: 'Breakfast buffet = 200 USD / 17 264 ₽',
       },
       {
@@ -180,7 +179,6 @@ const MOCK_OFFERS: Offer[] = [
         serviceFeeCurrency: 'RUB',
         checkIn: '2025-09-27',
         checkOut: '2025-10-02',
-        nights: 5,
         managerComment: 'Обязательный сервисный сбор на месте: 224 $ / 19 593 ₽',
       },
     ],
@@ -206,14 +204,12 @@ const MOCK_OFFERS: Offer[] = [
         ],
         managerComment:
             '18 октября — 25 октября 2025 · 7 ночей · Royal Caribbean · 5★ · Майами — Карибы — Майами',
-        cabins: [
-          {
+        cabin: {
             description:
                 'Каюта с балконом и видом на море · Тариф "Фортуна" · Питание "Всё включено" без алкоголя',
             price: 306774,
             currency: 'RUB',
           },
-        ],
       },
     ],
     excursions: [
