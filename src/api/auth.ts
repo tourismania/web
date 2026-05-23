@@ -8,7 +8,7 @@ export class Auth {
   async login(email: string, password: string): Promise<void> {
     try {
       const response = await apiClient.post<AuthResponse>('/api/login', {
-        username: email,
+        email: email,
         password,
       })
       this.authStore.setToken(response.data.token)
