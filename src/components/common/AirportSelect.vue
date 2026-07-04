@@ -22,6 +22,12 @@ const debounceTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 
 // ─── Display value for the selected airport ───────────────────────────────────
 
+// Some airports have no IATA code — match on either so a saved selection
+// is still found in a freshly loaded search result.
+function matchesCode(item: AirportResult, code: string): boolean {
+  return item.iata === code || item.icao === code
+}
+
 /**
  * Displayed in the input field after selection.
  * Format: "Москва (SVO) — Шереметьево"
@@ -31,7 +37,7 @@ const displayValue = computed<AirportResult | null>(() => {
   // Try to find the selected value in the current items list first,
   // otherwise synthesize a stub so v-autocomplete can display the label.
   return (
-    items.value.find((i) => i.iata === props.modelValue!.code) ??
+    items.value.find((i) => matchesCode(i, props.modelValue!.code)) ??
     ({
       iata: props.modelValue.code,
       icao: '',
@@ -50,8 +56,8 @@ const displayValue = computed<AirportResult | null>(() => {
 
 // Keep a merged list so the current selection is always in the options
 const mergedItems = computed<AirportResult[]>(() => {
-  if (!displayValue.value) return items.value
-  const exists = items.value.some((i) => i.iata === displayValue.value!.iata)
+  if (!displayValue.value || !props.modelValue?.code) return items.value
+  const exists = items.value.some((i) => matchesCode(i, props.modelValue!.code))
   return exists ? items.value : [displayValue.value, ...items.value]
 })
 
@@ -89,7 +95,12 @@ function onSelect(result: AirportResult | null) {
   const airport: Airport = {
     city: result.city.name,
     name: result.name,
-    code: result.iata,
+    // Some airports (mostly regional/general aviation) have no IATA code —
+    // fall back to ICAO so `code` is never empty for a real selection.
+    // An empty code is the app-wide sentinel for "no airport chosen" (see
+    // blankAirport() in FlightEditDialog.vue), so leaving it blank here
+    // would make a valid selection indistinguishable from an unset field.
+    code: result.iata || result.icao,
     // API may return null for city.timezone — fall back to UTC
     timezone: result.city.timezone || '+00:00',
   }
