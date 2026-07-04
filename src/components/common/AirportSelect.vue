@@ -135,7 +135,12 @@ watch(
         <template #default>
           <div class="airport-item__main">
             <span class="airport-item__city">{{ item.raw.city.name }}</span>
-            <v-chip size="x-small" variant="tonal" class="airport-item__iata ml-1">
+            <v-chip
+              v-if="item.raw.iata"
+              size="x-small"
+              variant="tonal"
+              class="airport-item__iata ml-1"
+            >
               {{ item.raw.iata }}
             </v-chip>
           </div>
