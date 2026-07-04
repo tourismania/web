@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Flight, FlightSegment } from '@/api/types/offer'
+import { formatDurationMs, computeFlightDurationMs, formatLayoverWait } from '@/helpers/flight'
 
 const props = defineProps<{ flight: Flight; index: number }>()
 
@@ -29,94 +30,9 @@ function formatPrice(price: number, currency: string): string {
   return `${price.toLocaleString('ru-RU')} ${currencySymbol[currency] ?? currency}`
 }
 
-/**
- * Converts a naive local ISO datetime string (e.g. "2026-05-14T10:00:00",
- * without any TZ suffix) interpreted as wall-clock time in `timeZone` into
- * absolute UTC milliseconds.
- *
- * Поддерживаются два формата `timeZone`:
- *   1. Числовое UTC-смещение в ISO-нотации, напр. "+03:00" или "-05:30".
- *      Используется в новом UI, не зависит от Intl и переходов на DST.
- *   2. Legacy IANA-зона, напр. "Europe/Moscow". Резолвится через Intl —
- *      оставлено для обратной совместимости с уже сохранёнными перелётами.
- */
-function zonedToUtcMs(localIso: string, timeZone: string): number {
-  const match = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/.exec(localIso)
-  if (!match) {
-    // Fall back to native parser when the string isn't the expected shape
-    return new Date(localIso).getTime()
-  }
-  const [, y, mo, d, h, mi, s] = match
-  const asIfUtc = Date.UTC(+y, +mo - 1, +d, +h, +mi, s ? +s : 0)
-
-  // Format 1: ISO offset designator like "+03:00" or "-05:30".
-  const offsetMatch = /^([+-])(\d{2}):(\d{2})$/.exec((timeZone ?? '').trim())
-  if (offsetMatch) {
-    const sign = offsetMatch[1] === '-' ? -1 : 1
-    const hours = +offsetMatch[2]
-    const minutes = +offsetMatch[3]
-    const offsetMs = sign * (hours * 60 + minutes) * 60_000
-    // Wall-clock = UTC + offset, поэтому UTC = asIfUtc - offset.
-    return asIfUtc - offsetMs
-  }
-
-  // Format 2: IANA zone name (legacy). Resolve offset via Intl.
-  const dtf = new Intl.DateTimeFormat('en-US', {
-    timeZone,
-    hourCycle: 'h23',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  })
-  const parts: Record<string, string> = {}
-  for (const p of dtf.formatToParts(new Date(asIfUtc))) {
-    if (p.type !== 'literal') parts[p.type] = p.value
-  }
-  const shownInTz = Date.UTC(
-    +parts.year,
-    +parts.month - 1,
-    +parts.day,
-    +parts.hour,
-    +parts.minute,
-    +parts.second,
-  )
-  // Offset of the target zone from UTC at this moment (ms).
-  const offset = shownInTz - asIfUtc
-  // The true UTC ms for the local wall-clock time in that zone.
-  return asIfUtc - offset
-}
-
-function formatDurationMs(ms: number): string {
-  if (!Number.isFinite(ms) || ms <= 0) return ''
-  const totalMinutes = Math.round(ms / 60000)
-  const days = Math.floor(totalMinutes / (60 * 24))
-  const hours = Math.floor((totalMinutes % (60 * 24)) / 60)
-  const minutes = totalMinutes % 60
-  if (days > 0) return `${days}д ${hours}ч в пути`
-  if (hours > 0) {
-    return minutes > 0 ? `${hours}ч ${minutes}мин в пути` : `${hours}ч в пути`
-  }
-  return `${minutes} мин в пути`
-}
-
 /** Время ожидания между двумя соседними сегментами (в .layover-tooltip-row). */
 function layoverWait(prev: FlightSegment, next: FlightSegment): string {
-  const arrMs = zonedToUtcMs(prev.arrivalDateTime, prev.to.timezone)
-  const depMs = zonedToUtcMs(next.departureDateTime, next.from.timezone)
-  const waitMs = depMs - arrMs
-  if (!Number.isFinite(waitMs) || waitMs <= 0) return ''
-  const totalMinutes = Math.round(waitMs / 60000)
-  const days = Math.floor(totalMinutes / (60 * 24))
-  const hours = Math.floor((totalMinutes % (60 * 24)) / 60)
-  const minutes = totalMinutes % 60
-  if (days > 0) return `${days}д ${hours}ч`
-  if (hours > 0) {
-    return minutes > 0 ? `${hours}ч ${minutes}мин` : `${hours}ч`
-  }
-  return `${minutes} мин`
+  return formatLayoverWait(prev, next)
 }
 
 const firstSegment = computed<FlightSegment>(() => props.flight.segments[0])
@@ -127,27 +43,9 @@ const lastSegment = computed<FlightSegment>(
 const departureFmt = computed(() => formatDateTime(firstSegment.value.departureDateTime))
 const arrivalFmt = computed(() => formatDateTime(lastSegment.value.arrivalDateTime))
 
-const duration = computed(() => {
-  const segments = props.flight.segments
-  let totalMs = 0
-  for (let i = 0; i < segments.length; i++) {
-    const seg = segments[i]
-    const depMs = zonedToUtcMs(seg.departureDateTime, seg.from.timezone)
-    const arrMs = zonedToUtcMs(seg.arrivalDateTime, seg.to.timezone)
-    if (Number.isFinite(arrMs - depMs) && arrMs > depMs) {
-      totalMs += arrMs - depMs
-    }
-    if (i < segments.length - 1) {
-      const next = segments[i + 1]
-      const nextDepMs = zonedToUtcMs(next.departureDateTime, next.from.timezone)
-      const waitMs = nextDepMs - arrMs
-      if (Number.isFinite(waitMs) && waitMs > 0) {
-        totalMs += waitMs
-      }
-    }
-  }
-  return formatDurationMs(totalMs)
-})
+const duration = computed(() =>
+  formatDurationMs(computeFlightDurationMs(props.flight.segments)),
+)
 
 const flightStatus = computed(() => {
   const n = props.flight.segments.length - 1
