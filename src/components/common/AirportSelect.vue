@@ -73,11 +73,16 @@ function onSearchInput(value: string) {
   debounceTimer.value = setTimeout(() => doSearch(value.trim()), 300)
 }
 
+// Airports with an IATA code first; stable sort keeps API order within each group.
+function sortByIata(list: AirportResult[]): AirportResult[] {
+  return [...list].sort((a, b) => Number(!a.iata) - Number(!b.iata))
+}
+
 async function doSearch(query: string) {
   loading.value = true
   try {
     const res = await AirportApi.search(query, 15)
-    items.value = res.data
+    items.value = sortByIata(res.data)
   } catch {
     items.value = []
   } finally {
