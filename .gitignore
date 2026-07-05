@@ -30,5 +30,4 @@ coverage
 *.tsbuildinfo
 
 # claude
-CLAUDE.md
 .claude

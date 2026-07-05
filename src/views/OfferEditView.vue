@@ -4,15 +4,15 @@ import { useRoute, useRouter } from 'vue-router'
 import { useOfferStore } from '@/stores/offer'
 import { useClientStore } from '@/stores/client'
 import type {
-  Offer, Flight, FlightSegment, Airport, Hotel,
+  Offer, Flight, Hotel,
   CarRental, CarRentalVehicle, Cruise, CruiseCabin,
   Excursion, PublicTransport, AdditionalService,
-  FlightClass, Currency, TransportCategory,
+  Currency, TransportCategory,
 } from '@/api/types/offer'
 import DateField from '@/components/common/DateField.vue'
 import DateTimeField from '@/components/common/DateTimeField.vue'
-import TimezoneOffsetSelect from '@/components/common/TimezoneOffsetSelect.vue'
 import { computeNights, pluralizeNights } from '@/helpers/hotel'
+import FlightEditDialog from '@/components/offer/FlightEditDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -23,28 +23,23 @@ const isEdit = ref(false)
 const tourId = ref<string | null>(null)
 
 const CURRENCIES: Currency[] = ['RUB', 'USD', 'EUR', 'TRY']
-const FLIGHT_CLASSES: FlightClass[] = ['economy', 'comfort', 'business']
 const TRANSPORT_CATEGORIES: TransportCategory[] = ['taxi', 'bus', 'transfer']
 const STARS = [1, 2, 3, 4, 5]
 
-function blankAirport(): Airport {
-  // Часовой пояс хранится как ISO-смещение от UTC (например, "+03:00", "-05:30").
-  // Структура `Airport.timezone` остаётся `string`.
-  return { city: '', name: '', code: '', timezone: '+03:00' }
-}
-function blankSegment(): FlightSegment {
-  return {
-    airline: '',
-    flightNumber: '',
-    flightClass: 'economy',
-    from: blankAirport(),
-    to: blankAirport(),
-    departureDateTime: '',
-    arrivalDateTime: '',
-  }
-}
 function blankFlight(): Flight {
-  return { segments: [blankSegment()], price: 0, currency: 'RUB' }
+  return {
+    segments: [{
+      airline: '',
+      flightNumber: '',
+      flightClass: 'economy',
+      from: { city: '', name: '', code: '', timezone: '+03:00' },
+      to: { city: '', name: '', code: '', timezone: '+03:00' },
+      departureDateTime: '',
+      arrivalDateTime: '',
+    }],
+    price: 0,
+    currency: 'RUB',
+  }
 }
 function blankHotel(): Hotel {
   return { name: '', stars: 3, address: '', description: '', roomType: '', occupancyType: '', price: 0, currency: 'RUB', gallery: [], serviceFee: 0, checkIn: '', checkOut: '',}
@@ -121,7 +116,10 @@ type DialogType = 'flight' | 'hotel' | 'carRental' | 'cruise' | 'excursion' | 't
 const activeDialog = ref<DialogType>(null)
 const editingIndex = ref<number | null>(null)
 
+// Flight dialog state
+const flightDialogOpen = ref(false)
 const draftFlight = ref<Flight>(blankFlight())
+
 const draftHotel = ref<Hotel>(blankHotel())
 const draftCarRental = ref<CarRental>(blankCarRental())
 const draftCruise = ref<Cruise>(blankCruise())
@@ -131,7 +129,11 @@ const draftService = ref<AdditionalService>(blankService())
 
 function openAdd(type: DialogType) {
   editingIndex.value = null
-  if (type === 'flight') draftFlight.value = blankFlight()
+  if (type === 'flight') {
+    draftFlight.value = blankFlight()
+    flightDialogOpen.value = true
+    return
+  }
   if (type === 'hotel') draftHotel.value = blankHotel()
   if (type === 'carRental') draftCarRental.value = blankCarRental()
   if (type === 'cruise') draftCruise.value = blankCruise()
@@ -143,7 +145,11 @@ function openAdd(type: DialogType) {
 
 function openEdit(type: DialogType, index: number) {
   editingIndex.value = index
-  if (type === 'flight') draftFlight.value = JSON.parse(JSON.stringify(offer.flights[index]))
+  if (type === 'flight') {
+    draftFlight.value = JSON.parse(JSON.stringify(offer.flights[index]))
+    flightDialogOpen.value = true
+    return
+  }
   if (type === 'hotel') draftHotel.value = JSON.parse(JSON.stringify(offer.hotels[index]))
   if (type === 'carRental') draftCarRental.value = JSON.parse(JSON.stringify(offer.carRentals[index]))
   if (type === 'cruise') draftCruise.value = JSON.parse(JSON.stringify(offer.cruises[index]))
@@ -153,13 +159,14 @@ function openEdit(type: DialogType, index: number) {
   activeDialog.value = type
 }
 
+function onFlightSave(flight: Flight) {
+  const idx = editingIndex.value
+  if (idx !== null) offer.flights[idx] = flight
+  else offer.flights.push(flight)
+}
+
 function saveDialog() {
   const idx = editingIndex.value
-  if (activeDialog.value === 'flight') {
-    syncTransferEndpoints()
-    if (idx !== null) offer.flights[idx] = JSON.parse(JSON.stringify(draftFlight.value))
-    else offer.flights.push(JSON.parse(JSON.stringify(draftFlight.value)))
-  }
   if (activeDialog.value === 'hotel') {
     if (idx !== null) offer.hotels[idx] = JSON.parse(JSON.stringify(draftHotel.value))
     else offer.hotels.push(JSON.parse(JSON.stringify(draftHotel.value)))
@@ -195,59 +202,6 @@ function removeItem(type: DialogType, index: number) {
   if (type === 'excursion') offer.excursions.splice(index, 1)
   if (type === 'transport') offer.transport.splice(index, 1)
   if (type === 'service') offer.additionalServices.splice(index, 1)
-}
-
-/**
- * Добавляет пересадку. Логика:
- *   - До: segments[..., last { from: A, to: B, ...}]
- *   - После: segments[..., last { from: A, to: TRANSFER }, new { from: TRANSFER, to: B, ... }]
- * Изначально TRANSFER — это копия данных конечной точки B, чтобы пользователь мог
- * затем отредактировать аэропорт пересадки. "Точка прибытия" остаётся прежней.
- */
-function addTransfer() {
-  console.log(draftFlight.value.segments.length)
-  const segs = draftFlight.value.segments
-  const lastSeg = segs[segs.length - 1]
-  const transferAirport = JSON.parse(JSON.stringify(lastSeg.to)) as Airport
-  const finalAirport = JSON.parse(JSON.stringify(lastSeg.to)) as Airport
-  const newSeg: FlightSegment = {
-    airline: '',
-    flightNumber: '',
-    flightClass: lastSeg.flightClass,
-    from: blankAirport(),
-    to: finalAirport,
-    departureDateTime: '',
-    arrivalDateTime: lastSeg.arrivalDateTime,
-  }
-  // lastSeg.to теперь представляет аэропорт пересадки (изначально такая же копия,
-  // как у newSeg.from, чтобы при сохранении они были синхронизированы).
-  segs.push(newSeg)
-}
-
-/**
- * Удаляет пересадку с индексом transferIdx (1..N-1). Сегменты i-1 и i сливаются:
- * сохраняем from/airline/flight#/class предыдущего и to/arrivalDateTime следующего.
- */
-function removeTransfer(transferIdx: number) {
-  const segs = draftFlight.value.segments
-  if (transferIdx < 1 || transferIdx >= segs.length) return
-  const prev = segs[transferIdx - 1]
-  const next = segs[transferIdx]
-  prev.to = JSON.parse(JSON.stringify(next.to))
-  prev.arrivalDateTime = next.arrivalDateTime
-  segs.splice(transferIdx, 1)
-}
-
-/**
- * Аэропорт пересадки логически разделяется двумя сегментами: segments[k-1].to и
- * segments[k].from. В UI мы редактируем только segments[k-1].to — перед сохранением
- * мирорим его в segments[k].from, чтобы данные были консистентны.
- */
-function syncTransferEndpoints() {
-  const segs = draftFlight.value.segments
-  for (let k = 1; k < segs.length; k++) {
-    segs[k].from = JSON.parse(JSON.stringify(segs[k - 1].to))
-  }
 }
 
 function addVehicle() { draftCarRental.value.vehicles.push(blankVehicle()) }
@@ -554,112 +508,12 @@ async function submitOffer() {
   </v-container>
 
   <!-- ДИАЛОГ: ПЕРЕЛЁТ -->
-  <v-dialog v-model="activeDialog" :model-value="activeDialog === 'flight'" @update:model-value="v => { if (!v) activeDialog = null }" max-width="700" scrollable>
-    <v-card>
-      <v-card-title class="dialog-title">
-        <v-icon class="mr-2">mdi-airplane</v-icon>
-        {{ editingIndex !== null ? 'Редактировать' : 'Добавить' }} перелёт
-      </v-card-title>
-      <v-divider />
-      <v-card-text class="dialog-body">
-        <!-- Общие параметры перелёта -->
-        <v-row dense>
-          <v-col cols="5"><v-text-field v-model.number="draftFlight.price" label="Цена" type="number" density="compact" variant="outlined" hide-details /></v-col>
-          <v-col cols="4"><v-select v-model="draftFlight.currency" :items="CURRENCIES" label="Валюта" density="compact" variant="outlined" hide-details /></v-col>
-          <v-col cols="12">
-            <v-textarea v-model="draftFlight.managerComment" label="Комментарий менеджера" density="compact" variant="outlined" rows="2" hide-details auto-grow />
-          </v-col>
-        </v-row>
-
-        <!-- Точка отправления -->
-        <div class="endpoint-card endpoint-card--departure mt-3">
-          <div class="endpoint-card__title">
-            <v-icon size="16" class="mr-1">mdi-airplane-takeoff</v-icon>
-            Точка отправления
-          </div>
-          <!-- Информация о первом рейсе -->
-          <div class="leg-card__title">
-            <v-icon size="14" class="mr-1">mdi-airplane</v-icon>
-            Рейс
-          </div>
-          <v-row dense>
-            <v-col cols="6"><v-text-field v-model="draftFlight.segments[0].airline" label="Авиакомпания" density="compact" variant="outlined" hide-details /></v-col>
-            <v-col cols="3"><v-text-field v-model="draftFlight.segments[0].flightNumber" label="Рейс" density="compact" variant="outlined" hide-details /></v-col>
-            <v-col cols="3"><v-select v-model="draftFlight.segments[0].flightClass" :items="FLIGHT_CLASSES" label="Класс" density="compact" variant="outlined" hide-details /></v-col>
-            <v-col cols="12"><v-text-field v-model="draftFlight.segments[0].from.city" label="Город" density="compact" variant="outlined" hide-details /></v-col>
-            <v-col cols="8"><v-text-field v-model="draftFlight.segments[0].from.name" label="Аэропорт" density="compact" variant="outlined" hide-details /></v-col>
-            <v-col cols="4"><v-text-field v-model="draftFlight.segments[0].from.code" label="Код" density="compact" variant="outlined" hide-details /></v-col>
-            <v-col cols="6"><TimezoneOffsetSelect v-model="draftFlight.segments[0].from.timezone" /></v-col>
-            <v-col cols="6"><DateTimeField v-model="draftFlight.segments[0].departureDateTime" label="Вылет (местное)" /></v-col>
-          </v-row>
-        </div>
-
-        <!-- Пересадки -->
-        <template v-for="k in draftFlight.segments.length - 1" :key="`transfer-${k}`">
-          <div class="transfer-card mt-2">
-            <div class="d-flex align-center justify-space-between mb-2">
-              <div class="transfer-card__title">
-                <v-icon size="14" class="mr-1">mdi-airplane-clock</v-icon>
-                Пересадка {{ k }}
-              </div>
-              <v-btn icon size="x-small" variant="text" color="error" @click="removeTransfer(k)">
-                <v-icon size="14">mdi-delete</v-icon>
-              </v-btn>
-            </div>
-
-            <v-row dense>
-              <v-col cols="12"><v-text-field v-model="draftFlight.segments[k - 1].to.city" label="Город" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="8"><v-text-field v-model="draftFlight.segments[k - 1].to.name" label="Аэропорт" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="4"><v-text-field v-model="draftFlight.segments[k - 1].to.code" label="Код" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="6"><TimezoneOffsetSelect v-model="draftFlight.segments[k - 1].to.timezone" /></v-col>
-              <v-col cols="6"><DateTimeField v-model="draftFlight.segments[k - 1].arrivalDateTime" label="Прилёт (местное)" /></v-col>
-            </v-row>
-
-            <div class="leg-card__title mt-3">
-              <v-icon size="14" class="mr-1">mdi-airplane</v-icon>
-              Рейс после пересадки в {{ draftFlight.segments[k - 1].to.city }}
-            </div>
-            <v-row dense>
-              <v-col cols="6"><v-text-field v-model="draftFlight.segments[k].airline" label="Авиакомпания" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="3"><v-text-field v-model="draftFlight.segments[k].flightNumber" label="Рейс" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="3"><v-select v-model="draftFlight.segments[k].flightClass" :items="FLIGHT_CLASSES" label="Класс" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="8"><v-text-field v-model="draftFlight.segments[k].from.name" label="Аэропорт" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="4"><v-text-field v-model="draftFlight.segments[k].from.code" label="Код" density="compact" variant="outlined" hide-details /></v-col>
-              <v-col cols="12"><DateTimeField v-model="draftFlight.segments[k].departureDateTime" label="Вылет с пересадки (местное)" /></v-col>
-            </v-row>
-          </div>
-        </template>
-
-        <!-- Кнопка добавления пересадки -->
-        <div class="d-flex justify-center mt-3 mb-1">
-          <v-btn variant="tonal" prepend-icon="mdi-plus" size="small" @click="addTransfer">
-            Добавить пересадку
-          </v-btn>
-        </div>
-
-        <!-- Точка прибытия -->
-        <div class="endpoint-card endpoint-card--arrival mt-2">
-          <div class="endpoint-card__title">
-            <v-icon size="16" class="mr-1">mdi-airplane-landing</v-icon>
-            Точка прибытия
-          </div>
-          <v-row dense>
-            <v-col cols="12"><v-text-field v-model="draftFlight.segments[draftFlight.segments.length - 1].to.city" label="Город" density="compact" variant="outlined" hide-details /></v-col>
-            <v-col cols="8"><v-text-field v-model="draftFlight.segments[draftFlight.segments.length - 1].to.name" label="Аэропорт" density="compact" variant="outlined" hide-details /></v-col>
-            <v-col cols="4"><v-text-field v-model="draftFlight.segments[draftFlight.segments.length - 1].to.code" label="Код" density="compact" variant="outlined" hide-details /></v-col>
-            <v-col cols="6"><TimezoneOffsetSelect v-model="draftFlight.segments[draftFlight.segments.length - 1].to.timezone" /></v-col>
-            <v-col cols="6"><DateTimeField v-model="draftFlight.segments[draftFlight.segments.length - 1].arrivalDateTime" label="Прилёт (местное)" /></v-col>
-          </v-row>
-        </div>
-      </v-card-text>
-      <v-divider />
-      <v-card-actions class="pa-3 ga-2">
-        <v-spacer />
-        <v-btn variant="text" @click="activeDialog = null">Отмена</v-btn>
-        <v-btn variant="tonal" @click="saveDialog">Сохранить</v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+  <FlightEditDialog
+    v-model="flightDialogOpen"
+    :flight="draftFlight"
+    :editing-index="editingIndex"
+    @save="onFlightSave"
+  />
 
   <!-- ДИАЛОГ: ОТЕЛЬ -->
   <v-dialog :model-value="activeDialog === 'hotel'" @update:model-value="v => { if (!v) activeDialog = null }" max-width="650" scrollable>
@@ -966,59 +820,6 @@ async function submitOffer() {
 .dialog-body {
   padding: 16px !important;
 }
-// ─── Карточки секций диалога перелёта ───────────────────────────────────────
-.endpoint-card,
-.leg-card,
-.transfer-card {
-  padding: 12px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-
-  &__title {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #fff;
-    letter-spacing: 0.04em;
-    display: flex;
-    align-items: center;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-  }
-}
-
-.endpoint-card {
-  border-color: rgba(54, 170, 184, 0.32);
-  background: rgba(54, 170, 184, 0.06);
-
-  &--departure &__title,
-  &--arrival &__title {
-    color: rgba(54, 170, 184, 0.95);
-  }
-}
-
-.leg-card {
-  background: rgba(255, 255, 255, 0.025);
-  border-style: dashed;
-  border-color: rgba(255, 255, 255, 0.18);
-
-  &__title {
-    color: rgba(255, 255, 255, 0.65);
-    text-transform: none;
-    letter-spacing: 0;
-    font-weight: 500;
-  }
-}
-
-.transfer-card {
-  border-color: rgba(239, 159, 59, 0.35);
-  background: rgba(239, 159, 59, 0.05);
-
-  &__title {
-    color: rgba(239, 159, 59, 0.95);
-  }
-}
-
 // ─── Превью изображения рядом с полем URL ────────────────────────────────────
 .image-preview {
   width: 44px;
