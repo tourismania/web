@@ -110,7 +110,9 @@ function onSelect(result: AirportResult | null) {
 // ─── Label helper ─────────────────────────────────────────────────────────────
 
 function itemTitle(item: AirportResult): string {
-  return `${item.city.name} (${item.iata}) — ${item.name}`
+  return item.iata
+    ? `${item.city.name} (${item.iata}) — ${item.name}`
+    : `${item.city.name} — ${item.name}`
 }
 
 watch(
