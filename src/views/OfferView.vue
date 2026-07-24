@@ -22,11 +22,13 @@ function navigateToEdit() {
   router.push({ name: 'offerEdit', params: { id: route.params.id } })
 }
 
-function deleteOffer() {
+async function deleteOffer() {
   const id = route.params.id as string || ''
   if (id === '') return
-  offerStore.deleteOffer(id)
-  router.push({name: 'offers'})
+  const success = await offerStore.deleteOffer(id)
+  if (success) {
+    router.push({name: 'offers'})
+  }
 }
 
 onMounted(() => {

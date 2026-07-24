@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useOfferStore } from '@/stores/offer'
 import OfferListItem from '@/components/offer/OfferListItem.vue'
@@ -7,8 +7,30 @@ import OfferListItem from '@/components/offer/OfferListItem.vue'
 const router = useRouter()
 const offerStore = useOfferStore()
 
+const limit = 20
+const offset = ref(0)
+
+function loadPage() {
+  offerStore.loadOffers({ limit, offset: offset.value })
+}
+
+const canGoPrev = computed(() => offset.value > 0)
+const canGoNext = computed(() => offset.value + limit < offerStore.meta.total)
+
+function prevPage() {
+  if (!canGoPrev.value) return
+  offset.value = Math.max(0, offset.value - limit)
+  loadPage()
+}
+
+function nextPage() {
+  if (!canGoNext.value) return
+  offset.value += limit
+  loadPage()
+}
+
 onMounted(() => {
-  offerStore.loadOffers()
+  loadPage()
 })
 
 function navigateToOffer(id: string) {
@@ -81,6 +103,30 @@ function navigateToEdit(id: string) {
             </tr>
           </tbody>
         </v-table>
+
+        <div v-if="offerStore.meta.total > limit" class="offers-list__pagination">
+          <v-btn
+            variant="text"
+            size="small"
+            prepend-icon="mdi-chevron-left"
+            :disabled="!canGoPrev"
+            @click="prevPage"
+          >
+            Назад
+          </v-btn>
+          <span class="offers-list__pagination-info">
+            {{ offset + 1 }}–{{ Math.min(offset + limit, offerStore.meta.total) }} из {{ offerStore.meta.total }}
+          </span>
+          <v-btn
+            variant="text"
+            size="small"
+            append-icon="mdi-chevron-right"
+            :disabled="!canGoNext"
+            @click="nextPage"
+          >
+            Вперёд
+          </v-btn>
+        </div>
       </div>
     </div>
   </div>
@@ -177,6 +223,20 @@ function navigateToEdit(id: string) {
     padding: 14px 20px !important;
     border-bottom: 1px solid rgba(54, 170, 184, 0.15) !important;
     white-space: nowrap;
+  }
+
+  &__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border-top: 1px solid rgba(54, 170, 184, 0.15);
+  }
+
+  &__pagination-info {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.4);
   }
 
   &__empty {

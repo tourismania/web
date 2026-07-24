@@ -1,5 +1,6 @@
 export type FlightClass = 'economy' | 'business' | 'comfort'
 export type Currency = 'RUB' | 'USD' | 'EUR' | 'TRY'
+export type OfferStatus = 'draft' | 'ready' | 'published'
 
 export interface Airport {
   city: string
@@ -107,7 +108,13 @@ export interface AdditionalService {
 }
 
 export interface Offer {
-  id?: string
+  id?: string               // uuid — первичный идентификатор оффера в реальном API
+  numericId?: number        // числовой id из реального API (для фильтров вроде created_by)
+  status?: OfferStatus      // из реального API; отсутствует у офферов, ещё не синхронизированных с бэкендом
+  description?: string      // из реального API (максимум 5000 символов на бэкенде)
+  agencyId?: number
+  createdBy?: number
+  updatedAt?: string
   clients: Client[]
   createdAt?: string
   startDate: string

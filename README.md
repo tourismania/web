@@ -69,7 +69,7 @@ src/
   api/
     axios.ts          # Общий экземпляр axios (VITE_API_BASE_URL + Content-Type JSON)
     auth.ts            # Auth — POST /api/login
-    user.ts             # UserApi — GET /api/v1/me
+    user.ts             # UserApi — GET /api/v1/users/me
     offer.ts             # OfferApi — CRUD /api/v1/offers
     airport.ts            # AirportApi — полнотекстовый поиск аэропортов/городов
     types/                # Доменные типы (offer, user, auth, airport)
@@ -117,7 +117,14 @@ docker/
 
 ### Хранение данных
 
-Стор `offer` (`src/stores/offer.ts`) сначала обращается к реальному API (`OfferApi`), а при ошибке использует фолбэк в `localStorage` (ключ `tourismania:offers`), чтобы создание/редактирование/удаление предложений переживало перезагрузку страницы даже без доступного бэкенда.
+Реальный бэкенд (`/api/v1/offers`) сейчас хранит только базовые поля оффера: `title`, `description`, `status` (`draft`/`ready`/`published`) + системные `id`/`uuid`/`agencyId`/`createdBy`/`createdAt`/`updatedAt`. Полей для `flights`/`hotels`/`carRentals`/`cruises`/`excursions`/`transport`/`additionalServices`/`clients`/`startDate`/`endDate`/`welcomeText` в API пока нет.
+
+Поэтому стор `offer` (`src/stores/offer.ts`) работает по гибридной схеме:
+
+1. Базовые поля офферов CRUD'ятся через реальный API (`OfferApi`, `src/api/offer.ts`) — ошибки не проглатываются, а попадают в `store.error` и логируются через `console.error`.
+2. Доменный контент (перелёты, отели, круизы и т.д.), которого ещё нет в бэкенде, персистится в `localStorage` (ключ `tourismania:offers`, карта `uuid → доменный контент`) и подмешивается к базовым полям с сервера при загрузке.
+
+Это временное состояние до расширения бэкенда под полную доменную модель (см. открытый вопрос в issue [#24](../../issues/24)).
 
 ### Поиск аэропортов
 
