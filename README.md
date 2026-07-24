@@ -1,371 +1,139 @@
-# web
+# Tourismania Web
 
-This template should help get you started developing with Vue 3 in Vite.
+SPA-интерфейс платформы **Tourismania** для менеджеров туристического агентства. Позволяет создавать, редактировать и просматривать туристические предложения (Offer): перелёты, отели, круизы, аренду авто, экскурсии, транспорт и дополнительные услуги.
 
-## Правило наименования файлов
+## Технологии
 
-| Тип файла             | Рекомендуемый формат имени | Пример                                |
-| --------------------- | -------------------------- | ------------------------------------- |
-| Vue компоненты (.vue) | PascalCase                 | `UserProfile.vue`                     |
-| Классы TypeScript     | PascalCase (для класса)    | Класс `UserAPI` в файле `user-api.ts` |
-| Обычные TS файлы      | kebab-case                 | `user-api.ts`, `auth-store.ts`        |
-| Папки                 | kebab-case                 | `/components`, `/api`, `/stores`      |
+- [Vue 3](https://vuejs.org/) + [Vite](https://vitejs.dev/) — SPA на Composition API
+- [TypeScript](https://www.typescriptlang.org/) — строгая типизация
+- [Vuetify 3](https://vuetifyjs.com/) — UI-кит (тёмная тема)
+- [Pinia](https://pinia.vuejs.org/) — стейт-менеджмент
+- [Vue Router 4](https://router.vuejs.org/) — маршрутизация
+- SCSS, `unplugin-icons` — стили и иконки
+- [Vitest](https://vitest.dev/) + [Cypress](https://www.cypress.io/) — тестирование
+
+## Требования
+
+- Docker
+
+Все команды по работе с приложением выполняются внутри Docker-контейнера, чтобы не влиять на локальную машину.
+
+## Быстрый старт
+
+```sh
+# Собрать образ (стадия "local" — dev-сервер с HMR)
+docker build --target local -t tourismania-web .
+
+# Запустить dev-сервер
+docker run --rm -it \
+  -p 5173:5173 \
+  -v "$(pwd)":/home/node/app \
+  tourismania-web
+```
+
+Приложение поднимется на `http://localhost:5173`. Для production используется стадия `production` (nginx + статика из `dist/`, конфиг — `docker/nginx/conf.d/default.conf`), см. `Dockerfile`.
+
+## Переменные окружения
+
+| Файл | Назначение |
+|---|---|
+| `.env` | Dev-конфигурация |
+| `.env.production` | Prod-конфигурация |
+
+| Переменная | Описание |
+|---|---|
+| `VITE_API_BASE_URL` | Базовый URL бэкенд-API. Обязательна — без неё API-запросы упадут |
+
+## Скрипты
+
+```sh
+npm run dev                  # Dev-сервер (HMR)
+npm run build                # type-check + сборка (vite build)
+npm run preview              # Предпросмотр prod-сборки
+npm run type-check           # vue-tsc --build
+npm run lint                 # ESLint --fix
+npm run format                # Prettier (src/)
+
+npm run test:unit             # Vitest (unit-тесты)
+npm run test:e2e              # Cypress e2e против prod-сборки
+npm run test:e2e:dev          # Cypress e2e против dev-сервера
+npm run test:component:dev    # Cypress component tests
+```
+
+Все команды запускаются внутри контейнера.
 
 ## Структура проекта
 
-В папке src:
-
-- **Assets**: здесь организуем хранение файлов CSS, шрифтов и изображений.
-
-- **Components**: это автономные компоненты Vue, которые одновременно инкапсулируют структуру шаблона, логику JavaScript и представление CSS.
-
-- **Router**: хранит все настройки роутинга и маршруты.
-
-- **Store**: содержит конфиг и данные хранилища (Vuex, Pinia).
-
-- **UI**. Здесь хранятся компоненты дизайн-системы. Это самые простые элементы интерфейса, которые часто переиспользуются. Обычно эти компоненты взаимодействуют с «внешним миром» через пропсы и события. Обращение из них к стору и роутингу будет лишним. Чаще всего они не отправляют запросов к серверу и не содержат сложной бизнес-логики. Примеры таких компонентов: инпуты, кнопки, алерты и другие UI-элементы.
-
-- **Blocks**. Это компоненты блоков. Блок — небольшой кусок интерфейса, который состоит из компонентов и уже имеет бизнес-логику. Примером блока может служить карточка продукта. Важно также хранить блоки простыми, не обращаться из них к стору, к роуту, не делать лишних запросов. Чаще всего таким компонентам достаточно информации из пропсов. Это позволит переиспользовать один блок для нескольких страниц.
-
-- **Views**. Страницы собираются из блоков и компонентов, но сами по себе являются более сложными компонентами, из которых мы обращаемся к стору, роутингу и т. д.
-
-- **Layouts**. Хранит компоненты-макеты с данными, которые используются для нескольких страниц. На нем обычно присутствует Footer, Header, глобальный прелоадер и др. Например, может быть один макет для авторизованных пользователей, другой — для страницы авторизации.
-
-- **Plugins**. В этой папке храним все сторонние библиотеки, там же их инициализируем и настраиваем.
-
-- **Hooks**. Можно выделить отдельную папку для хранения кода, использующегося в Setup-компонентах (composition API).
-
-- **Helpers**. Помощники будут содержать вспомогательные функции, которые вы хотели бы использовать в своем приложении. Например, функции форматирования, конвертирования данных или валидаторы.
-
-- **API/services**. Папка содержит все функции вызова API.
-
-- **Constants**. Всё, на что в приложении будут ссылаться глобально, но не хранится в .env, можно хранить здесь. Это могут быть статические данные или, например, список типов глобальных окон, которые можно вызвать глобально (через эмиттеры).
-
-- **Interfaces**, **enums**. Папку для типов и перечислений.
-
-
-## Работа с иконками
-
-Для работы с иконками используется библиотека `https://github.com/unplugin/unplugin-icons`. Все коллекции иконки данной библиотек можно посмотреть [тут](https://iconify.design/).
-Если нужен целый набор иконок, то необходимо подключить весь набор иконок, как пример `npm i -D @iconify-json/mdi`.
-Но если необходима, какая-то одна конкретная иконка, то на сайте можно получить ее шаблон и лучше завести отдельным компонентом.
-
-Какие коллекции подгружены:
-- circle-flags
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
+```plain
+src/
+  api/
+    axios.ts          # Общий экземпляр axios (VITE_API_BASE_URL + Content-Type JSON)
+    auth.ts            # Auth — POST /api/login
+    user.ts             # UserApi — GET /api/v1/me
+    offer.ts             # OfferApi — CRUD /api/v1/offers
+    airport.ts            # AirportApi — полнотекстовый поиск аэропортов/городов
+    types/                # Доменные типы (offer, user, auth, airport)
+  assets/                # SCSS-переменные, глобальные стили, шрифты
+  blocks/                # Layout/chrome-компоненты с доступом к стору (AppBar, NavigationDrawer, LoginForm...)
+  components/
+    offer/               # Карточки и блоки сущности Offer (FlightCard, HotelCard, CruiseCard...)
+    common/              # Переиспользуемые UI-компоненты ввода (DateField, AirportSelect...)
+  helpers/               # Чистые функции (расчёт ночей в отеле, перевод локального времени рейса в UTC)
+  layouts/               # MainLayout — обёртка всех страниц
+  router/                # Маршруты + navigation guard
+  stores/                # Pinia-сторы (auth, user, offer, client)
+  views/                 # Страницы-маршруты
+public/
+  images/                # Статические ассеты, попадающие в prod-сборку без явного импорта
+docker/
+  nginx/                 # Конфигурация nginx для production-образа
 ```
 
-### Compile and Hot-Reload for Development
+## Маршруты
 
-```sh
-npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
-npm run test:unit
-```
-
-### Run End-to-End Tests with [Cypress](https://www.cypress.io/)
-
-```sh
-npm run test:e2e:dev
-```
-
-This runs the end-to-end tests against the Vite development server.
-It is much faster than the production build.
-
-But it's still recommended to test the production build with `test:e2e` before deploying (e.g. in CI environments):
-
-```sh
-npm run build
-npm run test:e2e
-```
-
-### Run Component Tests with [Cypress](https://www.cypress.io/)
-
-Тестирование компонентов можно запустить командой ниже
-
-```sh
-npm run test:component:dev
-```
-**Важно помнить**. Для того, чтобы cypress корректно работал с Vite, ему необходима 4, 5 или 6-я версия Vite (а на 2025-08-24 актуальная 7-я).
-
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
-
----
-
-## Offer Domain
-
-### Архитектура
-
-| Слой | Файл | Описание |
+| Path | Auth | Описание |
 |---|---|---|
-| Types | `src/api/types/offer.ts` | Все типы доменной сущности Offer (включая `Client`) |
-| API | `src/api/offer.ts` | `OfferApi` — CRUD через `/api/v1/offers` |
-| Store | `src/stores/offer.ts` | `useOfferStore` — состояние + mock-данные как fallback |
-| Store | `src/stores/client.ts` | `useClientStore` — список клиентов для мультиселекта (mock, до появления API) |
-| Views | `src/views/OfferView.vue` | Просмотр предложения (ид из маршрута) |
-| Views | `src/views/OffersListView.vue` | Список предложений |
-| Views | `src/views/OfferEditView.vue` | Создание / редактирование предложения |
+| `/` | — | Главная |
+| `/offers` | ✅ | Список предложений |
+| `/offer/new` | ✅ | Создание предложения |
+| `/offer/:id/edit` | ✅ | Редактирование предложения |
+| `/offer/:id` | ✅ | Просмотр предложения |
+| `/deals` | — | Сделки |
+| `/login` | — | Вход |
+| `*` | — | 404 |
 
-### Offer-компоненты (`src/components/offer/`)
+Маршруты с `meta: { requiresAuth: true }` перенаправляют на `/login?redirect=...` при отсутствии JWT-токена.
 
-| Компонент | Назначение |
-|---|---|
-| `OfferHeader.vue` | Hero-блок: SVG-карта мира, название, даты, статистика |
-| `OfferPriceCard.vue` | Итоговая карточка с расчётом стоимости |
-| `OfferSectionHeader.vue` | Заголовок секции (иконка + название + счётчик + итог) |
-| `OfferListItem.vue` | Строка предложения в таблице списка |
-| `OfferBasicInfoForm.vue` | Форма редактирования основных данных предложения |
-| `FlightCard.vue` | Карточка перелёта (поддерживает оба формата `Airport.timezone`: ISO offset и IANA) |
-| `HotelCard.vue` | Карточка отеля с галереей |
-| `CarRentalCard.vue` | Карточка аренды авто |
-| `CruiseCard.vue` | Карточка круиза с галереей |
+## Домен Offer
 
-### Общие компоненты ввода (`src/components/common/`)
+Корневая сущность приложения (`src/api/types/offer.ts`): `title`, `clients`, `welcomeText`, `startDate`, `endDate` и массивы вложенных сущностей — `flights`, `hotels`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`.
 
-| Компонент | Назначение |
-|---|---|
-| `DateField.vue` | Поле даты — `v-text-field` (readonly) с иконкой календаря справа; клик в любую точку открывает `v-date-picker` в `v-menu`. Принимает/возвращает строку `YYYY-MM-DD`. Поддерживает `min` / `max` |
-| `DateTimeField.vue` | Поле даты+времени — `v-date-picker` + два инпута часы/минуты в общем меню. Возвращает строку `YYYY-MM-DDTHH:mm:ss` |
-| `TimezoneOffsetSelect.vue` | Выпадающий список UTC-смещений (UTC-12 … UTC+14, включая `+03:30`, `+05:30`, `+05:45` и т.д.). Хранит `+HH:MM` / `-HH:MM`. Имеет fallback: legacy IANA-значения нормализуются в офсет через `Intl` |
+- **`Flight`** — состоит из `segments: FlightSegment[]` (прямой рейс = 1 сегмент, N пересадок = N+1 сегмент). Каждый `Airport` хранит `timezone` как ISO-офсет (`+03:00`); для обратной совместимости `zonedToUtcMs` (`src/helpers/flight.ts`) также распознаёт legacy IANA-зоны (`Europe/Moscow`) через `Intl`.
+- **`Hotel`** — количество ночей не хранится в модели, а считается на лету через `computeNights(checkIn, checkOut)` (`src/helpers/hotel.ts`).
+- **`Cruise`** — одна каюта на круиз (`cabin: CruiseCabin`).
+- **`Excursion`, `Cruise`** — галереи изображений (`gallery: Image[]`).
 
-### Store (`useOfferStore`)
+Полные определения — в `src/api/types/offer.ts`.
 
-**State:** `offers`, `currentOffer`, `loading`, `error`  
-**Getters:** `offerById`, `offersCount`  
-**Actions:** `loadOffers`, `loadOfferById`, `createOffer`, `updateOffer`, `deleteOffer`, `clearCurrentOffer`
+### Хранение данных
 
-### Персистентность
+Стор `offer` (`src/stores/offer.ts`) сначала обращается к реальному API (`OfferApi`), а при ошибке использует фолбэк в `localStorage` (ключ `tourismania:offers`), чтобы создание/редактирование/удаление предложений переживало перезагрузку страницы даже без доступного бэкенда.
 
-Каждое из действий `loadOffers`, `loadOfferById`, `createOffer`, `updateOffer`, `deleteOffer` сначала пытается обратиться к `OfferApi`. Если API недоступен — используется фолбэк на `localStorage` под ключом `tourismania:offers`:
+### Поиск аэропортов
 
-| Сценарий | Поведение |
-|---|---|
-| `loadOffers` (API ↓) | читает из localStorage; при первом запуске сидит mock-данными |
-| `loadOfferById` (API ↓) | ищет оффер в localStorage, затем — в дефолтном mock |
-| `createOffer` (API ↓) | генерит `id` (через `crypto.randomUUID`) + `createdAt`, пишет в localStorage |
-| `createOffer` (API ↑) | синхронизирует localStorage с ответом сервера |
-| `updateOffer` (любой) | обновляет запись и в state, и в localStorage |
-| `deleteOffer` (любой) | удаляет запись и в state, и в localStorage |
+`AirportSelect.vue` использует `AirportApi.search` (`GET /api/v1/airports`) для полнотекстового поиска по аэропортам и городам (мин. 2 символа) и сохраняет выбранный аэропорт в `Airport`-объект перелёта.
 
-Благодаря этому создание/редактирование/удаление переживают F5 даже без бэкенда.
+## Тестирование
 
----
+- **Unit**: Vitest + `@vue/test-utils` + jsdom — тесты рядом с файлами (`*.spec.ts`)
+- **E2E / Component**: Cypress — `cypress/e2e`, `cypress/support`
 
-## Модель данных (`src/api/types/offer.ts`)
+Все хелперы (`src/helpers/`) и критические пути (auth flow, Offer CRUD) — приоритет при написании тестов.
 
-### Вспомогательные типы
+## Деплой
 
-| Тип | Значения |
-|---|---|
-| `FlightClass` | `'economy'` \| `'business'` \| `'comfort'` |
-| `Currency` | `'RUB'` \| `'USD'` \| `'EUR'` \| `'TRY'` |
-| `TransportCategory` | `'taxi'` \| `'bus'` \| `'transfer'` |
+CI/CD через GitHub Actions (`.github/workflows/deploy.yml`), запуск вручную (`workflow_dispatch`). Деплой по SSH на prod-сервер командой `make deploy-web-tag TAG=<tag>`.
 
-> Типы ранее были в `src/api/types/tour.ts`, теперь в `src/api/types/offer.ts`.
+## Документация для разработки
 
----
-
-### `Offer` — корневая сущность предложения
-
-Объединяет все составляющие поездки.
-
-| Поле | Тип | Описание |
-|---|---|---|
-| `title` | `string` | Название предложения |
-| `clients` | `Client[]` | Клиенты, для которых составлено предложение (мультиселект в форме редактирования) |
-| `welcomeText` | `string` | Приветственный текст от менеджера |
-| `startDate` | `string` | Дата начала (ISO) |
-| `endDate` | `string` | Дата окончания (ISO) |
-| `flights` | `Flight[]` | Перелёты |
-| `totalFlightsCost` | `number` | Итог по перелётам |
-| `flightsCurrency` | `Currency` | Валюта итога перелётов |
-| `hotels` | `Hotel[]` | Отели |
-| `totalHotelsCost` | `number` | Итог по отелям |
-| `hotelsCurrency` | `Currency` | Валюта итога отелей |
-| `carRentals` | `CarRental[]` | Аренда автомобилей |
-| `cruises` | `Cruise[]` | Круизы |
-| `excursions` | `Excursion[]` | Экскурсии |
-| `transport` | `PublicTransport[]` | Общественный транспорт |
-| `additionalServices` | `AdditionalService[]` | Дополнительные услуги |
-
----
-
-### `Flight` — перелёт (модель сегментов)
-
-Перелёт — это упорядоченная цепочка из одного или более сегментов. Прямой рейс — 1 сегмент, перелёт с N пересадками — N+1 сегмент. Каждый сегмент несёт свою авиакомпанию, номер рейса, класс и пару аэропортов вылета/прилёта.
-
-| Поле | Тип | Описание |
-|---|---|---|
-| `segments` | `FlightSegment[]` | Сегменты маршрута (длина >= 1) |
-| `price` | `number` | Стоимость перелёта (общая) |
-| `currency` | `Currency` | Валюта стоимости |
-| `managerComment` | `string?` | Комментарий менеджера |
-
-#### `FlightSegment` — один сегмент перелёта (между двумя аэропортами)
-
-| Поле | Тип | Описание |
-|---|---|---|
-| `airline` | `string` | Авиакомпания, выполняющая сегмент |
-| `flightNumber` | `string` | Номер рейса (напр. `U6-773`) |
-| `flightClass` | `FlightClass` | Класс перелёта на сегменте |
-| `from` | `Airport` | Аэропорт вылета |
-| `to` | `Airport` | Аэропорт прилёта |
-| `departureDateTime` | `string` | Локальное время вылета в `from.timezone` (ISO без TZ-суффикса, напр. `2026-05-14T10:00:00`) |
-| `arrivalDateTime` | `string` | Локальное время прилёта в `to.timezone` |
-
-#### `Airport` — аэропорт
-
-| Поле | Тип | Описание |
-|---|---|---|
-| `city` | `string` | Город |
-| `name` | `string` | Название аэропорта (напр. `Кольцово`) |
-| `code` | `string` | IATA-код (напр. `SVX`) |
-| `timezone` | `string` | UTC-смещение в ISO-формате (напр. `+03:00`, `-05:30`). Нужна для корректного расчёта длительности перелёта и времени ожидания на пересадках. Для обратной совместимости `FlightCard.zonedToUtcMs` также распознаёт legacy IANA-зоны (`Europe/Moscow`) — резолвится через `Intl` |
-
----
-
-### `Hotel` — отель
-
-| Поле | Тип | Описание |
-|---|---|---|
-| `name` | `string` | Название отеля |
-| `stars` | `number` | Количество звёзд |
-| `address` | `string` | Адрес |
-| `description` | `string` | Описание |
-| `roomType` | `string` | Тип номера |
-| `roomDescription` | `string?` | Описание номера |
-| `occupancyType` | `string` | Тип заселения |
-| `checkIn` | `string` | Дата заезда (ISO) |
-| `checkOut` | `string` | Дата выезда (ISO) |
-| `nights` | `number` | Количество ночей. **Автоматически вычисляется по датам** в `OfferEditView` (см. `src/helpers/hotel.ts → computeNights`); поле остаётся в типе для обратной совместимости и заполняется в `saveDialog`. В `HotelCard.vue` отображается через `pluralizeNights(computeNights(checkIn, checkOut))` |
-| `price` | `number` | Стоимость проживания |
-| `currency` | `Currency` | Валюта |
-| `serviceFee` | `number` | Сервисный сбор |
-| `serviceFeeCurrency` | `Currency?` | Валюта сервисного сбора |
-| `images` | `HotelImage[]` | Галерея |
-| `managerComment` | `string?` | Комментарий менеджера |
-
-#### `HotelImage`
-
-| Поле | Тип | Описание |
-|---|---|---|
-| `url` | `string` | URL изображения |
-| `alt` | `string?` | Alt-текст |
-
----
-
-### `CarRental` — аренда автомобиля
-
-| Поле | Тип | Описание |
-|---|---|---|
-| `name` | `string` | Название прокатной компании |
-| `startLocation` | `string` | Место получения |
-| `endLocation` | `string` | Место возврата |
-| `vehicles` | `CarRentalVehicle[]` | Варианты автомобилей |
-| `managerComment` | `string?` | Комментарий менеджера |
-
-#### `CarRentalVehicle`
-
-| Поле | Тип | Описание |
-|---|---|---|
-| `vehicle` | `string` | Идентификатор/тип автомобиля |
-| `name` | `string` | Название модели |
-| `price` | `number` | Стоимость |
-| `currency` | `Currency` | Валюта |
-
----
-
-### `Cruise` — круиз
-
-| Поле | Тип | Описание |
-|---|---|---|
-| `name` | `string` | Название круиза |
-| `gallery` | `string[]` | Галерея (массив URL) |
-| `cabins` | `CruiseCabin[]` | Варианты кают |
-| `managerComment` | `string?` | Комментарий менеджера |
-
-#### `CruiseCabin`
-
-| Поле | Тип | Описание |
-|---|---|---|
-| `description` | `string` | Описание каюты |
-| `price` | `number` | Стоимость |
-| `currency` | `Currency` | Валюта |
-
----
-
-### `Excursion` — экскурсия
-
-| Поле | Тип | Описание |
-|---|---|---|
-| `date` | `Date \| null \| undefined` | Дата (опционально) |
-| `city` | `string \| null \| undefined` | Город (опционально) |
-| `price` | `number` | Стоимость |
-| `currency` | `Currency` | Валюта |
-| `managerComment` | `string` | Комментарий менеджера |
-| `gallery` | `HotelImage[]` | Галерея |
-
----
-
-### `AdditionalService` — дополнительные услуги
-
-| Поле | Тип | Описание |
-|---|---|---|
-| `name` | `string` | Название услуги |
-| `price` | `number` | Стоимость |
-| `currency` | `Currency` | Валюта |
-| `managerComment` | `string?` | Комментарий менеджера |
-
----
-
-### `PublicTransport` — общественный транспорт
-
-| Поле | Тип | Описание |
-|---|---|---|
-| `datetime` | `string` | Дата и время (ISO) |
-| `category` | `TransportCategory` | Категория: такси / автобус / трансфер |
-| `pickupLocation` | `string` | Место посадки |
-| `dropoffLocation` | `string` | Место высадки |
-| `duration` | `number` | Длительность в минутах |
-| `price` | `number` | Стоимость |
-| `currency` | `Currency` | Валюта |
-| `managerComment` | `string?` | Комментарий менеджера |
-
----
-
-### `Client` — клиент предложения
-
-| Поле | Тип | Описание |
-|---|---|---|
-| `name` | `string` | Имя |
-| `surname` | `string` | Фамилия |
-| `email` | `string` | E-mail (используется как уникальный ключ при выборе в мультиселекте) |
-
-Список клиентов отдаётся через `useClientStore` (`src/stores/client.ts`). Сейчас стор отдаёт mock-данные; позже подключится бэкенд. В форме редактирования предложения клиенты выбираются через `v-autocomplete` с `multiple chips`; внутри формы работает с массивом email-ов, на сохранение преобразуется в `Client[]` для `Offer.clients`.
+Подробный контекст по архитектуре, конвенциям, доменным типам и процессу разработки — в [`CLAUDE.md`](./CLAUDE.md).
