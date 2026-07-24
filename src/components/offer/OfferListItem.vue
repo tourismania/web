@@ -19,18 +19,18 @@ function fmtDate(iso: string): string {
 }
 
 function handleClick() {
-  if (props.offer.id) emit('click', props.offer.id)
+  if (props.offer.uuid) emit('click', props.offer.uuid)
 }
 
 function handleEdit(e: Event) {
   e.stopPropagation()
-  if (props.offer.id) emit('edit', props.offer.id)
+  if (props.offer.uuid) emit('edit', props.offer.uuid)
 }
 
 function handleCopyLink(e: Event) {
   e.stopPropagation()
-  if (props.offer.id) {
-    const url = `${window.location.origin}/offer/${props.offer.id}`
+  if (props.offer.uuid) {
+    const url = `${window.location.origin}/offer/${props.offer.uuid}`
     navigator.clipboard.writeText(url)
   }
 }

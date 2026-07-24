@@ -221,8 +221,8 @@ async function submitOffer() {
     }
   } else {
     const result = await offerStore.createOffer(data)
-    if (result?.id) {
-      router.push({ name: 'offer', params: { id: result.id } })
+    if (result?.uuid) {
+      router.push({ name: 'offer', params: { id: result.uuid } })
     }
   }
 }

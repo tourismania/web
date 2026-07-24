@@ -88,7 +88,7 @@ function navigateToEdit(id: string) {
           <tbody v-if="offerStore.offers.length > 0">
             <OfferListItem
               v-for="offer in offerStore.offers"
-              :key="offer.id"
+              :key="offer.uuid"
               :offer="offer"
               @click="navigateToOffer"
               @edit="navigateToEdit"

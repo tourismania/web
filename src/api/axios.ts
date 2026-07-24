@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
+import { LOGIN_ROUTE_PATH } from '@/router/constants'
 
 /**
  * Shared axios instance for all API calls.
@@ -25,9 +26,9 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       useAuthStore().clearToken()
-      if (window.location.pathname !== '/login') {
+      if (window.location.pathname !== LOGIN_ROUTE_PATH) {
         const redirect = window.location.pathname + window.location.search
-        window.location.href = `/login?redirect=${encodeURIComponent(redirect)}`
+        window.location.href = `${LOGIN_ROUTE_PATH}?redirect=${encodeURIComponent(redirect)}`
       }
     }
     return Promise.reject(error)

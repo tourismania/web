@@ -18,8 +18,8 @@ const mockedOfferApi = vi.mocked(OfferApi, true)
 
 function baseOffer(overrides: Partial<Offer> = {}): Offer {
   return {
-    id: 'uuid-1',
-    numericId: 1,
+    uuid: 'uuid-1',
+    id: 1,
     status: 'draft',
     title: 'Тур',
     description: '',
@@ -63,7 +63,7 @@ describe('offer store', () => {
       await store.loadOffers()
 
       expect(store.offers).toHaveLength(1)
-      expect(store.offers[0].id).toBe('uuid-1')
+      expect(store.offers[0].uuid).toBe('uuid-1')
       expect(store.meta).toEqual({ total: 1, limit: 20, offset: 0 })
       expect(store.error).toBeNull()
       expect(store.loading).toBe(false)
@@ -122,7 +122,7 @@ describe('offer store', () => {
       const store = useOfferStore()
       await store.loadOfferById('uuid-1')
 
-      expect(store.currentOffer?.id).toBe('uuid-1')
+      expect(store.currentOffer?.uuid).toBe('uuid-1')
       expect(store.error).toBeNull()
     })
 
@@ -140,7 +140,7 @@ describe('offer store', () => {
 
   describe('createOffer', () => {
     it('creates via API, persists domain content locally and returns the merged offer', async () => {
-      mockedOfferApi.create.mockResolvedValueOnce(baseOffer({ id: 'uuid-new', title: 'Новый тур' }))
+      mockedOfferApi.create.mockResolvedValueOnce(baseOffer({ uuid: 'uuid-new', title: 'Новый тур' }))
 
       const store = useOfferStore()
       const result = await store.createOffer({
@@ -160,10 +160,10 @@ describe('offer store', () => {
 
       expect(mockedOfferApi.create).toHaveBeenCalledWith({
         title: 'Новый тур',
-        description: undefined,
+        description: '',
         status: 'draft',
       })
-      expect(result?.id).toBe('uuid-new')
+      expect(result?.uuid).toBe('uuid-new')
       expect(result?.hotels).toHaveLength(1)
       expect(store.offers).toHaveLength(1)
 
@@ -209,7 +209,7 @@ describe('offer store', () => {
 
       expect(mockedOfferApi.update).toHaveBeenCalledWith('uuid-1', {
         title: 'Изменённый',
-        description: undefined,
+        description: '',
         status: undefined,
       })
       expect(result?.flights).toHaveLength(1)

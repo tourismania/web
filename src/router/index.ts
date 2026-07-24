@@ -7,6 +7,7 @@ import OfferView from "@/views/OfferView.vue";
 import OffersListView from "@/views/OffersListView.vue";
 import OfferEditView from "@/views/OfferEditView.vue";
 import { useAuthStore } from '@/stores/auth'
+import { LOGIN_ROUTE_PATH } from '@/router/constants'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -46,7 +47,7 @@ const router = createRouter({
       component: DealView,
     },
     {
-      path: '/login',
+      path: LOGIN_ROUTE_PATH,
       name: 'login',
       component: LoginView,
     },

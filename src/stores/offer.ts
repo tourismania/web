@@ -8,7 +8,7 @@ import type { Offer } from '@/api/types/offer'
 // поля оффера: title, description, status, agencyId, createdBy, timestamps.
 // Перелёты/отели/круизы/итд там пока не появились, поэтому эта часть модели
 // временно живёт в localStorage и подмешивается к базовым полям, пришедшим
-// с реального API, по uuid оффера (Offer.id).
+// с реального API, по uuid оффера (Offer.uuid).
 const STORAGE_KEY = 'tourismania:offers'
 
 type DomainContent = Pick<
@@ -82,7 +82,7 @@ function writeDomainContentMap(map: Record<string, DomainContent>): void {
 }
 
 function mergeWithDomainContent(base: Offer, map: Record<string, DomainContent>): Offer {
-  const domain = base.id ? map[base.id] : undefined
+  const domain = base.uuid ? map[base.uuid] : undefined
   return domain ? { ...base, ...domain } : base
 }
 
@@ -96,7 +96,7 @@ export const useOfferStore = defineStore('offer', {
   }),
 
   getters: {
-    offerById: (state) => (id: string) => state.offers.find((t) => t.id === id) ?? null,
+    offerById: (state) => (uuid: string) => state.offers.find((o) => o.uuid === uuid) ?? null,
     offersCount: (state) => state.offers.length,
   },
 
@@ -117,15 +117,15 @@ export const useOfferStore = defineStore('offer', {
       }
     },
 
-    async loadOfferById(id: string) {
+    async loadOfferById(uuid: string) {
       this.loading = true
       this.error = null
       try {
-        const base = await OfferApi.getById(id)
+        const base = await OfferApi.getById(uuid)
         const domainMap = readDomainContentMap()
         this.currentOffer = mergeWithDomainContent(base, domainMap)
       } catch (e) {
-        console.error('[offer-store] failed to load offer', id, e)
+        console.error('[offer-store] failed to load offer', uuid, e)
         this.error = 'Не удалось загрузить оффер'
         this.currentOffer = null
       } finally {
@@ -139,12 +139,12 @@ export const useOfferStore = defineStore('offer', {
       try {
         const base = await OfferApi.create({
           title: data.title ?? '',
-          description: data.description,
+          description: data.description ?? '',
           status: data.status ?? 'draft',
         })
         const domainMap = readDomainContentMap()
-        if (base.id) {
-          domainMap[base.id] = extractDomainContent(data)
+        if (base.uuid) {
+          domainMap[base.uuid] = extractDomainContent(data)
           writeDomainContentMap(domainMap)
         }
         const created = mergeWithDomainContent(base, domainMap)
@@ -159,25 +159,25 @@ export const useOfferStore = defineStore('offer', {
       }
     },
 
-    async updateOffer(id: string, data: Partial<Offer>): Promise<Offer | null> {
+    async updateOffer(uuid: string, data: Partial<Offer>): Promise<Offer | null> {
       this.loading = true
       this.error = null
       try {
-        const base = await OfferApi.update(id, {
+        const base = await OfferApi.update(uuid, {
           title: data.title,
-          description: data.description,
+          description: data.description ?? '',
           status: data.status,
         })
         const domainMap = readDomainContentMap()
-        domainMap[id] = extractDomainContent(data)
+        domainMap[uuid] = extractDomainContent(data)
         writeDomainContentMap(domainMap)
         const updated = mergeWithDomainContent(base, domainMap)
-        const idx = this.offers.findIndex((o) => o.id === id)
+        const idx = this.offers.findIndex((o) => o.uuid === uuid)
         if (idx !== -1) this.offers[idx] = updated
-        if (this.currentOffer?.id === id) this.currentOffer = updated
+        if (this.currentOffer?.uuid === uuid) this.currentOffer = updated
         return updated
       } catch (e) {
-        console.error('[offer-store] failed to update offer', id, e)
+        console.error('[offer-store] failed to update offer', uuid, e)
         this.error = 'Не удалось сохранить оффер'
         return null
       } finally {
@@ -185,19 +185,19 @@ export const useOfferStore = defineStore('offer', {
       }
     },
 
-    async deleteOffer(id: string): Promise<boolean> {
+    async deleteOffer(uuid: string): Promise<boolean> {
       this.loading = true
       this.error = null
       try {
-        await OfferApi.delete(id)
+        await OfferApi.delete(uuid)
         const domainMap = readDomainContentMap()
-        delete domainMap[id]
+        delete domainMap[uuid]
         writeDomainContentMap(domainMap)
-        this.offers = this.offers.filter((o) => o.id !== id)
-        if (this.currentOffer?.id === id) this.currentOffer = null
+        this.offers = this.offers.filter((o) => o.uuid !== uuid)
+        if (this.currentOffer?.uuid === uuid) this.currentOffer = null
         return true
       } catch (e) {
-        console.error('[offer-store] failed to delete offer', id, e)
+        console.error('[offer-store] failed to delete offer', uuid, e)
         this.error = 'Не удалось удалить оффер'
         return false
       } finally {

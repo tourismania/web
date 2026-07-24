@@ -48,8 +48,8 @@ describe('OfferApi', () => {
     expect(result.offset).toBe(0)
     expect(result.offers).toHaveLength(1)
     expect(result.offers[0]).toMatchObject({
-      id: 'uuid-1',
-      numericId: 1,
+      uuid: 'uuid-1',
+      id: 1,
       agencyId: 7,
       createdBy: 3,
       createdAt: '2026-01-01T00:00:00Z',
@@ -73,6 +73,7 @@ describe('OfferApi', () => {
         created_at: '2026-01-01T00:00:00Z',
         updated_at: '2026-01-02T00:00:00Z',
         title: 'Тур в Турцию',
+        description: '',
         status: 'ready',
       },
     })
@@ -80,8 +81,29 @@ describe('OfferApi', () => {
     const offer = await OfferApi.getById('uuid-1')
 
     expect(mockedClient.get).toHaveBeenCalledWith('/api/v1/offers/uuid-1')
-    expect(offer.id).toBe('uuid-1')
+    expect(offer.uuid).toBe('uuid-1')
+    expect(offer.id).toBe(1)
     expect(offer.status).toBe('ready')
+  })
+
+  it('getPublicById requests /api/v1/public/offers/{uuid} and maps as published', async () => {
+    mockedClient.get.mockResolvedValueOnce({
+      data: {
+        id: 1,
+        uuid: 'uuid-1',
+        agency_id: 7,
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-02T00:00:00Z',
+        title: 'Тур в Турцию',
+        description: '',
+      },
+    })
+
+    const offer = await OfferApi.getPublicById('uuid-1')
+
+    expect(mockedClient.get).toHaveBeenCalledWith('/api/v1/public/offers/uuid-1')
+    expect(offer.uuid).toBe('uuid-1')
+    expect(offer.status).toBe('published')
   })
 
   it('create POSTs basic fields then re-fetches the full offer by uuid', async () => {
@@ -95,19 +117,20 @@ describe('OfferApi', () => {
         created_at: '2026-01-01T00:00:00Z',
         updated_at: '2026-01-01T00:00:00Z',
         title: 'Новый тур',
+        description: '',
         status: 'draft',
       },
     })
 
-    const offer = await OfferApi.create({ title: 'Новый тур', status: 'draft' })
+    const offer = await OfferApi.create({ title: 'Новый тур', description: '', status: 'draft' })
 
     expect(mockedClient.post).toHaveBeenCalledWith('/api/v1/offers', {
       title: 'Новый тур',
-      description: undefined,
+      description: '',
       status: 'draft',
     })
     expect(mockedClient.get).toHaveBeenCalledWith('/api/v1/offers/uuid-new')
-    expect(offer.id).toBe('uuid-new')
+    expect(offer.uuid).toBe('uuid-new')
   })
 
   it('update PATCHes /api/v1/offers/{uuid} then re-fetches the full offer', async () => {
@@ -121,6 +144,7 @@ describe('OfferApi', () => {
         created_at: '2026-01-01T00:00:00Z',
         updated_at: '2026-01-03T00:00:00Z',
         title: 'Обновлённый тур',
+        description: '',
         status: 'ready',
       },
     })
