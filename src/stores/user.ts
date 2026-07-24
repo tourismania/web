@@ -17,7 +17,7 @@ export const useUserStore = defineStore('user', {
 
       const userApi = new UserApi();
       try {
-        this.user = await userApi.fetchCurrentUser(authStore.token);
+        this.user = await userApi.fetchCurrentUser();
       } catch (error) {
         this.user = null;
         // обработка ошибок, например, очистка токена или вывод уведомления
