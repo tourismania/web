@@ -66,7 +66,6 @@ export interface OfferBasicFields {
 function blankDomainFields() {
   return {
     clients: [],
-    welcomeText: '',
     startDate: '',
     endDate: '',
     flights: [],

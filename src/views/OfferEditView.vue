@@ -69,8 +69,8 @@ function blankService(): AdditionalService {
 function blankOffer(): Offer {
   return {
     title: '',
+    description: '',
     clients: [],
-    welcomeText: '',
     startDate: '',
     endDate: '',
     flights: [],
@@ -302,7 +302,7 @@ async function submitOffer() {
             <DateField v-model="offer.endDate" label="Дата окончания" :min="offer.startDate" />
           </v-col>
           <v-col cols="12" class="mb-3">
-            <v-textarea v-model="offer.welcomeText" label="Приветственный текст" density="compact" variant="outlined" rows="3" hide-details auto-grow />
+            <v-textarea v-model="offer.description" label="Приветственный текст" density="compact" variant="outlined" rows="3" hide-details auto-grow />
           </v-col>
         </v-row>
       </div>

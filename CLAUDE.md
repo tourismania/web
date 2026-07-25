@@ -184,7 +184,9 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 
 **Поля из реального API** (`OfferApi`, `/api/v1/offers`): `uuid?` (первичный идентификатор для роутинга), `id?` (числовой id бэкенда), `status?: OfferStatus` (`'draft' | 'ready' | 'published'`), `description?`, `agencyId?`, `createdBy?`, `createdAt?`, `updatedAt?`, `title`.
 
-**Доменные поля** (в бэкенде ещё не реализованы, между перезагрузками страницы не сохраняются — см. [Offer Store: Basic Fields vs Domain Content](#offer-store-basic-fields-vs-domain-content)): `clients: Client[]`, `welcomeText`, `startDate`, `endDate`, `flights: Flight[]`, `hotels: Hotel[]`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`.
+**Доменные поля** (в бэкенде ещё не реализованы, между перезагрузками страницы не сохраняются — см. [Offer Store: Basic Fields vs Domain Content](#offer-store-basic-fields-vs-domain-content)): `clients: Client[]`, `startDate`, `endDate`, `flights: Flight[]`, `hotels: Hotel[]`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`.
+
+**Примечание:** отдельного поля `welcomeText` в модели нет — приветственный текст для клиента хранится в `description` (реальное поле API), эти два понятия были объединены по ревью PR #25.
 
 ### Flight — модель сегментов
 
@@ -211,7 +213,7 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 
 ## Offer Store: Basic Fields vs Domain Content
 
-Реальный бэкенд (`/api/v1/offers`, см. `api/docs/swagger/swagger.json` в репозитории API) хранит **только базовые поля** оффера: `title`, `description`, `status`, `agency_id`, `created_by`, `created_at`, `updated_at`. Полей для доменной модели (`flights`, `hotels`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`, `clients`, `startDate`, `endDate`, `welcomeText`) в бэкенде пока нет (issue [#24](https://github.com/tourismania/web/issues/24)).
+Реальный бэкенд (`/api/v1/offers`, см. `api/docs/swagger/swagger.json` в репозитории API) хранит **только базовые поля** оффера: `title`, `description`, `status`, `agency_id`, `created_by`, `created_at`, `updated_at`. `description` используется на фронте и как приветственный текст для клиента (отдельного `welcomeText` в модели нет — эти два понятия объединены). Полей для доменной модели (`flights`, `hotels`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`, `clients`, `startDate`, `endDate`) в бэкенде пока нет (issue [#24](https://github.com/tourismania/web/issues/24)).
 
 `src/stores/offer.ts` работает **только** с базовыми полями через `OfferApi` — реальный бэкенд, без фолбэка. Ошибки идут в `store.error` + `console.error`. localStorage-персистенция доменного контента, использовавшаяся ранее, убрана по ревью — доменные поля (`flights`/`hotels`/итд), приходящие из форм (`OfferEditView`), сейчас нигде не сохраняются между перезагрузками страницы; это осознанный и временный пробел, а не баг.
 

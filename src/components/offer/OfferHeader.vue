@@ -49,7 +49,7 @@ const stats = computed(() => {
         <v-icon icon="mdi-calendar-range" size="18" class="mr-2" />
         {{ fmtDate(props.offer.startDate) }} — {{ fmtDate(props.offer.endDate) }}
       </div>
-      <p v-if="props.offer.welcomeText" class="tour-hero__disclaimer">{{ props.offer.welcomeText }}</p>
+      <p v-if="props.offer.description" class="tour-hero__disclaimer">{{ props.offer.description }}</p>
 
       <div v-if="stats.length" class="tour-hero__stats">
         <template v-for="(stat, i) in stats" :key="stat.label">

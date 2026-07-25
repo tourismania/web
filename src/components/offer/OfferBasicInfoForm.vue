@@ -45,8 +45,8 @@ defineProps<{
         </v-col>
         <v-col cols="12">
           <v-textarea
-            :model-value="offer.welcomeText"
-            @update:model-value="$emit('update:offer', { ...offer, welcomeText: $event })"
+            :model-value="offer.description"
+            @update:model-value="$emit('update:offer', { ...offer, description: $event })"
             label="Приветственный текст"
             density="compact"
             variant="outlined"

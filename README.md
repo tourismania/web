@@ -106,7 +106,7 @@ docker/
 
 ## Домен Offer
 
-Корневая сущность приложения (`src/api/types/offer.ts`): `title`, `clients`, `welcomeText`, `startDate`, `endDate` и массивы вложенных сущностей — `flights`, `hotels`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`.
+Корневая сущность приложения (`src/api/types/offer.ts`): `title`, `description` (используется также как приветственный текст для клиента), `clients`, `startDate`, `endDate` и массивы вложенных сущностей — `flights`, `hotels`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`.
 
 - **`Flight`** — состоит из `segments: FlightSegment[]` (прямой рейс = 1 сегмент, N пересадок = N+1 сегмент). Каждый `Airport` хранит `timezone` как ISO-офсет (`+03:00`); для обратной совместимости `zonedToUtcMs` (`src/helpers/flight.ts`) также распознаёт legacy IANA-зоны (`Europe/Moscow`) через `Intl`.
 - **`Hotel`** — количество ночей не хранится в модели, а считается на лету через `computeNights(checkIn, checkOut)` (`src/helpers/hotel.ts`).
@@ -117,7 +117,7 @@ docker/
 
 ### Хранение данных
 
-Реальный бэкенд (`/api/v1/offers`) сейчас хранит только базовые поля оффера: `title`, `description`, `status` (`draft`/`ready`/`published`) + системные `id`/`uuid`/`agencyId`/`createdBy`/`createdAt`/`updatedAt`. Полей для `flights`/`hotels`/`carRentals`/`cruises`/`excursions`/`transport`/`additionalServices`/`clients`/`startDate`/`endDate`/`welcomeText` в API пока нет.
+Реальный бэкенд (`/api/v1/offers`) сейчас хранит только базовые поля оффера: `title`, `description`, `status` (`draft`/`ready`/`published`) + системные `id`/`uuid`/`agencyId`/`createdBy`/`createdAt`/`updatedAt`. Полей для `flights`/`hotels`/`carRentals`/`cruises`/`excursions`/`transport`/`additionalServices`/`clients`/`startDate`/`endDate` в API пока нет.
 
 Стор `offer` (`src/stores/offer.ts`) работает только с базовыми полями через реальный API (`OfferApi`, `src/api/offer.ts`) — ошибки не проглатываются, а попадают в `store.error` и логируются через `console.error`. Доменный контент (перелёты, отели, круизы и т.д.), которого ещё нет в бэкенде, нигде не сохраняется между перезагрузками страницы — это осознанный временный пробел до расширения бэкенда под полную доменную модель (см. открытый вопрос в issue [#24](../../issues/24)).
 

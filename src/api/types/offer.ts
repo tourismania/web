@@ -111,7 +111,7 @@ export interface Offer {
   uuid?: string              // первичный идентификатор оффера в реальном API, используется для роутинга
   id?: number                // числовой id из реального API (для фильтров вроде created_by)
   status?: OfferStatus       // из реального API; отсутствует у офферов, ещё не синхронизированных с бэкендом
-  description?: string       // из реального API (максимум 5000 символов на бэкенде)
+  description?: string       // из реального API (максимум 5000 символов на бэкенде); приветственный текст для клиента
   agencyId?: number
   createdBy?: number
   updatedAt?: string
@@ -120,7 +120,6 @@ export interface Offer {
   startDate: string
   endDate: string
   title: string
-  welcomeText: string
   flights: Flight[]
   hotels: Hotel[]
   carRentals: CarRental[]

@@ -13,7 +13,6 @@ import type { Offer } from '@/api/types/offer'
 export type DomainContent = Pick<
   Offer,
   | 'clients'
-  | 'welcomeText'
   | 'startDate'
   | 'endDate'
   | 'flights'
