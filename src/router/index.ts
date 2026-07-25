@@ -30,13 +30,13 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: '/offer/:id/edit',
+      path: '/offer/:uuid/edit',
       name: 'offerEdit',
       component: OfferEditView,
       meta: { requiresAuth: true },
     },
     {
-      path: '/offer/:id',
+      path: '/offer/:uuid',
       name: 'offer',
       component: OfferView,
       meta: { requiresAuth: true },

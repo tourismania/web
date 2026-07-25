@@ -6,8 +6,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  click: [id: string]
-  edit: [id: string]
+  click: [uuid: string]
+  edit: [uuid: string]
 }>()
 
 function fmtDate(iso: string): string {

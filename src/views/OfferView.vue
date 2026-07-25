@@ -19,11 +19,11 @@ const router = useRouter()
 const offerStore = useOfferStore()
 
 function navigateToEdit() {
-  router.push({ name: 'offerEdit', params: { id: route.params.id } })
+  router.push({ name: 'offerEdit', params: { uuid: route.params.uuid } })
 }
 
 async function deleteOffer() {
-  const uuid = route.params.id as string || ''
+  const uuid = route.params.uuid as string || ''
   if (uuid === '') return
   const success = await offerStore.deleteOffer(uuid)
   if (success) {
@@ -32,8 +32,8 @@ async function deleteOffer() {
 }
 
 onMounted(() => {
-  const id = route.params.id as string
-  offerStore.loadOfferById(id)
+  const uuid = route.params.uuid as string
+  offerStore.loadOfferById(uuid)
 })
 
 const offer = computed(() => offerStore.currentOffer)

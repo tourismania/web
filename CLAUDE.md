@@ -103,8 +103,8 @@ public/
 | `/` | `home` | `HomeView` | — |
 | `/offers` | `offers` | `OffersListView` | ✅ |
 | `/offer/new` | `offerNew` | `OfferEditView` | ✅ |
-| `/offer/:id/edit` | `offerEdit` | `OfferEditView` | ✅ |
-| `/offer/:id` | `offer` | `OfferView` | ✅ |
+| `/offer/:uuid/edit` | `offerEdit` | `OfferEditView` | ✅ |
+| `/offer/:uuid` | `offer` | `OfferView` | ✅ |
 | `/deals` | `deals` | `DealView` | — |
 | `/login` | `login` | `LoginView` | — |
 | `/:any(.*)` | `notFound` | `NotFoundView` | — |
@@ -139,8 +139,8 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 | Файл | Маршрут | Описание |
 |---|---|---|
 | `src/views/OffersListView.vue` | `/offers` | Список предложений; таблица с `OfferListItem` строками; кнопка «Создать» |
-| `src/views/OfferView.vue` | `/offer/:id` | Просмотр предложения; загружает через `loadOfferById`; компоненты из `src/components/offer/` |
-| `src/views/OfferEditView.vue` | `/offer/new`, `/offer/:id/edit` | Создание/редактирование; определяет режим по наличию `:id`; вызывает `createOffer` / `updateOffer`, редиректит на просмотр |
+| `src/views/OfferView.vue` | `/offer/:uuid` | Просмотр предложения; загружает через `loadOfferById`; компоненты из `src/components/offer/` |
+| `src/views/OfferEditView.vue` | `/offer/new`, `/offer/:uuid/edit` | Создание/редактирование; определяет режим по наличию `:uuid`; вызывает `createOffer` / `updateOffer`, редиректит на просмотр |
 | `src/views/Deals/DealView.vue` | `/deals` | Старый OfferView из `/offers` — перемещён при рефакторинге |
 
 ### Components (`src/components/offer/`)

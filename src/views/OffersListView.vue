@@ -33,16 +33,16 @@ onMounted(() => {
   loadPage()
 })
 
-function navigateToOffer(id: string) {
-  router.push({ name: 'offer', params: { id } })
+function navigateToOffer(uuid: string) {
+  router.push({ name: 'offer', params: { uuid } })
 }
 
 function navigateToNew() {
   router.push({ name: 'offerNew' })
 }
 
-function navigateToEdit(id: string) {
-  router.push({ name: 'offerEdit', params: { id } })
+function navigateToEdit(uuid: string) {
+  router.push({ name: 'offerEdit', params: { uuid } })
 }
 </script>
 

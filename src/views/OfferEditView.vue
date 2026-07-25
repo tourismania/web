@@ -89,11 +89,11 @@ onMounted(async () => {
   // Параллельно подгружаем список клиентов для мультиселекта
   const clientsPromise = clientStore.loadClients()
 
-  const id = route.params.id as string | undefined
-  if (id) {
+  const uuid = route.params.uuid as string | undefined
+  if (uuid) {
     isEdit.value = true
-    tourId.value = id
-    await offerStore.loadOfferById(id)
+    tourId.value = uuid
+    await offerStore.loadOfferById(uuid)
     if (offerStore.currentOffer) {
       Object.assign(offer, JSON.parse(JSON.stringify(offerStore.currentOffer)))
     }
@@ -217,12 +217,12 @@ async function submitOffer() {
   if (isEdit.value && tourId.value) {
     const result = await offerStore.updateOffer(tourId.value, data)
     if (result) {
-      router.push({ name: 'offer', params: { id: tourId.value } })
+      router.push({ name: 'offer', params: { uuid: tourId.value } })
     }
   } else {
     const result = await offerStore.createOffer(data)
     if (result?.uuid) {
-      router.push({ name: 'offer', params: { id: result.uuid } })
+      router.push({ name: 'offer', params: { uuid: result.uuid } })
     }
   }
 }
@@ -244,7 +244,7 @@ async function submitOffer() {
         variant="tonal"
         size="default"
         prepend-icon="mdi-eye"
-        :to="{ name: 'offer', params: { id: tourId } }"
+        :to="{ name: 'offer', params: { uuid: tourId } }"
       >
         Просмотр
       </v-btn>
