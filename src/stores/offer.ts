@@ -2,16 +2,15 @@ import { defineStore } from 'pinia'
 import { OfferApi, type OfferListParams } from '@/api/offer'
 import type { Offer } from '@/api/types/offer'
 
-// ─── localStorage: доменный контент, которого ещё нет в реальном API ────────
+// ─── Доменный контент, которого ещё нет в реальном API ──────────────────────
 //
 // Бэкенд (issue #24, api/docs/swagger/swagger.json) хранит только базовые
 // поля оффера: title, description, status, agencyId, createdBy, timestamps.
-// Перелёты/отели/круизы/итд там пока не появились, поэтому эта часть модели
-// временно живёт в localStorage и подмешивается к базовым полям, пришедшим
-// с реального API, по uuid оффера (Offer.uuid).
-const STORAGE_KEY = 'tourismania:offers'
-
-type DomainContent = Pick<
+// Перелёты/отели/круизы/итд там пока не появились. localStorage-фолбэк для
+// этих полей убран (см. ревью PR #25) — работу с ними переделаем целиком под
+// реальный API отдельной задачей. Тип оставлен как документация структуры,
+// которую предстоит перенести на бэкенд.
+export type DomainContent = Pick<
   Offer,
   | 'clients'
   | 'welcomeText'
@@ -25,66 +24,6 @@ type DomainContent = Pick<
   | 'transport'
   | 'additionalServices'
 >
-
-function blankDomainContent(): DomainContent {
-  return {
-    clients: [],
-    welcomeText: '',
-    startDate: '',
-    endDate: '',
-    flights: [],
-    hotels: [],
-    carRentals: [],
-    cruises: [],
-    excursions: [],
-    transport: [],
-    additionalServices: [],
-  }
-}
-
-function extractDomainContent(data: Partial<Offer>): DomainContent {
-  const blank = blankDomainContent()
-  return {
-    clients: data.clients ?? blank.clients,
-    welcomeText: data.welcomeText ?? blank.welcomeText,
-    startDate: data.startDate ?? blank.startDate,
-    endDate: data.endDate ?? blank.endDate,
-    flights: data.flights ?? blank.flights,
-    hotels: data.hotels ?? blank.hotels,
-    carRentals: data.carRentals ?? blank.carRentals,
-    cruises: data.cruises ?? blank.cruises,
-    excursions: data.excursions ?? blank.excursions,
-    transport: data.transport ?? blank.transport,
-    additionalServices: data.additionalServices ?? blank.additionalServices,
-  }
-}
-
-function readDomainContentMap(): Record<string, DomainContent> {
-  try {
-    if (typeof localStorage === 'undefined') return {}
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return {}
-    const parsed = JSON.parse(raw)
-    return parsed && typeof parsed === 'object' ? parsed : {}
-  } catch (e) {
-    console.error('[offer-store] failed to read domain content from localStorage', e)
-    return {}
-  }
-}
-
-function writeDomainContentMap(map: Record<string, DomainContent>): void {
-  try {
-    if (typeof localStorage === 'undefined') return
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(map))
-  } catch (e) {
-    console.error('[offer-store] failed to persist domain content to localStorage', e)
-  }
-}
-
-function mergeWithDomainContent(base: Offer, map: Record<string, DomainContent>): Offer {
-  const domain = base.uuid ? map[base.uuid] : undefined
-  return domain ? { ...base, ...domain } : base
-}
 
 export const useOfferStore = defineStore('offer', {
   state: () => ({
@@ -106,8 +45,7 @@ export const useOfferStore = defineStore('offer', {
       this.error = null
       try {
         const { offers, total, limit, offset } = await OfferApi.getAll(params)
-        const domainMap = readDomainContentMap()
-        this.offers = offers.map((o) => mergeWithDomainContent(o, domainMap))
+        this.offers = offers
         this.meta = { total, limit, offset }
       } catch (e) {
         console.error('[offer-store] failed to load offers', e)
@@ -121,9 +59,7 @@ export const useOfferStore = defineStore('offer', {
       this.loading = true
       this.error = null
       try {
-        const base = await OfferApi.getById(uuid)
-        const domainMap = readDomainContentMap()
-        this.currentOffer = mergeWithDomainContent(base, domainMap)
+        this.currentOffer = await OfferApi.getById(uuid)
       } catch (e) {
         console.error('[offer-store] failed to load offer', uuid, e)
         this.error = 'Не удалось загрузить оффер'
@@ -137,17 +73,11 @@ export const useOfferStore = defineStore('offer', {
       this.loading = true
       this.error = null
       try {
-        const base = await OfferApi.create({
+        const created = await OfferApi.create({
           title: data.title ?? '',
           description: data.description ?? '',
           status: data.status ?? 'draft',
         })
-        const domainMap = readDomainContentMap()
-        if (base.uuid) {
-          domainMap[base.uuid] = extractDomainContent(data)
-          writeDomainContentMap(domainMap)
-        }
-        const created = mergeWithDomainContent(base, domainMap)
         this.offers.push(created)
         return created
       } catch (e) {
@@ -163,15 +93,11 @@ export const useOfferStore = defineStore('offer', {
       this.loading = true
       this.error = null
       try {
-        const base = await OfferApi.update(uuid, {
+        const updated = await OfferApi.update(uuid, {
           title: data.title,
           description: data.description ?? '',
           status: data.status,
         })
-        const domainMap = readDomainContentMap()
-        domainMap[uuid] = extractDomainContent(data)
-        writeDomainContentMap(domainMap)
-        const updated = mergeWithDomainContent(base, domainMap)
         const idx = this.offers.findIndex((o) => o.uuid === uuid)
         if (idx !== -1) this.offers[idx] = updated
         if (this.currentOffer?.uuid === uuid) this.currentOffer = updated
@@ -190,9 +116,6 @@ export const useOfferStore = defineStore('offer', {
       this.error = null
       try {
         await OfferApi.delete(uuid)
-        const domainMap = readDomainContentMap()
-        delete domainMap[uuid]
-        writeDomainContentMap(domainMap)
         this.offers = this.offers.filter((o) => o.uuid !== uuid)
         if (this.currentOffer?.uuid === uuid) this.currentOffer = null
         return true

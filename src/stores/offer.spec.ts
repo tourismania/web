@@ -45,7 +45,6 @@ function baseOffer(overrides: Partial<Offer> = {}): Offer {
 describe('offer store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    localStorage.clear()
     vi.clearAllMocks()
     vi.spyOn(console, 'error').mockImplementation(() => {})
   })
@@ -81,38 +80,6 @@ describe('offer store', () => {
       expect(console.error).toHaveBeenCalled()
     })
 
-    it('merges local domain content (flights/hotels) into offers coming from the API', async () => {
-      localStorage.setItem(
-        'tourismania:offers',
-        JSON.stringify({
-          'uuid-1': {
-            clients: [{ name: 'A', surname: 'B', email: 'a@b.com' }],
-            welcomeText: 'Привет',
-            startDate: '2026-05-01',
-            endDate: '2026-05-10',
-            flights: [{ segments: [], price: 100, currency: 'RUB' }],
-            hotels: [],
-            carRentals: [],
-            cruises: [],
-            excursions: [],
-            transport: [],
-            additionalServices: [],
-          },
-        }),
-      )
-      mockedOfferApi.getAll.mockResolvedValueOnce({
-        offers: [baseOffer()],
-        total: 1,
-        limit: 20,
-        offset: 0,
-      })
-
-      const store = useOfferStore()
-      await store.loadOffers()
-
-      expect(store.offers[0].welcomeText).toBe('Привет')
-      expect(store.offers[0].flights).toHaveLength(1)
-    })
   })
 
   describe('loadOfferById', () => {
@@ -139,24 +106,11 @@ describe('offer store', () => {
   })
 
   describe('createOffer', () => {
-    it('creates via API, persists domain content locally and returns the merged offer', async () => {
+    it('creates via API and returns the created offer', async () => {
       mockedOfferApi.create.mockResolvedValueOnce(baseOffer({ uuid: 'uuid-new', title: 'Новый тур' }))
 
       const store = useOfferStore()
-      const result = await store.createOffer({
-        title: 'Новый тур',
-        clients: [],
-        welcomeText: 'Добро пожаловать',
-        startDate: '2026-06-01',
-        endDate: '2026-06-05',
-        flights: [],
-        hotels: [{ name: 'Отель', stars: 4, address: '', description: '', roomType: '', occupancyType: '', price: 1000, currency: 'RUB', gallery: [], serviceFee: 0, checkIn: '', checkOut: '' }],
-        carRentals: [],
-        cruises: [],
-        excursions: [],
-        transport: [],
-        additionalServices: [],
-      })
+      const result = await store.createOffer({ title: 'Новый тур' })
 
       expect(mockedOfferApi.create).toHaveBeenCalledWith({
         title: 'Новый тур',
@@ -164,12 +118,7 @@ describe('offer store', () => {
         status: 'draft',
       })
       expect(result?.uuid).toBe('uuid-new')
-      expect(result?.hotels).toHaveLength(1)
       expect(store.offers).toHaveLength(1)
-
-      const persisted = JSON.parse(localStorage.getItem('tourismania:offers') ?? '{}')
-      expect(persisted['uuid-new'].hotels).toHaveLength(1)
-      expect(persisted['uuid-new'].welcomeText).toBe('Добро пожаловать')
     })
 
     it('returns null and sets error on API failure', async () => {
@@ -185,36 +134,23 @@ describe('offer store', () => {
   })
 
   describe('updateOffer', () => {
-    it('updates via API, persists domain content and updates offers/currentOffer', async () => {
+    it('updates via API and updates offers/currentOffer with the API response', async () => {
       mockedOfferApi.update.mockResolvedValueOnce(baseOffer({ title: 'Изменённый' }))
 
       const store = useOfferStore()
       store.offers = [baseOffer()]
       store.currentOffer = baseOffer()
 
-      const result = await store.updateOffer('uuid-1', {
-        title: 'Изменённый',
-        clients: [],
-        welcomeText: '',
-        startDate: '',
-        endDate: '',
-        flights: [{ segments: [], price: 500, currency: 'RUB' }],
-        hotels: [],
-        carRentals: [],
-        cruises: [],
-        excursions: [],
-        transport: [],
-        additionalServices: [],
-      })
+      const result = await store.updateOffer('uuid-1', { title: 'Изменённый' })
 
       expect(mockedOfferApi.update).toHaveBeenCalledWith('uuid-1', {
         title: 'Изменённый',
         description: '',
         status: undefined,
       })
-      expect(result?.flights).toHaveLength(1)
-      expect(store.offers[0].flights).toHaveLength(1)
-      expect(store.currentOffer?.flights).toHaveLength(1)
+      expect(result?.title).toBe('Изменённый')
+      expect(store.offers[0].title).toBe('Изменённый')
+      expect(store.currentOffer?.title).toBe('Изменённый')
     })
 
     it('returns null and sets error on API failure', async () => {
@@ -229,9 +165,8 @@ describe('offer store', () => {
   })
 
   describe('deleteOffer', () => {
-    it('removes the offer from state and local domain content on success', async () => {
+    it('removes the offer from state on success', async () => {
       mockedOfferApi.delete.mockResolvedValueOnce(undefined)
-      localStorage.setItem('tourismania:offers', JSON.stringify({ 'uuid-1': {} }))
 
       const store = useOfferStore()
       store.offers = [baseOffer()]
@@ -242,8 +177,6 @@ describe('offer store', () => {
       expect(success).toBe(true)
       expect(store.offers).toHaveLength(0)
       expect(store.currentOffer).toBeNull()
-      const persisted = JSON.parse(localStorage.getItem('tourismania:offers') ?? '{}')
-      expect(persisted['uuid-1']).toBeUndefined()
     })
 
     it('returns false and sets error on API failure', async () => {

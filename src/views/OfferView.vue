@@ -23,9 +23,9 @@ function navigateToEdit() {
 }
 
 async function deleteOffer() {
-  const id = route.params.id as string || ''
-  if (id === '') return
-  const success = await offerStore.deleteOffer(id)
+  const uuid = route.params.id as string || ''
+  if (uuid === '') return
+  const success = await offerStore.deleteOffer(uuid)
   if (success) {
     router.push({name: 'offers'})
   }

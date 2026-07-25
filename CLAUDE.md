@@ -4,7 +4,7 @@
 
 ## Project Purpose
 
-SPA-интерфейс платформы Tourismania для управления туристическими предложениями. Позволяет менеджерам создавать, редактировать и просматривать предложения (Offer), включая перелёты, отели, круизы, аренду авто, экскурсии и транспорт. Авторизация через JWT. Данные переживают перезагрузку через двухслойный механизм: реальный API → localStorage-фолбэк.
+SPA-интерфейс платформы Tourismania для управления туристическими предложениями. Позволяет менеджерам создавать, редактировать и просматривать предложения (Offer), включая перелёты, отели, круизы, аренду авто, экскурсии и транспорт. Авторизация через JWT. Базовые поля оффера (`title`/`description`/`status`) хранятся в реальном API; доменный контент (`flights`/`hotels`/итд) бэкенд пока не поддерживает и между перезагрузками не сохраняется (issue [#24](https://github.com/tourismania/web/issues/24)).
 
 **Primary language:** TypeScript  
 **Framework:** Vue 3 + Vite SPA  
@@ -68,7 +68,7 @@ src/
   stores/
     auth.ts               # JWT token (localStorage 'auth_token')
     user.ts               # Текущий пользователь (loadCurrentUser)
-    offer.ts              # Offers CRUD + localStorage fallback
+    offer.ts              # Offers CRUD (базовые поля через реальный API)
     client.ts             # Clients (mock, без API)
   views/                  # Страницы-маршруты
 public/
@@ -117,7 +117,7 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 
 - `src/stores/auth.ts` — JWT в `localStorage['auth_token']`; actions: `setToken`, `clearToken`
 - `src/stores/user.ts` — `User | null`; `loadCurrentUser()` → `UserApi.fetchCurrentUser`; getters: `isAuthenticated`, `isSuperAdmin`
-- `src/stores/offer.ts` — `offers`, `currentOffer`, `loading`, `error`, `meta: { total, limit, offset }`; actions: `loadOffers(params?)`, `loadOfferById`, `createOffer`, `updateOffer`, `deleteOffer`, `clearCurrentOffer`; getters: `offerById`, `offersCount`. Базовые поля офферов идут через реальный API; доменный контент (flights/hotels/итд, которых в API ещё нет) — через `localStorage['tourismania:offers']`, см. [Offer Store: Persistence](#offer-store-persistence-localstorage)
+- `src/stores/offer.ts` — `offers`, `currentOffer`, `loading`, `error`, `meta: { total, limit, offset }`; actions: `loadOffers(params?)`, `loadOfferById`, `createOffer`, `updateOffer`, `deleteOffer`, `clearCurrentOffer`; getters: `offerById`, `offersCount`. Работает только с базовыми полями офферов через реальный API; доменный контент (flights/hotels/итд, которых в API ещё нет) нигде не персистится, см. [Offer Store: Basic Fields vs Domain Content](#offer-store-basic-fields-vs-domain-content)
 - `src/stores/client.ts` — `clients: Client[]`, mock (реального API нет)
 
 ### API Layer (`src/api/`)
@@ -125,7 +125,7 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 - `axios.ts` — **единственный** экземпляр axios. Все API-классы импортируют его. Содержит общий request-interceptor (проставляет `Authorization: Bearer <token>` из `useAuthStore()` для всех запросов) и response-interceptor (на `401` — `clearToken()` + редирект на `/login?redirect=...`). Отдельные API-классы **не должны** вручную добавлять заголовок `Authorization`.
 - `auth.ts` — `Auth` class: `POST /api/login`
 - `user.ts` — `UserApi` class: `GET /api/v1/users/me`
-- `offer.ts` — `OfferApi` class: CRUD `/api/v1/offers` (см. `api/docs/swagger/swagger.json` в репозитории бэкенда); методы `getAll(params?)` (пагинация `limit`/`offset`, фильтры `status`/`createdBy`), `getById`, `create`, `update` (PATCH, частичное обновление), `delete`. Возвращает только те поля, которые реально хранит бэкенд — см. [Offer Store: Persistence](#offer-store-persistence-localstorage)
+- `offer.ts` — `OfferApi` class: CRUD `/api/v1/offers` (см. `api/docs/swagger/swagger.json` в репозитории бэкенда); методы `getAll(params?)` (пагинация `limit`/`offset`, фильтры `status`/`createdBy`), `getById`, `getPublicById` (`GET /api/v1/public/offers/{uuid}`, без авторизации, только опубликованные — UI для неё пока не реализован, см. issue [#27](https://github.com/tourismania/web/issues/27)), `create`, `update` (PATCH, частичное обновление), `delete`. Возвращает только те поля, которые реально хранит бэкенд — см. [Offer Store: Basic Fields vs Domain Content](#offer-store-basic-fields-vs-domain-content)
 - `airport.ts` — `AirportApi` class: `GET /api/v1/airports` (полнотекстовый поиск)
 
 ---
@@ -182,9 +182,9 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 
 ### Offer — корневая сущность
 
-**Поля из реального API** (`OfferApi`, `/api/v1/offers`): `id?` (uuid, первичный идентификатор для роутинга), `numericId?` (числовой id бэкенда), `status?: OfferStatus` (`'draft' | 'ready' | 'published'`), `description?`, `agencyId?`, `createdBy?`, `createdAt?`, `updatedAt?`, `title`.
+**Поля из реального API** (`OfferApi`, `/api/v1/offers`): `uuid?` (первичный идентификатор для роутинга), `id?` (числовой id бэкенда), `status?: OfferStatus` (`'draft' | 'ready' | 'published'`), `description?`, `agencyId?`, `createdBy?`, `createdAt?`, `updatedAt?`, `title`.
 
-**Доменные поля** (пока только в localStorage-слое стора, см. [Offer Store: Persistence](#offer-store-persistence-localstorage)): `clients: Client[]`, `welcomeText`, `startDate`, `endDate`, `flights: Flight[]`, `hotels: Hotel[]`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`.
+**Доменные поля** (в бэкенде ещё не реализованы, между перезагрузками страницы не сохраняются — см. [Offer Store: Basic Fields vs Domain Content](#offer-store-basic-fields-vs-domain-content)): `clients: Client[]`, `welcomeText`, `startDate`, `endDate`, `flights: Flight[]`, `hotels: Hotel[]`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`.
 
 ### Flight — модель сегментов
 
@@ -209,18 +209,15 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 
 ---
 
-## Offer Store: Persistence (localStorage)
+## Offer Store: Basic Fields vs Domain Content
 
 Реальный бэкенд (`/api/v1/offers`, см. `api/docs/swagger/swagger.json` в репозитории API) хранит **только базовые поля** оффера: `title`, `description`, `status`, `agency_id`, `created_by`, `created_at`, `updated_at`. Полей для доменной модели (`flights`, `hotels`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`, `clients`, `startDate`, `endDate`, `welcomeText`) в бэкенде пока нет (issue [#24](https://github.com/tourismania/web/issues/24)).
 
-Поэтому `src/stores/offer.ts` работает по гибридной схеме, а не как fallback "API → localStorage":
+`src/stores/offer.ts` работает **только** с базовыми полями через `OfferApi` — реальный бэкенд, без фолбэка. Ошибки идут в `store.error` + `console.error`. localStorage-персистенция доменного контента, использовавшаяся ранее, убрана по ревью — доменные поля (`flights`/`hotels`/итд), приходящие из форм (`OfferEditView`), сейчас нигде не сохраняются между перезагрузками страницы; это осознанный и временный пробел, а не баг.
 
-1. **Базовые поля** CRUD'ятся через `OfferApi` — реальный бэкенд, без молчаливого фолбэка. Ошибки идут в `store.error` + `console.error`.
-2. **Доменный контент** персистится в `localStorage['tourismania:offers']` как карта `uuid → доменный контент` (`clients`, `welcomeText`, `startDate`, `endDate`, `flights`, `hotels`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`) и подмешивается к базовым полям с сервера при `loadOffers`/`loadOfferById`/`createOffer`/`updateOffer`.
+Тип `DomainContent` (в `offer.ts`) оставлен как документация структуры, которую предстоит перенести на бэкенд — сам по себе он больше ни для чего не используется.
 
-Так офферы переживают перезагрузку страницы (доменный контент), а базовые поля всегда актуальны и общие между пользователями агентства (реальный API).
-
-**Когда переписывать:** когда бэкенд получит поля для полной доменной модели — перенести `flights`/`hotels`/`итд` на реальный API и убрать localStorage-слой полностью (отдельный issue).
+**Когда переписывать:** когда бэкенд получит поля для полной доменной модели — реализовать `flights`/`hotels`/итд через реальный API целиком (отдельная задача, замена нынешнего пробела, а не текущей localStorage-схемы, которой больше нет).
 
 ---
 
