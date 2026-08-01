@@ -108,15 +108,20 @@ export interface AdditionalService {
 }
 
 export interface Offer {
-  uuid?: string              // первичный идентификатор оффера в реальном API, используется для роутинга
-  id?: number                // числовой id из реального API (для фильтров вроде created_by)
-  status?: OfferStatus       // из реального API; отсутствует у офферов, ещё не синхронизированных с бэкендом
-  description?: string       // из реального API (максимум 5000 символов на бэкенде); приветственный текст для клиента
+  // Идентификаторы и метаданные, которые присваивает бэкенд — отсутствуют,
+  // пока оффер существует только как локальный черновик (blankOffer()) и ещё
+  // не был сохранён через OfferApi.create.
+  uuid?: string               // первичный идентификатор оффера в реальном API, используется для роутинга
+  id?: number                 // числовой id из реального API (для фильтров вроде created_by)
   agencyId?: number
   createdBy?: number
-  updatedAt?: string
-  clients: Client[]
   createdAt?: string
+  updatedAt?: string
+  // Всегда имеют значение — задаются дефолтом и в blankOffer(), и в offer-сторе
+  // при create/update (см. OfferApi), поэтому не optional.
+  status: OfferStatus
+  description: string        // из реального API (максимум 5000 символов на бэкенде); приветственный текст для клиента
+  clients: Client[]
   startDate: string
   endDate: string
   title: string

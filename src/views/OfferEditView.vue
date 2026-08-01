@@ -70,6 +70,7 @@ function blankOffer(): Offer {
   return {
     title: '',
     description: '',
+    status: 'draft',
     clients: [],
     startDate: '',
     endDate: '',

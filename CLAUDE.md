@@ -182,7 +182,7 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 
 ### Offer — корневая сущность
 
-**Поля из реального API** (`OfferApi`, `/api/v1/offers`): `uuid?` (первичный идентификатор для роутинга), `id?` (числовой id бэкенда), `status?: OfferStatus` (`'draft' | 'ready' | 'published'`), `description?`, `agencyId?`, `createdBy?`, `createdAt?`, `updatedAt?`, `title`.
+**Поля из реального API** (`OfferApi`, `/api/v1/offers`): `title`, `description`, `status: OfferStatus` (`'draft' | 'ready' | 'published'`) — не `optional`, у них всегда есть значение (дефолтятся и в `blankOffer()`, и в offer-сторе при create/update). `uuid?`, `id?`, `agencyId?`, `createdBy?`, `createdAt?`, `updatedAt?` — присваиваются бэкендом, поэтому `optional`: отсутствуют у локального черновика, пока оффер не сохранён через `OfferApi.create`.
 
 **Доменные поля** (в бэкенде ещё не реализованы, между перезагрузками страницы не сохраняются — см. [Offer Store: Basic Fields vs Domain Content](#offer-store-basic-fields-vs-domain-content)): `clients: Client[]`, `startDate`, `endDate`, `flights: Flight[]`, `hotels: Hotel[]`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`.
 
