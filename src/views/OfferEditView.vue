@@ -69,8 +69,9 @@ function blankService(): AdditionalService {
 function blankOffer(): Offer {
   return {
     title: '',
+    description: '',
+    status: 'draft',
     clients: [],
-    welcomeText: '',
     startDate: '',
     endDate: '',
     flights: [],
@@ -89,11 +90,11 @@ onMounted(async () => {
   // Параллельно подгружаем список клиентов для мультиселекта
   const clientsPromise = clientStore.loadClients()
 
-  const id = route.params.id as string | undefined
-  if (id) {
+  const uuid = route.params.uuid as string | undefined
+  if (uuid) {
     isEdit.value = true
-    tourId.value = id
-    await offerStore.loadOfferById(id)
+    tourId.value = uuid
+    await offerStore.loadOfferById(uuid)
     if (offerStore.currentOffer) {
       Object.assign(offer, JSON.parse(JSON.stringify(offerStore.currentOffer)))
     }
@@ -217,12 +218,12 @@ async function submitOffer() {
   if (isEdit.value && tourId.value) {
     const result = await offerStore.updateOffer(tourId.value, data)
     if (result) {
-      router.push({ name: 'offer', params: { id: tourId.value } })
+      router.push({ name: 'offer', params: { uuid: tourId.value } })
     }
   } else {
     const result = await offerStore.createOffer(data)
-    if (result?.id) {
-      router.push({ name: 'offer', params: { id: result.id } })
+    if (result?.uuid) {
+      router.push({ name: 'offer', params: { uuid: result.uuid } })
     }
   }
 }
@@ -244,7 +245,7 @@ async function submitOffer() {
         variant="tonal"
         size="default"
         prepend-icon="mdi-eye"
-        :to="{ name: 'offer', params: { id: tourId } }"
+        :to="{ name: 'offer', params: { uuid: tourId } }"
       >
         Просмотр
       </v-btn>
@@ -302,7 +303,7 @@ async function submitOffer() {
             <DateField v-model="offer.endDate" label="Дата окончания" :min="offer.startDate" />
           </v-col>
           <v-col cols="12" class="mb-3">
-            <v-textarea v-model="offer.welcomeText" label="Приветственный текст" density="compact" variant="outlined" rows="3" hide-details auto-grow />
+            <v-textarea v-model="offer.description" label="Приветственный текст" density="compact" variant="outlined" rows="3" hide-details auto-grow />
           </v-col>
         </v-row>
       </div>

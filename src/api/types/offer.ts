@@ -1,5 +1,6 @@
 export type FlightClass = 'economy' | 'business' | 'comfort'
 export type Currency = 'RUB' | 'USD' | 'EUR' | 'TRY'
+export type OfferStatus = 'draft' | 'ready' | 'published'
 
 export interface Airport {
   city: string
@@ -107,13 +108,23 @@ export interface AdditionalService {
 }
 
 export interface Offer {
-  id?: string
-  clients: Client[]
+  // Идентификаторы и метаданные, которые присваивает бэкенд — отсутствуют,
+  // пока оффер существует только как локальный черновик (blankOffer()) и ещё
+  // не был сохранён через OfferApi.create.
+  uuid?: string               // первичный идентификатор оффера в реальном API, используется для роутинга
+  id?: number                 // числовой id из реального API (для фильтров вроде created_by)
+  agencyId?: number
+  createdBy?: number
   createdAt?: string
+  updatedAt?: string
+  // Всегда имеют значение — задаются дефолтом и в blankOffer(), и в offer-сторе
+  // при create/update (см. OfferApi), поэтому не optional.
+  status: OfferStatus
+  description: string        // из реального API (максимум 5000 символов на бэкенде); приветственный текст для клиента
+  clients: Client[]
   startDate: string
   endDate: string
   title: string
-  welcomeText: string
   flights: Flight[]
   hotels: Hotel[]
   carRentals: CarRental[]

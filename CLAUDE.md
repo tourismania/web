@@ -4,7 +4,7 @@
 
 ## Project Purpose
 
-SPA-интерфейс платформы Tourismania для управления туристическими предложениями. Позволяет менеджерам создавать, редактировать и просматривать предложения (Offer), включая перелёты, отели, круизы, аренду авто, экскурсии и транспорт. Авторизация через JWT. Данные переживают перезагрузку через двухслойный механизм: реальный API → localStorage-фолбэк.
+SPA-интерфейс платформы Tourismania для управления туристическими предложениями. Позволяет менеджерам создавать, редактировать и просматривать предложения (Offer), включая перелёты, отели, круизы, аренду авто, экскурсии и транспорт. Авторизация через JWT. Базовые поля оффера (`title`/`description`/`status`) хранятся в реальном API; доменный контент (`flights`/`hotels`/итд) бэкенд пока не поддерживает и между перезагрузками не сохраняется (issue [#24](https://github.com/tourismania/web/issues/24)).
 
 **Primary language:** TypeScript  
 **Framework:** Vue 3 + Vite SPA  
@@ -41,7 +41,7 @@ src/
   api/
     axios.ts              # Общий экземпляр axios (VITE_API_BASE_URL + Content-Type JSON)
     auth.ts               # Auth class — POST /api/login
-    user.ts               # UserApi class — GET /api/v1/me
+    user.ts               # UserApi class — GET /api/v1/users/me
     offer.ts              # OfferApi class — CRUD /api/v1/offers
     types/
       auth.ts             # AuthResponse: { token: string }
@@ -68,7 +68,7 @@ src/
   stores/
     auth.ts               # JWT token (localStorage 'auth_token')
     user.ts               # Текущий пользователь (loadCurrentUser)
-    offer.ts              # Offers CRUD + localStorage fallback
+    offer.ts              # Offers CRUD (базовые поля через реальный API)
     client.ts             # Clients (mock, без API)
   views/                  # Страницы-маршруты
 public/
@@ -103,8 +103,8 @@ public/
 | `/` | `home` | `HomeView` | — |
 | `/offers` | `offers` | `OffersListView` | ✅ |
 | `/offer/new` | `offerNew` | `OfferEditView` | ✅ |
-| `/offer/:id/edit` | `offerEdit` | `OfferEditView` | ✅ |
-| `/offer/:id` | `offer` | `OfferView` | ✅ |
+| `/offer/:uuid/edit` | `offerEdit` | `OfferEditView` | ✅ |
+| `/offer/:uuid` | `offer` | `OfferView` | ✅ |
 | `/deals` | `deals` | `DealView` | — |
 | `/login` | `login` | `LoginView` | — |
 | `/:any(.*)` | `notFound` | `NotFoundView` | — |
@@ -117,15 +117,16 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 
 - `src/stores/auth.ts` — JWT в `localStorage['auth_token']`; actions: `setToken`, `clearToken`
 - `src/stores/user.ts` — `User | null`; `loadCurrentUser()` → `UserApi.fetchCurrentUser`; getters: `isAuthenticated`, `isSuperAdmin`
-- `src/stores/offer.ts` — `offers`, `currentOffer`, `loading`, `error`; actions: `loadOffers`, `loadOfferById`, `createOffer`, `updateOffer`, `deleteOffer`, `clearCurrentOffer`; getters: `offerById`, `offersCount`; localStorage-фолбэк под ключом `tourismania:offers`
+- `src/stores/offer.ts` — `offers`, `currentOffer`, `loading`, `error`, `meta: { total, limit, offset }`; actions: `loadOffers(params?)`, `loadOfferById`, `createOffer`, `updateOffer`, `deleteOffer`, `clearCurrentOffer`; getters: `offerById`, `offersCount`. Работает только с базовыми полями офферов через реальный API; доменный контент (flights/hotels/итд, которых в API ещё нет) нигде не персистится, см. [Offer Store: Basic Fields vs Domain Content](#offer-store-basic-fields-vs-domain-content)
 - `src/stores/client.ts` — `clients: Client[]`, mock (реального API нет)
 
 ### API Layer (`src/api/`)
 
-- `axios.ts` — **единственный** экземпляр axios. Все API-классы импортируют его.
+- `axios.ts` — **единственный** экземпляр axios. Все API-классы импортируют его. Содержит общий request-interceptor (проставляет `Authorization: Bearer <token>` из `useAuthStore()` для всех запросов) и response-interceptor (на `401` — `clearToken()` + редирект на `/login?redirect=...`). Отдельные API-классы **не должны** вручную добавлять заголовок `Authorization`.
 - `auth.ts` — `Auth` class: `POST /api/login`
-- `user.ts` — `UserApi` class: `GET /api/v1/me` с Bearer-токеном
-- `offer.ts` — `OfferApi` class: CRUD `/api/v1/offers`; методы `getAll`, `getById`, `create`, `update`, `delete`
+- `user.ts` — `UserApi` class: `GET /api/v1/users/me`
+- `offer.ts` — `OfferApi` class: CRUD `/api/v1/offers` (см. `api/docs/swagger/swagger.json` в репозитории бэкенда); методы `getAll(params?)` (пагинация `limit`/`offset`, фильтры `status`/`createdBy`), `getById`, `getPublicById` (`GET /api/v1/public/offers/{uuid}`, без авторизации, только опубликованные — UI для неё пока не реализован, см. issue [#27](https://github.com/tourismania/web/issues/27)), `create`, `update` (PATCH, частичное обновление), `delete`. Возвращает только те поля, которые реально хранит бэкенд — см. [Offer Store: Basic Fields vs Domain Content](#offer-store-basic-fields-vs-domain-content)
+- `airport.ts` — `AirportApi` class: `GET /api/v1/airports` (полнотекстовый поиск)
 
 ---
 
@@ -138,8 +139,8 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 | Файл | Маршрут | Описание |
 |---|---|---|
 | `src/views/OffersListView.vue` | `/offers` | Список предложений; таблица с `OfferListItem` строками; кнопка «Создать» |
-| `src/views/OfferView.vue` | `/offer/:id` | Просмотр предложения; загружает через `loadOfferById`; компоненты из `src/components/offer/` |
-| `src/views/OfferEditView.vue` | `/offer/new`, `/offer/:id/edit` | Создание/редактирование; определяет режим по наличию `:id`; вызывает `createOffer` / `updateOffer`, редиректит на просмотр |
+| `src/views/OfferView.vue` | `/offer/:uuid` | Просмотр предложения; загружает через `loadOfferById`; компоненты из `src/components/offer/` |
+| `src/views/OfferEditView.vue` | `/offer/new`, `/offer/:uuid/edit` | Создание/редактирование; определяет режим по наличию `:uuid`; вызывает `createOffer` / `updateOffer`, редиректит на просмотр |
 | `src/views/Deals/DealView.vue` | `/deals` | Старый OfferView из `/offers` — перемещён при рефакторинге |
 
 ### Components (`src/components/offer/`)
@@ -181,7 +182,11 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 
 ### Offer — корневая сущность
 
-`title`, `clients: Client[]`, `welcomeText`, `startDate`, `endDate`, `flights: Flight[]`, `totalFlightsCost`, `flightsCurrency`, `hotels: Hotel[]`, `totalHotelsCost`, `hotelsCurrency`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`
+**Поля из реального API** (`OfferApi`, `/api/v1/offers`): `title`, `description`, `status: OfferStatus` (`'draft' | 'ready' | 'published'`) — не `optional`, у них всегда есть значение (дефолтятся и в `blankOffer()`, и в offer-сторе при create/update). `uuid?`, `id?`, `agencyId?`, `createdBy?`, `createdAt?`, `updatedAt?` — присваиваются бэкендом, поэтому `optional`: отсутствуют у локального черновика, пока оффер не сохранён через `OfferApi.create`.
+
+**Доменные поля** (в бэкенде ещё не реализованы, между перезагрузками страницы не сохраняются — см. [Offer Store: Basic Fields vs Domain Content](#offer-store-basic-fields-vs-domain-content)): `clients: Client[]`, `startDate`, `endDate`, `flights: Flight[]`, `hotels: Hotel[]`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`.
+
+**Примечание:** отдельного поля `welcomeText` в модели нет — приветственный текст для клиента хранится в `description` (реальное поле API), эти два понятия были объединены по ревью PR #25.
 
 ### Flight — модель сегментов
 
@@ -206,16 +211,15 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 
 ---
 
-## Offer Store: Persistence (localStorage)
+## Offer Store: Basic Fields vs Domain Content
 
-Двухслойная архитектура:
+Реальный бэкенд (`/api/v1/offers`, см. `api/docs/swagger/swagger.json` в репозитории API) хранит **только базовые поля** оффера: `title`, `description`, `status`, `agency_id`, `created_by`, `created_at`, `updated_at`. `description` используется на фронте и как приветственный текст для клиента (отдельного `welcomeText` в модели нет — эти два понятия объединены). Полей для доменной модели (`flights`, `hotels`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`, `clients`, `startDate`, `endDate`) в бэкенде пока нет (issue [#24](https://github.com/tourismania/web/issues/24)).
 
-1. Пытается вызвать `OfferApi` (реальный бэкенд)
-2. При ошибке — фолбэк на `localStorage['tourismania:offers']`
+`src/stores/offer.ts` работает **только** с базовыми полями через `OfferApi` — реальный бэкенд, без фолбэка. Ошибки идут в `store.error` + `console.error`. localStorage-персистенция доменного контента, использовавшаяся ранее, убрана по ревью — доменные поля (`flights`/`hotels`/итд), приходящие из форм (`OfferEditView`), сейчас нигде не сохраняются между перезагрузками страницы; это осознанный и временный пробел, а не баг.
 
-При первом запуске `ensureSeededOffers()` сидит localStorage mock-данными. `newOfferId()` использует `crypto.randomUUID()`.
+Тип `DomainContent` (в `offer.ts`) оставлен как документация структуры, которую предстоит перенести на бэкенд — сам по себе он больше ни для чего не используется.
 
-**Когда переписывать:** после появления стабильного бэкенда — решить, оставить localStorage как offline-кеш или удалить.
+**Когда переписывать:** когда бэкенд получит поля для полной доменной модели — реализовать `flights`/`hotels`/итд через реальный API целиком (отдельная задача, замена нынешнего пробела, а не текущей localStorage-схемы, которой больше нет).
 
 ---
 
@@ -246,6 +250,17 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 - Строгая типизация; `any` запрещён кроме крайних случаев.
 - Доменные типы — только в `src/api/types/`; компоненты импортируют оттуда через `import type`.
 - Нет магических строк — используй union-типы и именованные константы.
+
+**Именование wire-типов в API-классах** (`src/api/*.ts`, см. `offer.ts`):
+
+| Суффикс | Назначение | Экспортируется? |
+|---|---|---|
+| `*Dto` | Сырой JSON бэкенда 1:1 (snake_case, как в swagger) | Нет, приватный тип файла |
+| `*Params` | Входные параметры метода API-класса, во фронтовых конвенциях (camelCase) | Да |
+| `*Result` | Возвращаемое значение метода, уже смёрженное с доменными полями/метаданными (не является буквальным ответом бэкенда) | Да |
+| `*Fields` | Подмножество доменных полей, которое реально принимает эндпоинт на запись (create/update) | Да |
+
+Домен (`src/api/types/offer.ts` и т.п.) от этих типов не зависит — `*Dto` мапится в доменный тип внутри API-класса, наружу утекает только домен.
 
 ### State Management
 
