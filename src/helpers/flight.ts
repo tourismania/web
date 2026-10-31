@@ -1,4 +1,4 @@
-import type { Airline, Airport, CabinClass, Flight, FlightSegment } from '@/api/types/offer'
+import type { Airport, CabinClass, Flight, FlightSegment } from '@/api/types/offer'
 import type { FieldRule } from './rules'
 
 const SECONDS_IN_MINUTE = 60
@@ -21,16 +21,11 @@ export function cabinClassLabel(cabinClass: CabinClass): string {
   return CABIN_CLASS_OPTIONS.find((o) => o.value === cabinClass)?.title ?? cabinClass
 }
 
-// ─── Показ аэропорта и авиакомпании ───────────────────────────────────────────
+// ─── Показ аэропорта ──────────────────────────────────────────────────────────
 
 /** Код аэропорта для показа: IATA, а если его нет — ICAO. */
 export function airportCode(airport: Airport | null | undefined): string {
   return airport ? (airport.iata ?? airport.icao) : ''
-}
-
-/** Название авиакомпании для показа: русское, а если его нет — английское. */
-export function airlineName(airline: Airline | null | undefined): string {
-  return airline ? airline.nameRu || airline.name : ''
 }
 
 // ─── Длительности (их считает api, web только форматирует секунды) ────────────

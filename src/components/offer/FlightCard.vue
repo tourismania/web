@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 import type { Flight, FlightSegment } from '@/api/types/offer'
 import {
-  airlineName,
   airportCode,
   cabinClassLabel,
   formatFlightDuration,
@@ -93,7 +92,7 @@ function layoverPositionPercent(i: number): number {
         >
           <span class="flight-card__meta-item">
             <v-icon icon="mdi-airplane" size="14" class="mr-1" />
-            {{ airlineName(segment.airline) }}
+            {{ segment.airline?.name }}
           </span>
           <template v-if="segment.cabinClass">
             <span class="flight-card__meta-sep">·</span>

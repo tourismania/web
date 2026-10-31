@@ -24,7 +24,7 @@ interface AirportDto {
   icao: string
   iata: string | null
   name: string
-  city: { name: string; timezone: string | null }
+  city: { name: string }
   country: { iso2: string; name: string }
 }
 
@@ -32,7 +32,6 @@ interface AirlineDto {
   id: number
   icao: string | null
   name: string
-  name_ru: string
   dissolved_on: string | null
 }
 
@@ -152,7 +151,7 @@ function mapAirportResponse(dto: AirportDto): Airport {
     icao: dto.icao,
     iata: dto.iata,
     name: dto.name,
-    city: { name: dto.city.name, timezone: dto.city.timezone },
+    city: { name: dto.city.name },
     country: { iso2: dto.country.iso2, name: dto.country.name },
   }
 }
@@ -162,7 +161,6 @@ function mapAirlineResponse(dto: AirlineDto): Airline {
     id: dto.id,
     icao: dto.icao,
     name: dto.name,
-    nameRu: dto.name_ru,
     dissolvedOn: dto.dissolved_on,
   }
 }

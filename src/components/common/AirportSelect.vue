@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import type { Airport } from '@/api/types/offer'
-import type { AirportResult } from '@/api/types/airport'
 import { AirportApi } from '@/api/airport'
 import type { FieldRule } from '@/helpers/rules'
 
@@ -58,27 +57,15 @@ function onSearchInput(value: string) {
 }
 
 // Airports with an IATA code first; stable sort keeps API order within each group.
-function sortByIata(list: AirportResult[]): AirportResult[] {
+function sortByIata(list: Airport[]): Airport[] {
   return [...list].sort((a, b) => Number(!a.iata) - Number(!b.iata))
-}
-
-// Ответ поиска → модель перелёта. Поиск отдаёт пустую таймзону строкой, а модель
-// хранит отсутствие значения как null — так же, как карточка оффера.
-function toAirport(result: AirportResult): Airport {
-  return {
-    icao: result.icao,
-    iata: result.iata || null,
-    name: result.name,
-    city: { name: result.city.name, timezone: result.city.timezone || null },
-    country: { iso2: result.country.iso2, name: result.country.name },
-  }
 }
 
 async function doSearch(query: string) {
   loading.value = true
   try {
     const res = await AirportApi.search(query, 15)
-    items.value = sortByIata(res.data).map(toAirport)
+    items.value = sortByIata(res.data)
   } catch {
     items.value = []
   } finally {

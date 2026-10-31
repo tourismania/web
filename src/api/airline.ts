@@ -5,7 +5,6 @@ interface AirlineDto {
   id: number
   icao: string | null
   name: string
-  name_ru: string
   country: { iso2: string; name: string } | null
   dissolved_on: string | null
 }
@@ -26,7 +25,6 @@ export class AirlineApi {
         id: dto.id,
         icao: dto.icao,
         name: dto.name,
-        nameRu: dto.name_ru,
         country: dto.country,
         dissolvedOn: dto.dissolved_on,
       })),

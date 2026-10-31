@@ -12,7 +12,7 @@ import type {
 import DateField from '@/components/common/DateField.vue'
 import DateTimeField from '@/components/common/DateTimeField.vue'
 import { computeNights, pluralizeNights } from '@/helpers/hotel'
-import { airlineName, blankFlight } from '@/helpers/flight'
+import { blankFlight } from '@/helpers/flight'
 import FlightEditDialog from '@/components/offer/FlightEditDialog.vue'
 
 const route = useRoute()
@@ -310,7 +310,7 @@ async function submitOffer() {
           <v-expansion-panel-text>
             <div v-for="(f, i) in offer.flights" :key="i" class="entity-row">
               <div class="entity-info">
-                <span class="text-body-2">{{ i + 1 }}. {{ airlineName(f.segments[0]?.airline) || '—' }}</span>
+                <span class="text-body-2">{{ i + 1 }}. {{ f.segments[0]?.airline?.name || '—' }}</span>
                 <span class="text-caption text-medium-emphasis ml-2">{{ f.segments[0]?.departureAirport?.city.name }} → {{ f.segments.at(-1)?.arrivalAirport?.city.name }}</span>
               </div>
               <div class="entity-actions">

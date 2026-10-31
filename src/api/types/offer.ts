@@ -3,8 +3,8 @@ export type CabinClass = 'economy' | 'comfort' | 'comfort_plus' | 'business' | '
 export type Currency = 'RUB' | 'USD' | 'EUR' | 'TRY'
 export type OfferStatus = 'draft' | 'ready' | 'published'
 
-// Модель перелёта повторяет модель api и отличается только регистром имён
-// (camelCase вместо snake_case). Маппинг — в src/api/offer.ts.
+// Модель перелёта повторяет модель api в camelCase вместо snake_case, без полей,
+// которые web не использует (таймзона города аэропорта). Маппинг — в src/api/offer.ts.
 
 export interface Airport {
   icao: string                    // ключ аэропорта, e.g. "USSS"
@@ -12,7 +12,6 @@ export interface Airport {
   name: string                    // e.g. "Кольцово"
   city: {
     name: string
-    timezone: string | null       // IANA, e.g. "Asia/Yekaterinburg"; web по ней ничего не считает
   }
   country: {
     iso2: string
@@ -23,8 +22,7 @@ export interface Airport {
 export interface Airline {
   id: number                      // ключ авиакомпании, в api уходит как airline_id
   icao: string | null             // null только у служебной записи «Неизвестная»
-  name: string                    // английское название
-  nameRu: string                  // '' — русского названия нет
+  name: string                    // для показа: русское, если есть, иначе английское (выбирает api)
   dissolvedOn: string | null      // YYYY-MM-DD; null — действует
 }
 

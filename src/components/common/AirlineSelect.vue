@@ -3,7 +3,6 @@ import { computed, ref, watch } from 'vue'
 import type { Airline } from '@/api/types/offer'
 import type { AirlineSearchItem } from '@/api/types/airline'
 import { AirlineApi } from '@/api/airline'
-import { airlineName } from '@/helpers/flight'
 import type { FieldRule } from '@/helpers/rules'
 
 const MIN_SEARCH_LENGTH = 3
@@ -84,13 +83,8 @@ function onSelect(item: AirlineSearchItem | null) {
     id: item.id,
     icao: item.icao,
     name: item.name,
-    nameRu: item.nameRu,
     dissolvedOn: item.dissolvedOn,
   })
-}
-
-function itemTitle(item: AirlineSearchItem): string {
-  return airlineName(item)
 }
 
 // YYYY-MM-DD → ДД.ММ.ГГГГ, без Date: дата справочника не зависит от часового пояса
@@ -110,7 +104,7 @@ watch(
   <v-autocomplete
     :model-value="displayValue"
     :items="mergedItems"
-    :item-title="itemTitle"
+    item-title="name"
     :item-value="(i: AirlineSearchItem) => i"
     :loading="loading"
     :label="label ?? 'Авиакомпания'"
@@ -136,7 +130,7 @@ watch(
       <v-list-item v-bind="itemProps" :title="undefined" class="airline-item px-3 py-2">
         <template #default>
           <div class="airline-item__main">
-            <span class="airline-item__name">{{ airlineName(item.raw) }}</span>
+            <span class="airline-item__name">{{ item.raw.name }}</span>
             <v-chip v-if="item.raw.icao" size="x-small" variant="tonal" class="ml-1">
               {{ item.raw.icao }}
             </v-chip>

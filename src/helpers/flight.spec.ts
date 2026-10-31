@@ -1,6 +1,5 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import {
-  airlineName,
   airportCode,
   blankFlight,
   blankSegment,
@@ -11,22 +10,14 @@ import {
   formatLocalDateTime,
   priceRule,
 } from './flight'
-import type { Airline, Airport } from '@/api/types/offer'
+import type { Airport } from '@/api/types/offer'
 
 const airport: Airport = {
   icao: 'UUEE',
   iata: 'SVO',
   name: 'Шереметьево',
-  city: { name: 'Москва', timezone: 'Europe/Moscow' },
+  city: { name: 'Москва' },
   country: { iso2: 'RU', name: 'Россия' },
-}
-
-const airline: Airline = {
-  id: 42,
-  icao: 'AFL',
-  name: 'Aeroflot',
-  nameRu: 'Аэрофлот',
-  dissolvedOn: null,
 }
 
 describe('airportCode', () => {
@@ -35,16 +26,6 @@ describe('airportCode', () => {
   it('нет аэропорта — пусто', () => {
     expect(airportCode(null)).toBe('')
     expect(airportCode(undefined)).toBe('')
-  })
-})
-
-describe('airlineName', () => {
-  it('показывает русское название', () => expect(airlineName(airline)).toBe('Аэрофлот'))
-  it('авиакомпания без русского названия — английское', () =>
-    expect(airlineName({ ...airline, nameRu: '' })).toBe('Aeroflot'))
-  it('нет авиакомпании — пусто', () => {
-    expect(airlineName(null)).toBe('')
-    expect(airlineName(undefined)).toBe('')
   })
 })
 

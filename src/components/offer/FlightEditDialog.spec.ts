@@ -12,12 +12,12 @@ function airport(icao: string, iata: string | null, city: string): Airport {
     icao,
     iata,
     name: `Аэропорт ${icao}`,
-    city: { name: city, timezone: null },
+    city: { name: city },
     country: { iso2: 'RU', name: 'Россия' },
   }
 }
 
-const unknownAirline: Airline = { id: 1, icao: null, name: 'Unknown', nameRu: 'Неизвестная', dissolvedOn: null }
+const unknownAirline: Airline = { id: 1, icao: null, name: 'Неизвестная', dissolvedOn: null }
 
 // Сегмент «со старыми данными»: пустые класс и номер, авиакомпания «Неизвестная»
 function savedFlight(): Flight {

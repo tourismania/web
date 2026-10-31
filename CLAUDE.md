@@ -66,7 +66,7 @@ src/
     common/               # Переиспользуемые UI-компоненты ввода
   helpers/
     hotel.ts              # computeNights, pluralizeNights
-    flight.ts             # Показ перелёта (airportCode, airlineName, длительности из секунд, местное время), priceRule, черновики
+    flight.ts             # Показ перелёта (airportCode, длительности из секунд, местное время), priceRule, черновики
     rules.ts              # Правила полей форм Vuetify (FieldRule, required)
   layouts/
     MainLayout.vue        # Обёртка всех страниц: AppBar + NavigationDrawer + RouterView
@@ -133,7 +133,7 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 - `auth.ts` — `Auth` class: `POST /api/login`
 - `user.ts` — `UserApi` class: `GET /api/v1/users/me`
 - `offer.ts` — `OfferApi` class: CRUD `/api/v1/offers` (см. `api/docs/swagger/swagger.json` в репозитории бэкенда); методы `getAll(params?)` (пагинация `limit`/`offset`, фильтры `status`/`createdBy`), `getById`, `getPublicById` (`GET /api/v1/public/offers/{uuid}`, без авторизации, только опубликованные — UI для неё пока не реализован, см. issue [#27](https://github.com/tourismania/web/issues/27)), `create`, `update` (PATCH, частичное обновление базовых полей), `delete`. `create`/`update` всегда отправляют полный набор `flights`, в том числе `[]`: api заменяет его целиком, поэтому в `update` поле `flights` обязательно по типу. Возвращает только те поля, которые реально хранит бэкенд; в списке `getAll` перелётов нет, у таких офферов `flights: []` — для записи используй оффер из `getById`. См. [Offer Store: Basic Fields vs Domain Content](#offer-store-basic-fields-vs-domain-content)
-- `airport.ts` — `AirportApi` class: `GET /api/v1/airports` (полнотекстовый поиск)
+- `airport.ts` — `AirportApi` class: `GET /api/v1/airports` (полнотекстовый поиск); приватные `*Dto` и маппинг в доменный `Airport`, пустой `iata` → `null`
 - `airline.ts` — `AirlineApi` class: `GET /api/v1/airlines` (поиск по справочнику авиакомпаний)
 - `error.ts` — `apiErrorMessage(e, fallback)`: `<fallback>: <причина из response.data.error>`, для `validation failed` — с ключами `meta`; без причины в ответе — `fallback`
 
@@ -204,18 +204,18 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 
 ### Flight — модель сегментов
 
-Модель повторяет модель api и отличается только регистром имён (camelCase вместо snake_case); маппинг — в `src/api/offer.ts`.
+Модель повторяет модель api в camelCase вместо snake_case, без полей, которые web не использует (например, таймзоны города аэропорта); маппинг — в `src/api/offer.ts`.
 
 `Flight { id?, price: string, currency, managerComment: string, segments: FlightSegment[], totalDurationSeconds?, layovers?: { airportIcao, durationSeconds }[] }`  
 `FlightSegment { departureAirport, arrivalAirport: Airport | null, departureAt, arrivalAt: string, cabinClass: CabinClass, airline: Airline | null, flightNumber, durationSeconds? }`  
-`Airport { icao, iata: string | null, name, city: { name, timezone: string | null }, country: { iso2, name } }`  
-`Airline { id, icao: string | null, name, nameRu, dissolvedOn: string | null }`
+`Airport { icao, iata: string | null, name, city: { name }, country: { iso2, name } }`  
+`Airline { id, icao: string | null, name, dissolvedOn: string | null }`
 
 **Правило:** прямой рейс = 1 сегмент, N пересадок = N+1 сегмент.  
 **`null` в сегменте** бывает только в черновике диалога.  
 **Время** — местное время аэропорта без смещения (`2026-05-14T10:00:00`). Web передаёт и показывает его как есть, не зависит от часового пояса браузера и часовые пояса не считает: время в пути и пересадки берутся из вычисленных api полей, неположительные значения не показываются. Вычисляемые поля (`id`, длительности, `layovers`) и объекты аэропорта и авиакомпании в тело записи не попадают: api отклоняет неизвестные поля.  
 **Цена** — десятичная строка с точкой, как в api; в число приводится только для итога на странице оффера.  
-**Показ:** код аэропорта — `airportCode` (`iata ?? icao`), авиакомпания — `airlineName` (`nameRu || name`).
+**Показ:** код аэропорта — `airportCode` (`iata ?? icao`), авиакомпания — `name` (русское название или английское, если русского нет; выбирает api).
 
 ### Hotel
 
