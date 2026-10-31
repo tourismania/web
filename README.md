@@ -72,13 +72,15 @@ src/
     user.ts             # UserApi — GET /api/v1/users/me
     offer.ts             # OfferApi — CRUD /api/v1/offers
     airport.ts            # AirportApi — полнотекстовый поиск аэропортов/городов
-    types/                # Доменные типы (offer, user, auth, airport)
+    airline.ts            # AirlineApi — поиск по справочнику авиакомпаний
+    error.ts              # apiErrorMessage — текст ошибки api с причиной
+    types/                # Доменные типы (offer, user, auth, airport, airline)
   assets/                # SCSS-переменные, глобальные стили, шрифты
   blocks/                # Layout/chrome-компоненты с доступом к стору (AppBar, NavigationDrawer, LoginForm...)
   components/
     offer/               # Карточки и блоки сущности Offer (FlightCard, HotelCard, CruiseCard...)
-    common/              # Переиспользуемые UI-компоненты ввода (DateField, AirportSelect...)
-  helpers/               # Чистые функции (расчёт ночей в отеле, перевод локального времени рейса в UTC)
+    common/              # Переиспользуемые UI-компоненты ввода (DateField, AirportSelect, AirlineSelect...)
+  helpers/               # Чистые функции (расчёт ночей в отеле, показ перелёта, правила полей форм)
   layouts/               # MainLayout — обёртка всех страниц
   router/                # Маршруты + navigation guard
   stores/                # Pinia-сторы (auth, user, offer, client)
@@ -108,7 +110,7 @@ docker/
 
 Корневая сущность приложения (`src/api/types/offer.ts`): `title`, `description` (используется также как приветственный текст для клиента), `clients`, `startDate`, `endDate` и массивы вложенных сущностей — `flights`, `hotels`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`.
 
-- **`Flight`** — состоит из `segments: FlightSegment[]` (прямой рейс = 1 сегмент, N пересадок = N+1 сегмент). Каждый `Airport` хранит `timezone` как ISO-офсет (`+03:00`); для обратной совместимости `zonedToUtcMs` (`src/helpers/flight.ts`) также распознаёт legacy IANA-зоны (`Europe/Moscow`) через `Intl`.
+- **`Flight`** — повторяет модель api в camelCase; состоит из `segments: FlightSegment[]` (прямой рейс = 1 сегмент, N пересадок = N+1 сегмент). Цена — десятичная строка. Аэропорт (`Airport`) хранится объектом справочника и передаётся в api по коду ICAO, авиакомпания (`Airline`) — объектом справочника и передаётся по `id`. Время сегмента — местное время аэропорта без смещения; web показывает его как есть и часовые пояса не считает, а время в пути и пересадки берёт из вычисленных api полей.
 - **`Hotel`** — количество ночей не хранится в модели, а считается на лету через `computeNights(checkIn, checkOut)` (`src/helpers/hotel.ts`).
 - **`Cruise`** — одна каюта на круиз (`cabin: CruiseCabin`).
 - **`Excursion`, `Cruise`** — галереи изображений (`gallery: Image[]`).
@@ -117,13 +119,17 @@ docker/
 
 ### Хранение данных
 
-Реальный бэкенд (`/api/v1/offers`) сейчас хранит только базовые поля оффера: `title`, `description`, `status` (`draft`/`ready`/`published`) + системные `id`/`uuid`/`agencyId`/`createdBy`/`createdAt`/`updatedAt`. Полей для `flights`/`hotels`/`carRentals`/`cruises`/`excursions`/`transport`/`additionalServices`/`clients`/`startDate`/`endDate` в API пока нет.
+Реальный бэкенд (`/api/v1/offers`) сейчас хранит базовые поля оффера — `title`, `description`, `status` (`draft`/`ready`/`published`) + системные `id`/`uuid`/`agencyId`/`createdBy`/`createdAt`/`updatedAt` — и перелёты `flights` (только в карточке, в списке офферов их нет). Полей для `hotels`/`carRentals`/`cruises`/`excursions`/`transport`/`additionalServices`/`clients`/`startDate`/`endDate` в API пока нет.
 
-Стор `offer` (`src/stores/offer.ts`) работает только с базовыми полями через реальный API (`OfferApi`, `src/api/offer.ts`) — ошибки не проглатываются, а попадают в `store.error` и логируются через `console.error`. Доменный контент (перелёты, отели, круизы и т.д.), которого ещё нет в бэкенде, нигде не сохраняется между перезагрузками страницы — это осознанный временный пробел до расширения бэкенда под полную доменную модель (см. открытый вопрос в issue [#24](../../issues/24)).
+Стор `offer` (`src/stores/offer.ts`) работает с базовыми полями и перелётами через реальный API (`OfferApi`, `src/api/offer.ts`) — ошибки не проглатываются, а попадают в `store.error` (при записи — с причиной из ответа api) и логируются через `console.error`. При создании и сохранении оффера web всегда передаёт полный набор перелётов редактора, в том числе пустой. Остальной доменный контент (отели, круизы и т.д.), которого ещё нет в бэкенде, нигде не сохраняется между перезагрузками страницы — это осознанный временный пробел до расширения бэкенда под полную доменную модель (см. открытый вопрос в issue [#24](../../issues/24)).
 
 ### Поиск аэропортов
 
 `AirportSelect.vue` использует `AirportApi.search` (`GET /api/v1/airports`) для полнотекстового поиска по аэропортам и городам (мин. 2 символа) и сохраняет выбранный аэропорт в `Airport`-объект перелёта.
+
+### Поиск авиакомпаний
+
+`AirlineSelect.vue` использует `AirlineApi.search` (`GET /api/v1/airlines`) для поиска по справочнику авиакомпаний (мин. 3 символа) и сохраняет выбранную авиакомпанию в `Airline`-объект сегмента. Если перевозчик неизвестен, выбирается «Неизвестная».
 
 ## Тестирование
 

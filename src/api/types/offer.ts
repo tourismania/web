@@ -1,29 +1,57 @@
-export type FlightClass = 'economy' | 'business' | 'comfort'
+// Класс обслуживания сегмента; '' — класс неизвестен («Не указан»).
+export type CabinClass = 'economy' | 'comfort' | 'comfort_plus' | 'business' | ''
 export type Currency = 'RUB' | 'USD' | 'EUR' | 'TRY'
 export type OfferStatus = 'draft' | 'ready' | 'published'
 
+// Модель перелёта повторяет модель api и отличается только регистром имён
+// (camelCase вместо snake_case). Маппинг — в src/api/offer.ts.
+
 export interface Airport {
-  city: string
-  name: string         // e.g. "Кольцово"
-  code: string         // IATA, e.g. "SVX"
-  timezone: string     // IANA, e.g. "Asia/Yekaterinburg"
+  icao: string                    // ключ аэропорта, e.g. "USSS"
+  iata: string | null             // только для показа, e.g. "SVX"
+  name: string                    // e.g. "Кольцово"
+  city: {
+    name: string
+    timezone: string | null       // IANA, e.g. "Asia/Yekaterinburg"; web по ней ничего не считает
+  }
+  country: {
+    iso2: string
+    name: string
+  }
+}
+
+export interface Airline {
+  id: number                      // ключ авиакомпании, в api уходит как airline_id
+  icao: string | null             // null только у служебной записи «Неизвестная»
+  name: string                    // английское название
+  nameRu: string                  // '' — русского названия нет
+  dissolvedOn: string | null      // YYYY-MM-DD; null — действует
 }
 
 export interface FlightSegment {
-  airline: string                 // авиакомпания, выполняющая сегмент
-  flightNumber: string            // e.g. "U6-773"
-  flightClass: FlightClass        // класс перелёта на сегменте
-  from: Airport
-  to: Airport
-  departureDateTime: string       // local wall-clock в from.timezone, e.g. "2026-05-14T10:00:00"
-  arrivalDateTime: string         // local wall-clock в to.timezone
+  departureAirport: Airport | null // null бывает только в черновике диалога
+  arrivalAirport: Airport | null   // null бывает только в черновике диалога
+  departureAt: string              // местное время аэропорта вылета без смещения, e.g. "2026-05-14T10:00:00"
+  arrivalAt: string                // местное время аэропорта прилёта без смещения
+  cabinClass: CabinClass
+  airline: Airline | null          // null бывает только в черновике диалога
+  flightNumber: string             // e.g. "U6773"; '' — номер неизвестен
+  durationSeconds?: number         // вычисляет api; нет у сегмента, не сохранённого в api
+}
+
+export interface FlightLayover {
+  airportIcao: string
+  durationSeconds: number
 }
 
 export interface Flight {
-  managerComment?: string
-  segments: FlightSegment[]       // длина >= 1; перелёт с N пересадками = N+1 сегмент
-  price: number
+  id?: number                     // присваивает api
+  price: string                   // десятичная строка с точкой, как в api, e.g. "12345.50"
   currency: Currency
+  managerComment: string          // '' — комментария нет
+  segments: FlightSegment[]       // длина >= 1; перелёт с N пересадками = N+1 сегмент
+  totalDurationSeconds?: number   // вычисляет api; нет у перелёта, не сохранённого в api
+  layovers?: FlightLayover[]      // вычисляет api; нет у перелёта, не сохранённого в api
 }
 
 export interface Image {

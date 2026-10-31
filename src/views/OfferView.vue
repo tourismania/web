@@ -64,7 +64,8 @@ const hotelTotal = computed(() => {
 
 const flightTotal = computed(() => {
   if (!offer.value) return 0
-  return offer.value.flights.reduce((sum, ex) => sum + ex.price, 0)
+  // Цена перелёта — строка, как в api; в число приводится только для итога
+  return offer.value.flights.reduce((sum, ex) => sum + Number(ex.price), 0)
 })
 
 const excursionTotal = computed(() => {

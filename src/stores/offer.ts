@@ -1,21 +1,21 @@
 import { defineStore } from 'pinia'
+import { apiErrorMessage } from '@/api/error'
 import { OfferApi, type OfferListParams } from '@/api/offer'
 import type { Offer } from '@/api/types/offer'
 
 // ─── Доменный контент, которого ещё нет в реальном API ──────────────────────
 //
-// Бэкенд (issue #24, api/docs/swagger/swagger.json) хранит только базовые
-// поля оффера: title, description, status, agencyId, createdBy, timestamps.
-// Перелёты/отели/круизы/итд там пока не появились. localStorage-фолбэк для
-// этих полей убран (см. ревью PR #25) — работу с ними переделаем целиком под
-// реальный API отдельной задачей. Тип оставлен как документация структуры,
-// которую предстоит перенести на бэкенд.
+// Бэкенд (issue #24, api/docs/swagger/swagger.json) хранит базовые поля оффера
+// (title, description, status, agencyId, createdBy, timestamps) и перелёты —
+// их стор передаёт в OfferApi. Отели/круизы/итд там пока не появились.
+// localStorage-фолбэк для этих полей убран (см. ревью PR #25) — работу с ними
+// переделаем целиком под реальный API отдельной задачей. Тип оставлен как
+// документация структуры, которую предстоит перенести на бэкенд.
 export type DomainContent = Pick<
   Offer,
   | 'clients'
   | 'startDate'
   | 'endDate'
-  | 'flights'
   | 'hotels'
   | 'carRentals'
   | 'cruises'
@@ -76,19 +76,21 @@ export const useOfferStore = defineStore('offer', {
           title: data.title ?? '',
           description: data.description ?? '',
           status: data.status ?? 'draft',
+          flights: data.flights ?? [],
         })
         this.offers.push(created)
         return created
       } catch (e) {
         console.error('[offer-store] failed to create offer', e)
-        this.error = 'Не удалось создать оффер'
+        this.error = apiErrorMessage(e, 'Не удалось создать оффер')
         return null
       } finally {
         this.loading = false
       }
     },
 
-    async updateOffer(uuid: string, data: Partial<Offer>): Promise<Offer | null> {
+    // flights обязателен: api заменяет весь набор, пропуск поля не должен его стирать.
+    async updateOffer(uuid: string, data: Partial<Offer> & Pick<Offer, 'flights'>): Promise<Offer | null> {
       this.loading = true
       this.error = null
       try {
@@ -96,6 +98,7 @@ export const useOfferStore = defineStore('offer', {
           title: data.title,
           description: data.description ?? '',
           status: data.status,
+          flights: data.flights,
         })
         const idx = this.offers.findIndex((o) => o.uuid === uuid)
         if (idx !== -1) this.offers[idx] = updated
@@ -103,7 +106,7 @@ export const useOfferStore = defineStore('offer', {
         return updated
       } catch (e) {
         console.error('[offer-store] failed to update offer', uuid, e)
-        this.error = 'Не удалось сохранить оффер'
+        this.error = apiErrorMessage(e, 'Не удалось сохранить оффер')
         return null
       } finally {
         this.loading = false
