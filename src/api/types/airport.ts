@@ -1,42 +1,24 @@
-export interface AirportCity {
-  id: number
-  name: string
-  state: string
-  /** IANA timezone, e.g. "Europe/Moscow" */
-  timezone: string
-}
-
-export interface AirportCountry {
-  iso2: string
-  name: string
-}
-
-export interface AirportLocation {
-  elevation_ft: number
-  latitude: number
-  longitude: number
-}
-
-export interface AirportResult {
-  /** IATA code, e.g. "SVO" */
-  iata: string
-  /** ICAO code, e.g. "UUEE" */
-  icao: string
-  /** Airport name, e.g. "Шереметьево" */
-  name: string
-  city: AirportCity
-  country: AirportCountry
-  location: AirportLocation
+// Модель повторяет модель api в camelCase, без полей, которые web не использует.
+export interface Airport {
+  icao: string                    // ключ аэропорта, e.g. "USSS"
+  iata: string | null             // только для показа, e.g. "SVX"
+  name: string                    // e.g. "Кольцово"
+  city: {
+    name: string
+  }
+  country: {
+    iso2: string
+    name: string
+  }
 }
 
 export interface AirportSearchMeta {
+  total: number
   limit: number
   offset: number
-  search: string
-  total: number
 }
 
-export interface AirportSearchResponse {
-  data: AirportResult[]
+export interface AirportSearchResult {
+  data: Airport[]
   meta: AirportSearchMeta
 }

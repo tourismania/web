@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import type { Airport } from '@/api/types/offer'
-import type { AirportResult } from '@/api/types/airport'
+import type { Airport } from '@/api/types/airport'
 import { AirportApi } from '@/api/airport'
+import type { FieldRule } from '@/helpers/rules'
 
 const props = defineProps<{
   modelValue: Airport | null
   label?: string
+  rules?: FieldRule[]
 }>()
 
 const emit = defineEmits<{
@@ -16,49 +17,31 @@ const emit = defineEmits<{
 // ─── Internal state ───────────────────────────────────────────────────────────
 
 const searchQuery = ref('')
-const items = ref<AirportResult[]>([])
+const items = ref<Airport[]>([])
 const loading = ref(false)
 const debounceTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 
 // ─── Display value for the selected airport ───────────────────────────────────
 
-// Some airports have no IATA code — match on either so a saved selection
-// is still found in a freshly loaded search result.
-function matchesCode(item: AirportResult, code: string): boolean {
-  return item.iata === code || item.icao === code
-}
-
 /**
  * Displayed in the input field after selection.
  * Format: "Москва (SVO) — Шереметьево"
+ *
+ * Аэропорты сопоставляются по ICAO. Данные выбранного значения и выдачи поиска
+ * могут отличаться, поэтому при совпадении берётся объект из выдачи: поле
+ * сравнивает значение с вариантами целиком. Иначе показывается само значение.
  */
-const displayValue = computed<AirportResult | null>(() => {
-  if (!props.modelValue?.code) return null
-  // Try to find the selected value in the current items list first,
-  // otherwise synthesize a stub so v-autocomplete can display the label.
-  return (
-    items.value.find((i) => matchesCode(i, props.modelValue!.code)) ??
-    ({
-      iata: props.modelValue.code,
-      icao: '',
-      name: props.modelValue.name,
-      city: {
-        id: 0,
-        name: props.modelValue.city,
-        state: '',
-        timezone: props.modelValue.timezone,
-      },
-      country: { iso2: '', name: '' },
-      location: { elevation_ft: 0, latitude: 0, longitude: 0 },
-    } satisfies AirportResult)
-  )
+const displayValue = computed<Airport | null>(() => {
+  const selected = props.modelValue
+  if (!selected) return null
+  return items.value.find((i) => i.icao === selected.icao) ?? selected
 })
 
 // Keep a merged list so the current selection is always in the options
-const mergedItems = computed<AirportResult[]>(() => {
-  if (!displayValue.value || !props.modelValue?.code) return items.value
-  const exists = items.value.some((i) => matchesCode(i, props.modelValue!.code))
-  return exists ? items.value : [displayValue.value, ...items.value]
+const mergedItems = computed<Airport[]>(() => {
+  const selected = displayValue.value
+  if (!selected) return items.value
+  return items.value.includes(selected) ? items.value : [selected, ...items.value]
 })
 
 // ─── Search ───────────────────────────────────────────────────────────────────
@@ -74,7 +57,7 @@ function onSearchInput(value: string) {
 }
 
 // Airports with an IATA code first; stable sort keeps API order within each group.
-function sortByIata(list: AirportResult[]): AirportResult[] {
+function sortByIata(list: Airport[]): Airport[] {
   return [...list].sort((a, b) => Number(!a.iata) - Number(!b.iata))
 }
 
@@ -92,29 +75,13 @@ async function doSearch(query: string) {
 
 // ─── Selection ────────────────────────────────────────────────────────────────
 
-function onSelect(result: AirportResult | null) {
-  if (!result) {
-    emit('update:modelValue', null)
-    return
-  }
-  const airport: Airport = {
-    city: result.city.name,
-    name: result.name,
-    // Some airports (mostly regional/general aviation) have no IATA code —
-    // fall back to ICAO so `code` is never empty for a real selection.
-    // An empty code is the app-wide sentinel for "no airport chosen" (see
-    // blankAirport() in FlightEditDialog.vue), so leaving it blank here
-    // would make a valid selection indistinguishable from an unset field.
-    code: result.iata || result.icao,
-    // API may return null for city.timezone — fall back to UTC
-    timezone: result.city.timezone || '+00:00',
-  }
+function onSelect(airport: Airport | null) {
   emit('update:modelValue', airport)
 }
 
 // ─── Label helper ─────────────────────────────────────────────────────────────
 
-function itemTitle(item: AirportResult): string {
+function itemTitle(item: Airport): string {
   return item.iata
     ? `${item.city.name} (${item.iata}) — ${item.name}`
     : `${item.city.name} — ${item.name}`
@@ -133,13 +100,14 @@ watch(
     :model-value="displayValue"
     :items="mergedItems"
     :item-title="itemTitle"
-    :item-value="(i: AirportResult) => i"
+    :item-value="(i: Airport) => i"
     :loading="loading"
     :label="label ?? 'Аэропорт'"
     :search="searchQuery"
+    :rules="rules"
     density="compact"
     variant="outlined"
-    hide-details
+    hide-details="auto"
     no-filter
     return-object
     clearable

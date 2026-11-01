@@ -1,120 +1,106 @@
-import type { FlightSegment } from '@/api/types/offer'
+import type { Airport } from '@/api/types/airport'
+import type { CabinClass, Flight, FlightSegment } from '@/api/types/offer'
+import type { FieldRule } from './rules'
 
-/**
- * Converts a naive local ISO datetime string (without TZ suffix) interpreted
- * as wall-clock time in `timeZone` into absolute UTC milliseconds.
- *
- * Supported `timeZone` formats:
- *   1. ISO offset — "+03:00", "-05:30".  No Intl dependency.
- *   2. IANA zone  — "Europe/Moscow".     Resolved via Intl (legacy compat).
- *   3. Null / empty / unknown            → treated as UTC (offset 0).
- */
-export function zonedToUtcMs(localIso: string, timeZone: string | null | undefined): number {
-  const match = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/.exec(localIso ?? '')
-  if (!match) {
-    return new Date(localIso ?? '').getTime()
-  }
-  const [, y, mo, d, h, mi, s] = match
-  // Treat the local time components as if they were UTC — we then subtract the
-  // zone offset to recover the true UTC instant.
-  const asIfUtc = Date.UTC(+y, +mo - 1, +d, +h, +mi, s ? +s : 0)
+const SECONDS_IN_MINUTE = 60
+const MINUTES_IN_HOUR = 60
+const MINUTES_IN_DAY = 24 * MINUTES_IN_HOUR
 
-  const tz = (timeZone ?? '').trim()
+// ─── Классы обслуживания ──────────────────────────────────────────────────────
 
-  // Format 1: ISO offset designator like "+03:00" or "-05:30".
-  const offsetMatch = /^([+-])(\d{2}):(\d{2})$/.exec(tz)
-  if (offsetMatch) {
-    const sign = offsetMatch[1] === '-' ? -1 : 1
-    const offsetMs = sign * (+offsetMatch[2] * 60 + +offsetMatch[3]) * 60_000
-    // Wall-clock = UTC + offset  →  UTC = asIfUtc − offset
-    return asIfUtc - offsetMs
-  }
+export const CABIN_CLASS_OPTIONS: { value: CabinClass; title: string }[] = [
+  { value: 'economy', title: 'Эконом' },
+  { value: 'comfort', title: 'Комфорт' },
+  { value: 'comfort_plus', title: 'Комфорт плюс' },
+  { value: 'business', title: 'Бизнес' },
+  { value: '', title: 'Не указан' },
+]
 
-  // Format 2: IANA zone name (legacy). Resolve offset via Intl.
-  // Empty / null / invalid zone falls back to UTC (offset 0).
-  if (!tz) return asIfUtc
-
-  try {
-    const dtf = new Intl.DateTimeFormat('en-US', {
-      timeZone: tz,
-      hourCycle: 'h23',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    })
-    const parts: Record<string, string> = {}
-    for (const p of dtf.formatToParts(new Date(asIfUtc))) {
-      if (p.type !== 'literal') parts[p.type] = p.value
-    }
-    const shownInTz = Date.UTC(
-      +parts.year,
-      +parts.month - 1,
-      +parts.day,
-      +parts.hour,
-      +parts.minute,
-      +parts.second,
-    )
-    // offset = how far ahead of UTC the zone is at this moment
-    const offset = shownInTz - asIfUtc
-    return asIfUtc - offset
-  } catch {
-    // Unknown or unsupported IANA name → treat local time as UTC
-    return asIfUtc
-  }
+/** Подпись класса для показа перелёта; у неизвестного класса подписи нет. */
+export function cabinClassLabel(cabinClass: CabinClass): string {
+  if (!cabinClass) return ''
+  return CABIN_CLASS_OPTIONS.find((o) => o.value === cabinClass)?.title ?? cabinClass
 }
 
-export function formatDurationMs(ms: number): string {
-  if (!Number.isFinite(ms) || ms <= 0) return ''
-  const totalMinutes = Math.round(ms / 60_000)
-  const days = Math.floor(totalMinutes / (60 * 24))
-  const hours = Math.floor((totalMinutes % (60 * 24)) / 60)
-  const minutes = totalMinutes % 60
-  if (days > 0) return `${days}д ${hours}ч в пути`
-  if (hours > 0) {
-    return minutes > 0 ? `${hours}ч ${minutes}мин в пути` : `${hours}ч в пути`
-  }
-  return `${minutes} мин в пути`
+// ─── Показ аэропорта ──────────────────────────────────────────────────────────
+
+/** Код аэропорта для показа: IATA, а если его нет — ICAO. */
+export function airportCode(airport: Airport | null | undefined): string {
+  return airport ? (airport.iata ?? airport.icao) : ''
 }
 
-/**
- * Total flight duration in ms: sum of all segment flight times + all layover
- * waiting times.  Returns 0 when there is insufficient data.
- */
-export function computeFlightDurationMs(segments: FlightSegment[]): number {
-  let totalMs = 0
-  for (let i = 0; i < segments.length; i++) {
-    const seg = segments[i]
-    const depMs = zonedToUtcMs(seg.departureDateTime, seg.from.timezone)
-    const arrMs = zonedToUtcMs(seg.arrivalDateTime, seg.to.timezone)
-    if (Number.isFinite(arrMs - depMs) && arrMs > depMs) {
-      totalMs += arrMs - depMs
-    }
-    if (i < segments.length - 1) {
-      const next = segments[i + 1]
-      const nextDepMs = zonedToUtcMs(next.departureDateTime, next.from.timezone)
-      const waitMs = nextDepMs - arrMs
-      if (Number.isFinite(waitMs) && waitMs > 0) {
-        totalMs += waitMs
-      }
-    }
-  }
-  return totalMs
-}
+// ─── Длительности (их считает api, web только форматирует секунды) ────────────
 
-/** Human-readable layover wait between two adjacent segments. */
-export function formatLayoverWait(prev: FlightSegment, next: FlightSegment): string {
-  const arrMs = zonedToUtcMs(prev.arrivalDateTime, prev.to.timezone)
-  const depMs = zonedToUtcMs(next.departureDateTime, next.from.timezone)
-  const waitMs = depMs - arrMs
-  if (!Number.isFinite(waitMs) || waitMs <= 0) return ''
-  const totalMinutes = Math.round(waitMs / 60_000)
-  const days = Math.floor(totalMinutes / (60 * 24))
-  const hours = Math.floor((totalMinutes % (60 * 24)) / 60)
-  const minutes = totalMinutes % 60
+function formatSpan(seconds: number | null | undefined): string {
+  if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds <= 0) return ''
+  const totalMinutes = Math.round(seconds / SECONDS_IN_MINUTE)
+  const days = Math.floor(totalMinutes / MINUTES_IN_DAY)
+  const hours = Math.floor((totalMinutes % MINUTES_IN_DAY) / MINUTES_IN_HOUR)
+  const minutes = totalMinutes % MINUTES_IN_HOUR
   if (days > 0) return `${days}д ${hours}ч`
   if (hours > 0) return minutes > 0 ? `${hours}ч ${minutes}мин` : `${hours}ч`
   return `${minutes} мин`
+}
+
+/** Общее время в пути; неположительное или неизвестное значение не показывается. */
+export function formatFlightDuration(seconds: number | null | undefined): string {
+  const span = formatSpan(seconds)
+  return span && `${span} в пути`
+}
+
+/** Ожидание на пересадке; неположительное или неизвестное значение не показывается. */
+export function formatLayoverWait(seconds: number | null | undefined): string {
+  return formatSpan(seconds)
+}
+
+// ─── Местное время ────────────────────────────────────────────────────────────
+
+const LOCAL_DATE_TIME = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/
+
+/**
+ * Разбирает местное время сегмента для показа. Строка показывается как есть:
+ * часы берутся из неё напрямую, а дата форматируется в UTC, поэтому часовой
+ * пояс браузера на результат не влияет.
+ */
+export function formatLocalDateTime(value: string): { date: string; time: string; weekday: string } {
+  const match = LOCAL_DATE_TIME.exec(value ?? '')
+  if (!match) return { date: '', time: '', weekday: '' }
+  const [, year, month, day, hour, minute] = match
+  const calendarDay = new Date(Date.UTC(+year, +month - 1, +day))
+  return {
+    date: calendarDay.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', timeZone: 'UTC' }),
+    weekday: calendarDay.toLocaleDateString('ru-RU', { weekday: 'short', timeZone: 'UTC' }),
+    time: `${hour}:${minute}`,
+  }
+}
+
+// ─── Цена ─────────────────────────────────────────────────────────────────────
+
+const DECIMAL_PRICE = /^\d+(\.\d+)?$/
+
+/** Цена — неотрицательная десятичная запись с точкой. Остальные ограничения проверяет api. */
+export const priceRule: FieldRule = (value) =>
+  DECIMAL_PRICE.test(String(value ?? '').trim()) || 'Укажите число с точкой, например 12345.50'
+
+// ─── Черновики диалога ────────────────────────────────────────────────────────
+
+export function blankSegment(): FlightSegment {
+  return {
+    departureAirport: null,
+    arrivalAirport: null,
+    departureAt: '',
+    arrivalAt: '',
+    cabinClass: '',
+    airline: null,
+    flightNumber: '',
+  }
+}
+
+export function blankFlight(): Flight {
+  return {
+    price: '',
+    currency: 'RUB',
+    managerComment: '',
+    segments: [blankSegment()],
+  }
 }

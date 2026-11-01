@@ -2,7 +2,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useOfferStore } from './offer'
 import { OfferApi } from '@/api/offer'
-import type { Offer } from '@/api/types/offer'
+import type { Flight, Offer } from '@/api/types/offer'
+
+const flight: Flight = {
+  price: '15000.00',
+  currency: 'RUB',
+  managerComment: '',
+  segments: [],
+}
+
+function apiError(data?: unknown) {
+  return { isAxiosError: true, response: { status: 400, data } }
+}
 
 vi.mock('@/api/offer', () => ({
   OfferApi: {
@@ -109,15 +120,35 @@ describe('offer store', () => {
       mockedOfferApi.create.mockResolvedValueOnce(baseOffer({ uuid: 'uuid-new', title: 'Новый тур' }))
 
       const store = useOfferStore()
-      const result = await store.createOffer({ title: 'Новый тур' })
+      const result = await store.createOffer({ title: 'Новый тур', flights: [flight] })
 
       expect(mockedOfferApi.create).toHaveBeenCalledWith({
         title: 'Новый тур',
         description: '',
         status: 'draft',
+        flights: [flight],
       })
       expect(result?.uuid).toBe('uuid-new')
       expect(store.offers).toHaveLength(1)
+    })
+
+    it('without flights passes an empty set to the API', async () => {
+      mockedOfferApi.create.mockResolvedValueOnce(baseOffer())
+
+      const store = useOfferStore()
+      await store.createOffer({ title: 'Тур' })
+
+      expect(mockedOfferApi.create).toHaveBeenCalledWith(expect.objectContaining({ flights: [] }))
+    })
+
+    it('puts the reason from a 400 response into error', async () => {
+      mockedOfferApi.create.mockRejectedValueOnce(apiError({ error: 'title is required' }))
+
+      const store = useOfferStore()
+      const result = await store.createOffer({ title: '' })
+
+      expect(result).toBeNull()
+      expect(store.error).toBe('Не удалось создать оффер: title is required')
     })
 
     it('returns null and sets error on API failure', async () => {
@@ -140,26 +171,52 @@ describe('offer store', () => {
       store.offers = [baseOffer()]
       store.currentOffer = baseOffer()
 
-      const result = await store.updateOffer('uuid-1', { title: 'Изменённый' })
+      const result = await store.updateOffer('uuid-1', { title: 'Изменённый', flights: [flight] })
 
       expect(mockedOfferApi.update).toHaveBeenCalledWith('uuid-1', {
         title: 'Изменённый',
         description: '',
         status: undefined,
+        flights: [flight],
       })
       expect(result?.title).toBe('Изменённый')
       expect(store.offers[0].title).toBe('Изменённый')
       expect(store.currentOffer?.title).toBe('Изменённый')
     })
 
-    it('returns null and sets error on API failure', async () => {
+    it('without a response body sets the general phrase', async () => {
       mockedOfferApi.update.mockRejectedValueOnce(new Error('forbidden'))
 
       const store = useOfferStore()
-      const result = await store.updateOffer('uuid-1', { title: 'x' })
+      const result = await store.updateOffer('uuid-1', { title: 'x', flights: [] })
 
       expect(result).toBeNull()
       expect(store.error).toBe('Не удалось сохранить оффер')
+    })
+
+    it('puts the reason from a 400 response into error', async () => {
+      mockedOfferApi.update.mockRejectedValueOnce(
+        apiError({ error: 'flight segment arrival must be strictly after departure', code: 400 }),
+      )
+
+      const store = useOfferStore()
+      const result = await store.updateOffer('uuid-1', { title: 'x', flights: [flight] })
+
+      expect(result).toBeNull()
+      expect(store.error).toBe(
+        'Не удалось сохранить оффер: flight segment arrival must be strictly after departure',
+      )
+    })
+
+    it('adds meta keys for validation failed', async () => {
+      mockedOfferApi.update.mockRejectedValueOnce(
+        apiError({ error: 'validation failed', meta: { Price: 'money' } }),
+      )
+
+      const store = useOfferStore()
+      await store.updateOffer('uuid-1', { title: 'x', flights: [flight] })
+
+      expect(store.error).toBe('Не удалось сохранить оффер: validation failed (Price)')
     })
   })
 

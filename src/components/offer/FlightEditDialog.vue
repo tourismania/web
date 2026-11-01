@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import type { Flight, FlightSegment, Airport, FlightClass, Currency } from '@/api/types/offer'
+import type { VForm } from 'vuetify/components'
+import type { Flight, FlightSegment, Currency } from '@/api/types/offer'
 import DateTimeField from '@/components/common/DateTimeField.vue'
 import AirportSelect from '@/components/common/AirportSelect.vue'
+import AirlineSelect from '@/components/common/AirlineSelect.vue'
+import { CABIN_CLASS_OPTIONS, blankSegment, priceRule } from '@/helpers/flight'
+import { required, type FieldRule } from '@/helpers/rules'
 
 const props = defineProps<{
   modelValue: boolean
@@ -18,11 +22,14 @@ const emit = defineEmits<{
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CURRENCIES: Currency[] = ['RUB', 'USD', 'EUR', 'TRY']
-const FLIGHT_CLASSES: FlightClass[] = ['economy', 'comfort', 'business']
+const FLIGHT_NUMBER_MAX_LENGTH = 10
+const REQUIRED_RULES: FieldRule[] = [required]
+const PRICE_RULES: FieldRule[] = [required, priceRule]
 
 // ─── Draft ────────────────────────────────────────────────────────────────────
 
 const draft = ref<Flight>(cloneFlight(props.flight))
+const form = ref<VForm | null>(null)
 
 function cloneFlight(f: Flight): Flight {
   return JSON.parse(JSON.stringify(f))
@@ -36,42 +43,20 @@ watch(
   },
 )
 
-// ─── Airport helpers ──────────────────────────────────────────────────────────
-
-function blankAirport(): Airport {
-  return { city: '', name: '', code: '', timezone: '+03:00' }
-}
-
-function blankSegment(): FlightSegment {
-  return {
-    airline: '',
-    flightNumber: '',
-    flightClass: 'economy',
-    from: blankAirport(),
-    to: blankAirport(),
-    departureDateTime: '',
-    arrivalDateTime: '',
-  }
-}
-
 // ─── Transfer management ──────────────────────────────────────────────────────
 
 /**
  * Adds a transfer. Before: [..., last{from:A, to:B}]
  * After: [..., last{from:A, to:TRANSFER}, new{from:TRANSFER, to:B}]
+ * Класс нового сегмента — «Не указан», авиакомпания не выбрана.
  */
 function addTransfer() {
   const segs = draft.value.segments
   const last = segs[segs.length - 1]
-  const finalAirport: Airport = JSON.parse(JSON.stringify(last.to))
   const newSeg: FlightSegment = {
-    airline: '',
-    flightNumber: '',
-    flightClass: last.flightClass,
-    from: blankAirport(),
-    to: finalAirport,
-    departureDateTime: '',
-    arrivalDateTime: last.arrivalDateTime,
+    ...blankSegment(),
+    arrivalAirport: JSON.parse(JSON.stringify(last.arrivalAirport)),
+    arrivalAt: last.arrivalAt,
   }
   segs.push(newSeg)
 }
@@ -85,38 +70,26 @@ function removeTransfer(transferIdx: number) {
   if (transferIdx < 1 || transferIdx >= segs.length) return
   const prev = segs[transferIdx - 1]
   const next = segs[transferIdx]
-  prev.to = JSON.parse(JSON.stringify(next.to))
-  prev.arrivalDateTime = next.arrivalDateTime
+  prev.arrivalAirport = JSON.parse(JSON.stringify(next.arrivalAirport))
+  prev.arrivalAt = next.arrivalAt
   segs.splice(transferIdx, 1)
 }
 
 /**
- * Mirrors segments[k-1].to → segments[k].from for all transfer points.
+ * Mirrors segments[k-1].arrivalAirport → segments[k].departureAirport for all transfer points.
  */
 function syncTransferEndpoints() {
   const segs = draft.value.segments
   for (let k = 1; k < segs.length; k++) {
-    segs[k].from = JSON.parse(JSON.stringify(segs[k - 1].to))
+    segs[k].departureAirport = JSON.parse(JSON.stringify(segs[k - 1].arrivalAirport))
   }
-}
-
-// ─── Airport v-model helpers ──────────────────────────────────────────────────
-
-function setFromAirport(segIdx: number, airport: Airport | null) {
-  draft.value.segments[segIdx].from = airport ?? blankAirport()
-}
-
-function setToAirport(segIdx: number, airport: Airport | null) {
-  draft.value.segments[segIdx].to = airport ?? blankAirport()
-}
-
-function getAirportOrNull(airport: Airport): Airport | null {
-  return airport.code ? airport : null
 }
 
 // ─── Save / close ─────────────────────────────────────────────────────────────
 
-function save() {
+async function save() {
+  const result = await form.value?.validate()
+  if (!result?.valid) return
   syncTransferEndpoints()
   emit('save', JSON.parse(JSON.stringify(draft.value)))
   emit('update:modelValue', false)
@@ -142,147 +115,66 @@ function close() {
       <v-divider />
 
       <v-card-text class="dialog-body">
-        <!-- Общие параметры -->
-        <v-row dense>
-          <v-col cols="5">
-            <v-text-field
-              v-model.number="draft.price"
-              label="Цена"
-              type="number"
-              density="compact"
-              variant="outlined"
-              hide-details
-            />
-          </v-col>
-          <v-col cols="4">
-            <v-select
-              v-model="draft.currency"
-              :items="CURRENCIES"
-              label="Валюта"
-              density="compact"
-              variant="outlined"
-              hide-details
-            />
-          </v-col>
-          <v-col cols="12">
-            <v-textarea
-              v-model="draft.managerComment"
-              label="Комментарий менеджера"
-              density="compact"
-              variant="outlined"
-              rows="2"
-              hide-details
-              auto-grow
-            />
-          </v-col>
-        </v-row>
-
-        <!-- ── Точка отправления ──────────────────────────────────── -->
-        <div class="endpoint-card endpoint-card--departure mt-3">
-          <div class="endpoint-card__title">
-            <v-icon size="16" class="mr-1">mdi-airplane-takeoff</v-icon>
-            Точка отправления
-          </div>
-
-          <div class="leg-card__title">
-            <v-icon size="14" class="mr-1">mdi-airplane</v-icon>
-            Рейс
-          </div>
+        <v-form ref="form" @submit.prevent>
+          <!-- Общие параметры -->
           <v-row dense>
-            <v-col cols="6">
+            <v-col cols="5">
               <v-text-field
-                v-model="draft.segments[0].airline"
-                label="Авиакомпания"
+                v-model="draft.price"
+                :rules="PRICE_RULES"
+                label="Цена"
+                inputmode="decimal"
                 density="compact"
                 variant="outlined"
-                hide-details
+                hide-details="auto"
               />
             </v-col>
-            <v-col cols="3">
-              <v-text-field
-                v-model="draft.segments[0].flightNumber"
-                label="Рейс"
-                density="compact"
-                variant="outlined"
-                hide-details
-              />
-            </v-col>
-            <v-col cols="3">
+            <v-col cols="4">
               <v-select
-                v-model="draft.segments[0].flightClass"
-                :items="FLIGHT_CLASSES"
-                label="Класс"
+                v-model="draft.currency"
+                :items="CURRENCIES"
+                :rules="REQUIRED_RULES"
+                label="Валюта"
                 density="compact"
                 variant="outlined"
+                hide-details="auto"
+              />
+            </v-col>
+            <v-col cols="12">
+              <v-textarea
+                v-model="draft.managerComment"
+                label="Комментарий менеджера"
+                density="compact"
+                variant="outlined"
+                rows="2"
                 hide-details
-              />
-            </v-col>
-
-            <!-- Airport selector: откуда -->
-            <v-col cols="12">
-              <AirportSelect
-                :model-value="getAirportOrNull(draft.segments[0].from)"
-                label="Откуда"
-                @update:model-value="(v) => setFromAirport(0, v)"
-              />
-            </v-col>
-
-            <v-col cols="12">
-              <DateTimeField
-                v-model="draft.segments[0].departureDateTime"
-                label="Вылет (местное)"
+                auto-grow
               />
             </v-col>
           </v-row>
-        </div>
 
-        <!-- ── Пересадки ──────────────────────────────────────────── -->
-        <template v-for="k in draft.segments.length - 1" :key="`transfer-${k}`">
-          <div class="transfer-card mt-2">
-            <div class="d-flex align-center justify-space-between mb-2">
-              <div class="transfer-card__title">
-                <v-icon size="14" class="mr-1">mdi-airplane-clock</v-icon>
-                Пересадка {{ k }}
-              </div>
-              <v-btn icon size="x-small" variant="text" color="error" @click="removeTransfer(k)">
-                <v-icon size="14">mdi-delete</v-icon>
-              </v-btn>
+          <!-- ── Точка отправления ──────────────────────────────────── -->
+          <div class="endpoint-card endpoint-card--departure mt-3">
+            <div class="endpoint-card__title">
+              <v-icon size="16" class="mr-1">mdi-airplane-takeoff</v-icon>
+              Точка отправления
             </div>
 
-            <v-row dense>
-              <!-- Аэропорт пересадки = segments[k-1].to -->
-              <v-col cols="12">
-                <AirportSelect
-                  :model-value="getAirportOrNull(draft.segments[k - 1].to)"
-                  label="Аэропорт пересадки"
-                  @update:model-value="(v) => setToAirport(k - 1, v)"
-                />
-              </v-col>
-              <v-col cols="12">
-                <DateTimeField
-                  v-model="draft.segments[k - 1].arrivalDateTime"
-                  label="Прилёт (местное)"
-                />
-              </v-col>
-            </v-row>
-
-            <div class="leg-card__title mt-3">
+            <div class="leg-card__title">
               <v-icon size="14" class="mr-1">mdi-airplane</v-icon>
-              Рейс после пересадки в {{ draft.segments[k - 1].to.city || '…' }}
+              Рейс
             </div>
             <v-row dense>
               <v-col cols="6">
-                <v-text-field
-                  v-model="draft.segments[k].airline"
-                  label="Авиакомпания"
-                  density="compact"
-                  variant="outlined"
-                  hide-details
+                <AirlineSelect
+                  v-model="draft.segments[0].airline"
+                  :rules="REQUIRED_RULES"
                 />
               </v-col>
               <v-col cols="3">
                 <v-text-field
-                  v-model="draft.segments[k].flightNumber"
+                  v-model="draft.segments[0].flightNumber"
+                  :maxlength="FLIGHT_NUMBER_MAX_LENGTH"
                   label="Рейс"
                   density="compact"
                   variant="outlined"
@@ -291,53 +183,142 @@ function close() {
               </v-col>
               <v-col cols="3">
                 <v-select
-                  v-model="draft.segments[k].flightClass"
-                  :items="FLIGHT_CLASSES"
+                  v-model="draft.segments[0].cabinClass"
+                  :items="CABIN_CLASS_OPTIONS"
                   label="Класс"
                   density="compact"
                   variant="outlined"
                   hide-details
                 />
               </v-col>
+
+              <!-- Airport selector: откуда -->
+              <v-col cols="12">
+                <AirportSelect
+                  v-model="draft.segments[0].departureAirport"
+                  :rules="REQUIRED_RULES"
+                  label="Откуда"
+                />
+              </v-col>
+
               <v-col cols="12">
                 <DateTimeField
-                  v-model="draft.segments[k].departureDateTime"
-                  label="Вылет с пересадки (местное)"
+                  v-model="draft.segments[0].departureAt"
+                  :rules="REQUIRED_RULES"
+                  hide-details="auto"
+                  label="Вылет (местное)"
                 />
               </v-col>
             </v-row>
           </div>
-        </template>
 
-        <!-- Добавить пересадку -->
-        <div class="d-flex justify-center mt-3 mb-1">
-          <v-btn variant="tonal" prepend-icon="mdi-plus" size="small" @click="addTransfer">
-            Добавить пересадку
-          </v-btn>
-        </div>
+          <!-- ── Пересадки ──────────────────────────────────────────── -->
+          <template v-for="k in draft.segments.length - 1" :key="`transfer-${k}`">
+            <div class="transfer-card mt-2">
+              <div class="d-flex align-center justify-space-between mb-2">
+                <div class="transfer-card__title">
+                  <v-icon size="14" class="mr-1">mdi-airplane-clock</v-icon>
+                  Пересадка {{ k }}
+                </div>
+                <v-btn icon size="x-small" variant="text" color="error" @click="removeTransfer(k)">
+                  <v-icon size="14">mdi-delete</v-icon>
+                </v-btn>
+              </div>
 
-        <!-- ── Точка прибытия ─────────────────────────────────────── -->
-        <div class="endpoint-card endpoint-card--arrival mt-2">
-          <div class="endpoint-card__title">
-            <v-icon size="16" class="mr-1">mdi-airplane-landing</v-icon>
-            Точка прибытия
+              <v-row dense>
+                <!-- Аэропорт пересадки = segments[k-1].arrivalAirport -->
+                <v-col cols="12">
+                  <AirportSelect
+                    v-model="draft.segments[k - 1].arrivalAirport"
+                    :rules="REQUIRED_RULES"
+                    label="Аэропорт пересадки"
+                  />
+                </v-col>
+                <v-col cols="12">
+                  <DateTimeField
+                    v-model="draft.segments[k - 1].arrivalAt"
+                    :rules="REQUIRED_RULES"
+                    hide-details="auto"
+                    label="Прилёт (местное)"
+                  />
+                </v-col>
+              </v-row>
+
+              <div class="leg-card__title mt-3">
+                <v-icon size="14" class="mr-1">mdi-airplane</v-icon>
+                Рейс после пересадки в {{ draft.segments[k - 1].arrivalAirport?.city.name || '…' }}
+              </div>
+              <v-row dense>
+                <v-col cols="6">
+                  <AirlineSelect
+                    v-model="draft.segments[k].airline"
+                    :rules="REQUIRED_RULES"
+                  />
+                </v-col>
+                <v-col cols="3">
+                  <v-text-field
+                    v-model="draft.segments[k].flightNumber"
+                    :maxlength="FLIGHT_NUMBER_MAX_LENGTH"
+                    label="Рейс"
+                    density="compact"
+                    variant="outlined"
+                    hide-details
+                  />
+                </v-col>
+                <v-col cols="3">
+                  <v-select
+                    v-model="draft.segments[k].cabinClass"
+                    :items="CABIN_CLASS_OPTIONS"
+                    label="Класс"
+                    density="compact"
+                    variant="outlined"
+                    hide-details
+                  />
+                </v-col>
+                <v-col cols="12">
+                  <DateTimeField
+                    v-model="draft.segments[k].departureAt"
+                    :rules="REQUIRED_RULES"
+                    hide-details="auto"
+                    label="Вылет с пересадки (местное)"
+                  />
+                </v-col>
+              </v-row>
+            </div>
+          </template>
+
+          <!-- Добавить пересадку -->
+          <div class="d-flex justify-center mt-3 mb-1">
+            <v-btn variant="tonal" prepend-icon="mdi-plus" size="small" @click="addTransfer">
+              Добавить пересадку
+            </v-btn>
           </div>
-          <v-row dense>
-            <v-col cols="12">
-              <AirportSelect
-                :model-value="getAirportOrNull(draft.segments[draft.segments.length - 1].to)"
-                label="Куда"
-                @update:model-value="(v) => setToAirport(draft.segments.length - 1, v)"
-              />
-            </v-col>
-            <v-col cols="12">
-              <DateTimeField
-                v-model="draft.segments[draft.segments.length - 1].arrivalDateTime"
-                label="Прилёт (местное)"
-              />
-            </v-col>
-          </v-row>
-        </div>
+
+          <!-- ── Точка прибытия ─────────────────────────────────────── -->
+          <div class="endpoint-card endpoint-card--arrival mt-2">
+            <div class="endpoint-card__title">
+              <v-icon size="16" class="mr-1">mdi-airplane-landing</v-icon>
+              Точка прибытия
+            </div>
+            <v-row dense>
+              <v-col cols="12">
+                <AirportSelect
+                  v-model="draft.segments[draft.segments.length - 1].arrivalAirport"
+                  :rules="REQUIRED_RULES"
+                  label="Куда"
+                />
+              </v-col>
+              <v-col cols="12">
+                <DateTimeField
+                  v-model="draft.segments[draft.segments.length - 1].arrivalAt"
+                  :rules="REQUIRED_RULES"
+                  hide-details="auto"
+                  label="Прилёт (местное)"
+                />
+              </v-col>
+            </v-row>
+          </div>
+        </v-form>
       </v-card-text>
 
       <v-divider />

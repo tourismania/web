@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import type { FieldRule } from '@/helpers/rules'
 
 const props = withDefaults(defineProps<{
   modelValue: string | null | undefined
@@ -7,8 +8,9 @@ const props = withDefaults(defineProps<{
   min?: string | null
   max?: string | null
   density?: 'default' | 'comfortable' | 'compact'
-  hideDetails?: boolean
+  hideDetails?: boolean | 'auto'
   disabled?: boolean
+  rules?: FieldRule[]
 }>(), {
   label: '',
   min: null,
@@ -32,23 +34,26 @@ interface ParsedDateTime {
   date: Date | null
   hour: number
   minute: number
+  // Секунды в поле не редактируются, но сохраняются: время из api возвращается как пришло.
+  second: number
 }
 
 function parseDateTime(value: string | null | undefined): ParsedDateTime {
-  if (!value) return { date: null, hour: 12, minute: 0 }
-  const m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/.exec(String(value))
-  if (!m) return { date: null, hour: 12, minute: 0 }
+  if (!value) return { date: null, hour: 12, minute: 0, second: 0 }
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(String(value))
+  if (!m) return { date: null, hour: 12, minute: 0, second: 0 }
   const date = new Date(+m[1], +m[2] - 1, +m[3])
-  if (isNaN(date.getTime())) return { date: null, hour: 12, minute: 0 }
+  if (isNaN(date.getTime())) return { date: null, hour: 12, minute: 0, second: 0 }
   return {
     date,
     hour: m[4] ? +m[4] : 0,
     minute: m[5] ? +m[5] : 0,
+    second: m[6] ? +m[6] : 0,
   }
 }
 
-function toIsoDateTime(d: Date, h: number, mi: number): string {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(h)}:${pad(mi)}:00`
+function toIsoDateTime(d: Date, h: number, mi: number, s: number): string {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(h)}:${pad(mi)}:${pad(s)}`
 }
 
 const local = ref<ParsedDateTime>(parseDateTime(props.modelValue))
@@ -104,7 +109,7 @@ function clamp(value: number, mn: number, mx: number): number {
 
 function confirm() {
   if (local.value.date) {
-    emit('update:modelValue', toIsoDateTime(local.value.date, local.value.hour, local.value.minute))
+    emit('update:modelValue', toIsoDateTime(local.value.date, local.value.hour, local.value.minute, local.value.second))
   }
   menu.value = false
 }
@@ -131,6 +136,7 @@ function cancel() {
         :density="density"
         :hide-details="hideDetails"
         :disabled="disabled"
+        :rules="rules"
         readonly
         variant="outlined"
         append-inner-icon="mdi-calendar-clock"

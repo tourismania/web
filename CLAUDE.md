@@ -4,7 +4,7 @@
 
 ## Project Purpose
 
-SPA-интерфейс платформы Tourismania для управления туристическими предложениями. Позволяет менеджерам создавать, редактировать и просматривать предложения (Offer), включая перелёты, отели, круизы, аренду авто, экскурсии и транспорт. Авторизация через JWT. Базовые поля оффера (`title`/`description`/`status`) хранятся в реальном API; доменный контент (`flights`/`hotels`/итд) бэкенд пока не поддерживает и между перезагрузками не сохраняется (issue [#24](https://github.com/tourismania/web/issues/24)).
+SPA-интерфейс платформы Tourismania для управления туристическими предложениями. Позволяет менеджерам создавать, редактировать и просматривать предложения (Offer), включая перелёты, отели, круизы, аренду авто, экскурсии и транспорт. Авторизация через JWT. Базовые поля оффера (`title`/`description`/`status`) и перелёты (`flights`) хранятся в реальном API; остальной доменный контент (`hotels`/итд) бэкенд пока не поддерживает и между перезагрузками не сохраняется (issue [#24](https://github.com/tourismania/web/issues/24)).
 
 **Primary language:** TypeScript  
 **Framework:** Vue 3 + Vite SPA  
@@ -42,11 +42,16 @@ src/
     axios.ts              # Общий экземпляр axios (VITE_API_BASE_URL + Content-Type JSON)
     auth.ts               # Auth class — POST /api/login
     user.ts               # UserApi class — GET /api/v1/users/me
-    offer.ts              # OfferApi class — CRUD /api/v1/offers
+    offer.ts              # OfferApi class — CRUD /api/v1/offers, маппинг flights
+    airport.ts            # AirportApi class — GET /api/v1/airports
+    airline.ts            # AirlineApi class — GET /api/v1/airlines
+    error.ts              # apiErrorMessage — текст ошибки api с причиной
     types/
       auth.ts             # AuthResponse: { token: string }
       user.ts             # User: id, email, phone, firstName, lastName, rights.isSuperAdmin
       offer.ts            # Offer + все вложенные типы
+      airport.ts          # Airport + ответ поиска аэропортов
+      airline.ts          # Airline + ответ поиска авиакомпаний
   assets/
     variables.scss        # Общие SCSS-токены ($color-blue, $color-blue-dark, $color-yellow, шрифты)
     main.scss             # Глобальные стили
@@ -61,6 +66,8 @@ src/
     common/               # Переиспользуемые UI-компоненты ввода
   helpers/
     hotel.ts              # computeNights, pluralizeNights
+    flight.ts             # Показ перелёта (airportCode, длительности из секунд, местное время), priceRule, черновики
+    rules.ts              # Правила полей форм Vuetify (FieldRule, required)
   layouts/
     MainLayout.vue        # Обёртка всех страниц: AppBar + NavigationDrawer + RouterView
   router/
@@ -117,7 +124,7 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 
 - `src/stores/auth.ts` — JWT в `localStorage['auth_token']`; actions: `setToken`, `clearToken`
 - `src/stores/user.ts` — `User | null`; `loadCurrentUser()` → `UserApi.fetchCurrentUser`; getters: `isAuthenticated`, `isSuperAdmin`
-- `src/stores/offer.ts` — `offers`, `currentOffer`, `loading`, `error`, `meta: { total, limit, offset }`; actions: `loadOffers(params?)`, `loadOfferById`, `createOffer`, `updateOffer`, `deleteOffer`, `clearCurrentOffer`; getters: `offerById`, `offersCount`. Работает только с базовыми полями офферов через реальный API; доменный контент (flights/hotels/итд, которых в API ещё нет) нигде не персистится, см. [Offer Store: Basic Fields vs Domain Content](#offer-store-basic-fields-vs-domain-content)
+- `src/stores/offer.ts` — `offers`, `currentOffer`, `loading`, `error`, `meta: { total, limit, offset }`; actions: `loadOffers(params?)`, `loadOfferById`, `createOffer`, `updateOffer`, `deleteOffer`, `clearCurrentOffer`; getters: `offerById`, `offersCount`. Работает с базовыми полями и перелётами офферов через реальный API; остальной доменный контент (hotels/итд, которых в API ещё нет) нигде не персистится; при ошибке записи `error` содержит причину из ответа api (`apiErrorMessage`), см. [Offer Store: Basic Fields vs Domain Content](#offer-store-basic-fields-vs-domain-content)
 - `src/stores/client.ts` — `clients: Client[]`, mock (реального API нет)
 
 ### API Layer (`src/api/`)
@@ -125,8 +132,10 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 - `axios.ts` — **единственный** экземпляр axios. Все API-классы импортируют его. Содержит общий request-interceptor (проставляет `Authorization: Bearer <token>` из `useAuthStore()` для всех запросов) и response-interceptor (на `401` — `clearToken()` + редирект на `/login?redirect=...`). Отдельные API-классы **не должны** вручную добавлять заголовок `Authorization`.
 - `auth.ts` — `Auth` class: `POST /api/login`
 - `user.ts` — `UserApi` class: `GET /api/v1/users/me`
-- `offer.ts` — `OfferApi` class: CRUD `/api/v1/offers` (см. `api/docs/swagger/swagger.json` в репозитории бэкенда); методы `getAll(params?)` (пагинация `limit`/`offset`, фильтры `status`/`createdBy`), `getById`, `getPublicById` (`GET /api/v1/public/offers/{uuid}`, без авторизации, только опубликованные — UI для неё пока не реализован, см. issue [#27](https://github.com/tourismania/web/issues/27)), `create`, `update` (PATCH, частичное обновление), `delete`. Возвращает только те поля, которые реально хранит бэкенд — см. [Offer Store: Basic Fields vs Domain Content](#offer-store-basic-fields-vs-domain-content)
-- `airport.ts` — `AirportApi` class: `GET /api/v1/airports` (полнотекстовый поиск)
+- `offer.ts` — `OfferApi` class: CRUD `/api/v1/offers` (см. `api/docs/swagger/swagger.json` в репозитории бэкенда); методы `getAll(params?)` (пагинация `limit`/`offset`, фильтры `status`/`createdBy`), `getById`, `getPublicById` (`GET /api/v1/public/offers/{uuid}`, без авторизации, только опубликованные — UI для неё пока не реализован, см. issue [#27](https://github.com/tourismania/web/issues/27)), `create`, `update` (PATCH, частичное обновление базовых полей), `delete`. `create`/`update` всегда отправляют полный набор `flights`, в том числе `[]`: api заменяет его целиком, поэтому в `update` поле `flights` обязательно по типу. Возвращает только те поля, которые реально хранит бэкенд; в списке `getAll` перелётов нет, у таких офферов `flights: []` — для записи используй оффер из `getById`. См. [Offer Store: Basic Fields vs Domain Content](#offer-store-basic-fields-vs-domain-content)
+- `airport.ts` — `AirportApi` class: `GET /api/v1/airports` (полнотекстовый поиск); приватные `*Dto` и маппинг в доменный `Airport`, пустой `iata` → `null`
+- `airline.ts` — `AirlineApi` class: `GET /api/v1/airlines` (поиск по справочнику авиакомпаний)
+- `error.ts` — `apiErrorMessage(e, fallback)`: `<fallback>: <причина из response.data.error>`, для `validation failed` — с ключами `meta`; без причины в ответе — `fallback`
 
 ---
 
@@ -152,7 +161,8 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 | `OfferSectionHeader.vue` | Заголовок секции (иконка + название + счётчик + итог) |
 | `OfferListItem.vue` | Строка таблицы; emits `click` с `id` |
 | `OfferBasicInfoForm.vue` | Форма основных полей предложения |
-| `FlightCard.vue` | Карточка перелёта: таймлайн сегментов, тултипы пересадок, расчёт длительности |
+| `FlightCard.vue` | Карточка перелёта: таймлайн сегментов, тултипы пересадок; время в пути и ожидание — из ответа api |
+| `FlightEditDialog.vue` | Диалог перелёта: `v-form` с обязательными полями, пересадки; хронологию не проверяет — это делает api |
 | `HotelCard.vue` | Карточка отеля с галереей; nights считает через `computeNights` |
 | `CarRentalCard.vue` | Аренда авто |
 | `CruiseCard.vue` | Круиз с галереей |
@@ -165,8 +175,10 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 | Компонент | Назначение |
 |---|---|
 | `DateField.vue` | `v-text-field` (readonly) + `v-date-picker` в `v-menu`; принимает/возвращает `YYYY-MM-DD`; поддерживает `min`/`max` |
-| `DateTimeField.vue` | Дата + время; принимает/возвращает `YYYY-MM-DDTHH:mm:ss` |
-| `TimezoneOffsetSelect.vue` | Список UTC-смещений (UTC-12…+14); хранит `+HH:MM`/`-HH:MM`; нормализует legacy IANA через `Intl` |
+| `DateTimeField.vue` | Дата + время; принимает/возвращает `YYYY-MM-DDTHH:mm:ss`, секунды сохраняет; поддерживает `rules` |
+| `AirportSelect.vue` | Поиск аэропорта (`AirportApi`, от 2 символов); значение — `Airport`, сопоставление по ICAO; поддерживает `rules` |
+| `AirlineSelect.vue` | Поиск авиакомпании (`AirlineApi`, от 3 символов, дебаунс 300 мс); значение — `Airline`, сопоставление по `id`, текущее значение всегда среди вариантов (в том числе скрытая из поиска авиакомпания); поддерживает `rules` |
+| `TimezoneOffsetSelect.vue` | Список UTC-смещений (UTC-12…+14); хранит `+HH:MM`/`-HH:MM`; нормализует legacy IANA через `Intl`. Нигде не используется |
 
 ---
 
@@ -176,7 +188,7 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 
 | Тип | Значения |
 |---|---|
-| `FlightClass` | `'economy'` \| `'business'` \| `'comfort'` |
+| `CabinClass` | `'economy'` \| `'comfort'` \| `'comfort_plus'` \| `'business'` \| `''` (класс неизвестен, «Не указан») |
 | `Currency` | `'RUB'` \| `'USD'` \| `'EUR'` \| `'TRY'` |
 | `TransportCategory` | `'taxi'` \| `'bus'` \| `'transfer'` |
 
@@ -184,18 +196,26 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 
 **Поля из реального API** (`OfferApi`, `/api/v1/offers`): `title`, `description`, `status: OfferStatus` (`'draft' | 'ready' | 'published'`) — не `optional`, у них всегда есть значение (дефолтятся и в `blankOffer()`, и в offer-сторе при create/update). `uuid?`, `id?`, `agencyId?`, `createdBy?`, `createdAt?`, `updatedAt?` — присваиваются бэкендом, поэтому `optional`: отсутствуют у локального черновика, пока оффер не сохранён через `OfferApi.create`.
 
-**Доменные поля** (в бэкенде ещё не реализованы, между перезагрузками страницы не сохраняются — см. [Offer Store: Basic Fields vs Domain Content](#offer-store-basic-fields-vs-domain-content)): `clients: Client[]`, `startDate`, `endDate`, `flights: Flight[]`, `hotels: Hotel[]`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`.
+**Перелёты** — `flights: Flight[]`, хранятся в реальном API.
+
+**Доменные поля** (в бэкенде ещё не реализованы, между перезагрузками страницы не сохраняются — см. [Offer Store: Basic Fields vs Domain Content](#offer-store-basic-fields-vs-domain-content)): `clients: Client[]`, `startDate`, `endDate`, `hotels: Hotel[]`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`.
 
 **Примечание:** отдельного поля `welcomeText` в модели нет — приветственный текст для клиента хранится в `description` (реальное поле API), эти два понятия были объединены по ревью PR #25.
 
 ### Flight — модель сегментов
 
-`Flight { managerComment?, segments: FlightSegment[], price, currency }`  
-`FlightSegment { airline, flightNumber, flightClass, from: Airport, to: Airport, departureDateTime, arrivalDateTime }`  
-`Airport { city, name, code, timezone: string }`
+Модель повторяет модель api в camelCase вместо snake_case, без полей, которые web не использует (например, таймзоны города аэропорта); маппинг — в `src/api/offer.ts`.
+
+`Flight { id?, price: string, currency, managerComment: string, segments: FlightSegment[], totalDurationSeconds?, layovers?: { airportIcao, durationSeconds }[] }`  
+`FlightSegment { departureAirport, arrivalAirport: Airport | null, departureAt, arrivalAt: string, cabinClass: CabinClass, airline: Airline | null, flightNumber, durationSeconds? }`  
+`Airport { icao, iata: string | null, name, city: { name }, country: { iso2, name } }` — определён в `src/api/types/airport.ts`  
+`Airline { id, icao: string | null, name, dissolvedOn: string | null }` — определён в `src/api/types/airline.ts`
 
 **Правило:** прямой рейс = 1 сегмент, N пересадок = N+1 сегмент.  
-**`Airport.timezone`:** хранится как ISO-офсет (`+03:00`). Для обратной совместимости `FlightCard.zonedToUtcMs` поддерживает legacy IANA-зоны (`Europe/Moscow`).
+**`null` в сегменте** бывает только в черновике диалога.  
+**Время** — местное время аэропорта без смещения (`2026-05-14T10:00:00`). Web передаёт и показывает его как есть, не зависит от часового пояса браузера и часовые пояса не считает: время в пути и пересадки берутся из вычисленных api полей, неположительные значения не показываются. Вычисляемые поля (`id`, длительности, `layovers`) и объекты аэропорта и авиакомпании в тело записи не попадают: api отклоняет неизвестные поля.  
+**Цена** — десятичная строка с точкой, как в api; в число приводится только для итога на странице оффера.  
+**Показ:** код аэропорта — `airportCode` (`iata ?? icao`), авиакомпания — `name` (русское название или английское, если русского нет; выбирает api).
 
 ### Hotel
 
@@ -213,13 +233,13 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 
 ## Offer Store: Basic Fields vs Domain Content
 
-Реальный бэкенд (`/api/v1/offers`, см. `api/docs/swagger/swagger.json` в репозитории API) хранит **только базовые поля** оффера: `title`, `description`, `status`, `agency_id`, `created_by`, `created_at`, `updated_at`. `description` используется на фронте и как приветственный текст для клиента (отдельного `welcomeText` в модели нет — эти два понятия объединены). Полей для доменной модели (`flights`, `hotels`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`, `clients`, `startDate`, `endDate`) в бэкенде пока нет (issue [#24](https://github.com/tourismania/web/issues/24)).
+Реальный бэкенд (`/api/v1/offers`, см. `api/docs/swagger/swagger.json` в репозитории API) хранит **базовые поля** оффера (`title`, `description`, `status`, `agency_id`, `created_by`, `created_at`, `updated_at`) и **перелёты** (`flights`, только в карточке, в списке их нет). `description` используется на фронте и как приветственный текст для клиента (отдельного `welcomeText` в модели нет — эти два понятия объединены). Полей для остальной доменной модели (`hotels`, `carRentals`, `cruises`, `excursions`, `transport`, `additionalServices`, `clients`, `startDate`, `endDate`) в бэкенде пока нет (issue [#24](https://github.com/tourismania/web/issues/24)).
 
-`src/stores/offer.ts` работает **только** с базовыми полями через `OfferApi` — реальный бэкенд, без фолбэка. Ошибки идут в `store.error` + `console.error`. localStorage-персистенция доменного контента, использовавшаяся ранее, убрана по ревью — доменные поля (`flights`/`hotels`/итд), приходящие из форм (`OfferEditView`), сейчас нигде не сохраняются между перезагрузками страницы; это осознанный и временный пробел, а не баг.
+`src/stores/offer.ts` работает с базовыми полями и перелётами через `OfferApi` — реальный бэкенд, без фолбэка. Ошибки идут в `store.error` + `console.error`; при записи `store.error` содержит причину из ответа api, а редактор остаётся с введёнными данными. Если оффер не загрузился, сохранение в редакторе недоступно: иначе пустая форма заменила бы его поля и перелёты. localStorage-персистенция доменного контента, использовавшаяся ранее, убрана по ревью — остальные доменные поля (`hotels`/итд), приходящие из форм (`OfferEditView`), сейчас нигде не сохраняются между перезагрузками страницы; это осознанный и временный пробел, а не баг.
 
 Тип `DomainContent` (в `offer.ts`) оставлен как документация структуры, которую предстоит перенести на бэкенд — сам по себе он больше ни для чего не используется.
 
-**Когда переписывать:** когда бэкенд получит поля для полной доменной модели — реализовать `flights`/`hotels`/итд через реальный API целиком (отдельная задача, замена нынешнего пробела, а не текущей localStorage-схемы, которой больше нет).
+**Когда переписывать:** когда бэкенд получит поля для остальной доменной модели — реализовать `hotels`/итд через реальный API целиком (отдельная задача, замена нынешнего пробела, а не текущей localStorage-схемы, которой больше нет).
 
 ---
 
@@ -316,7 +336,7 @@ pnpm run test:component:dev     # Cypress component tests
 ### Test Organization
 
 ```
-src/                         # Unit-тесты рядом с файлами (*.spec.ts) — пока не используется
+src/                         # Unit-тесты рядом с файлами (*.spec.ts)
 cypress/
   e2e/                       # End-to-end тесты
   support/                   # Команды и фикстуры

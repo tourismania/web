@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Flight, FlightSegment } from '@/api/types/offer'
-import { formatDurationMs, computeFlightDurationMs, formatLayoverWait } from '@/helpers/flight'
+import {
+  airportCode,
+  cabinClassLabel,
+  formatFlightDuration,
+  formatLayoverWait,
+  formatLocalDateTime,
+} from '@/helpers/flight'
 
 const props = defineProps<{ flight: Flight; index: number }>()
-
-const classLabel: Record<string, string> = {
-  economy: 'Эконом',
-  business: 'Бизнес',
-  comfort: 'Комфорт',
-}
 
 const currencySymbol: Record<string, string> = {
   RUB: '₽',
@@ -18,21 +18,14 @@ const currencySymbol: Record<string, string> = {
   TRY: '₺',
 }
 
-function formatDateTime(iso: string): { date: string; time: string; weekday: string } {
-  const d = new Date(iso)
-  const date = d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' })
-  const weekday = d.toLocaleDateString('ru-RU', { weekday: 'short' })
-  const time = d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
-  return { date, time, weekday }
+// Цена показывается как в ответе api, с его числом знаков после точки.
+function formatPrice(price: string, currency: string): string {
+  return `${price} ${currencySymbol[currency] ?? currency}`
 }
 
-function formatPrice(price: number, currency: string): string {
-  return `${price.toLocaleString('ru-RU')} ${currencySymbol[currency] ?? currency}`
-}
-
-/** Время ожидания между двумя соседними сегментами (в .layover-tooltip-row). */
-function layoverWait(prev: FlightSegment, next: FlightSegment): string {
-  return formatLayoverWait(prev, next)
+/** Ожидание на i-й пересадке — из ответа api (в .layover-tooltip-row). */
+function layoverWait(i: number): string {
+  return formatLayoverWait(props.flight.layovers?.[i]?.durationSeconds)
 }
 
 const firstSegment = computed<FlightSegment>(() => props.flight.segments[0])
@@ -40,12 +33,10 @@ const lastSegment = computed<FlightSegment>(
   () => props.flight.segments[props.flight.segments.length - 1],
 )
 
-const departureFmt = computed(() => formatDateTime(firstSegment.value.departureDateTime))
-const arrivalFmt = computed(() => formatDateTime(lastSegment.value.arrivalDateTime))
+const departureFmt = computed(() => formatLocalDateTime(firstSegment.value.departureAt))
+const arrivalFmt = computed(() => formatLocalDateTime(lastSegment.value.arrivalAt))
 
-const duration = computed(() =>
-  formatDurationMs(computeFlightDurationMs(props.flight.segments)),
-)
+const duration = computed(() => formatFlightDuration(props.flight.totalDurationSeconds))
 
 const flightStatus = computed(() => {
   const n = props.flight.segments.length - 1
@@ -70,11 +61,11 @@ const layoverIndices = computed<number[]>(() => {
 
 const codes = computed<string[]>(() => {
   const segments = props.flight.segments
-  const out: string[] = [segments[0].from.code]
+  const out: string[] = [airportCode(segments[0].departureAirport)]
   for (let i = 0; i <= segments.length - 2; i++) {
-    out.push(segments[i].to.code)
+    out.push(airportCode(segments[i].arrivalAirport))
   }
-  out.push(segments[segments.length - 1].to.code)
+  out.push(airportCode(segments[segments.length - 1].arrivalAirport))
   return out
 })
 
@@ -99,14 +90,16 @@ function layoverPositionPercent(i: number): number {
           :key="si"
           class="flight-card__meta"
         >
-          <span v-if="segment.airline" class="flight-card__meta-item">
+          <span class="flight-card__meta-item">
             <v-icon icon="mdi-airplane" size="14" class="mr-1" />
-            {{ segment.airline }}
+            {{ segment.airline?.name }}
           </span>
-          <span v-if="segment.airline" class="flight-card__meta-sep">·</span>
-          <span class="flight-card__meta-item flight-card__meta-item--accent">
-            {{ classLabel[segment.flightClass] ?? segment.flightClass }}
-          </span>
+          <template v-if="segment.cabinClass">
+            <span class="flight-card__meta-sep">·</span>
+            <span class="flight-card__meta-item flight-card__meta-item--accent">
+              {{ cabinClassLabel(segment.cabinClass) }}
+            </span>
+          </template>
           <template v-if="segment.flightNumber">
             <span class="flight-card__meta-sep">·</span>
             <span class="flight-card__meta-item">Рейс {{ segment.flightNumber }}</span>
@@ -120,7 +113,8 @@ function layoverPositionPercent(i: number): number {
       <!-- Departure -->
       <div class="flight-card__endpoint">
         <div class="flight-card__time">{{ departureFmt.time }}</div>
-        <div class="flight-card__city">{{ firstSegment.from.city }}</div>
+        <div class="flight-card__city">{{ firstSegment.departureAirport?.city.name }}</div>
+        <div class="flight-card__date">{{ firstSegment.departureAirport?.name }}</div>
         <div class="flight-card__date">{{ departureFmt.date }}, {{ departureFmt.weekday }}</div>
       </div>
 
@@ -149,27 +143,27 @@ function layoverPositionPercent(i: number): number {
               <div class="layover-tooltip-content">
                 <div class="layover-tooltip-row">
                   <span class="layover-tooltip-label">Аэропорт:</span>
-                  {{ flight.segments[i].to.city }} ({{ flight.segments[i].to.code }}),
-                  {{ flight.segments[i].to.name }}
+                  {{ flight.segments[i].arrivalAirport?.city.name }} ({{ airportCode(flight.segments[i].arrivalAirport) }}),
+                  {{ flight.segments[i].arrivalAirport?.name }}
                 </div>
                 <div class="layover-tooltip-row">
                   <span class="layover-tooltip-label">Прилёт:</span>
-                  {{ formatDateTime(flight.segments[i].arrivalDateTime).time }},
-                  {{ formatDateTime(flight.segments[i].arrivalDateTime).date }}
+                  {{ formatLocalDateTime(flight.segments[i].arrivalAt).time }},
+                  {{ formatLocalDateTime(flight.segments[i].arrivalAt).date }}
                 </div>
                 <div
-                  v-if="layoverWait(flight.segments[i], flight.segments[i + 1])"
+                  v-if="layoverWait(i)"
                   class="layover-tooltip-row layover-tooltip-row--wait"
                 >
                   <span class="layover-tooltip-label">Ожидание:</span>
-                  {{ layoverWait(flight.segments[i], flight.segments[i + 1]) }}
+                  {{ layoverWait(i) }}
                 </div>
                 <div class="layover-tooltip-row">
                   <span class="layover-tooltip-label">Вылет:</span>
-                  {{ formatDateTime(flight.segments[i + 1].departureDateTime).time }},
-                  {{ formatDateTime(flight.segments[i + 1].departureDateTime).date }}
+                  {{ formatLocalDateTime(flight.segments[i + 1].departureAt).time }},
+                  {{ formatLocalDateTime(flight.segments[i + 1].departureAt).date }}
                 </div>
-                <div class="layover-tooltip-row">
+                <div v-if="flight.segments[i + 1].flightNumber" class="layover-tooltip-row">
                   <span class="layover-tooltip-label">Рейс:</span>
                   {{ flight.segments[i + 1].flightNumber }}
                 </div>
@@ -194,7 +188,8 @@ function layoverPositionPercent(i: number): number {
       <!-- Arrival -->
       <div class="flight-card__endpoint flight-card__endpoint--right">
         <div class="flight-card__time">{{ arrivalFmt.time }}</div>
-        <div class="flight-card__city">{{ lastSegment.to.city }}</div>
+        <div class="flight-card__city">{{ lastSegment.arrivalAirport?.city.name }}</div>
+        <div class="flight-card__date">{{ lastSegment.arrivalAirport?.name }}</div>
         <div class="flight-card__date">{{ arrivalFmt.date }}, {{ arrivalFmt.weekday }}</div>
       </div>
     </div>

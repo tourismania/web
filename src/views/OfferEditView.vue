@@ -12,6 +12,7 @@ import type {
 import DateField from '@/components/common/DateField.vue'
 import DateTimeField from '@/components/common/DateTimeField.vue'
 import { computeNights, pluralizeNights } from '@/helpers/hotel'
+import { blankFlight } from '@/helpers/flight'
 import FlightEditDialog from '@/components/offer/FlightEditDialog.vue'
 
 const route = useRoute()
@@ -26,21 +27,6 @@ const CURRENCIES: Currency[] = ['RUB', 'USD', 'EUR', 'TRY']
 const TRANSPORT_CATEGORIES: TransportCategory[] = ['taxi', 'bus', 'transfer']
 const STARS = [1, 2, 3, 4, 5]
 
-function blankFlight(): Flight {
-  return {
-    segments: [{
-      airline: '',
-      flightNumber: '',
-      flightClass: 'economy',
-      from: { city: '', name: '', code: '', timezone: '+03:00' },
-      to: { city: '', name: '', code: '', timezone: '+03:00' },
-      departureDateTime: '',
-      arrivalDateTime: '',
-    }],
-    price: 0,
-    currency: 'RUB',
-  }
-}
 function blankHotel(): Hotel {
   return { name: '', stars: 3, address: '', description: '', roomType: '', occupancyType: '', price: 0, currency: 'RUB', gallery: [], serviceFee: 0, checkIn: '', checkOut: '',}
 }
@@ -85,6 +71,8 @@ function blankOffer(): Offer {
 }
 
 const offer = reactive<Offer>(blankOffer())
+// Оффер не загрузился: сохранять нельзя, иначе пустая форма заменит его поля и перелёты.
+const loadFailed = ref(false)
 
 onMounted(async () => {
   // Параллельно подгружаем список клиентов для мультиселекта
@@ -97,6 +85,8 @@ onMounted(async () => {
     await offerStore.loadOfferById(uuid)
     if (offerStore.currentOffer) {
       Object.assign(offer, JSON.parse(JSON.stringify(offerStore.currentOffer)))
+    } else {
+      loadFailed.value = true
     }
   }
 
@@ -251,10 +241,6 @@ async function submitOffer() {
       </v-btn>
     </div>
 
-    <v-alert v-if="offerStore.error" type="error" class="mb-3" closable>
-      {{ offerStore.error }}
-    </v-alert>
-
     <!-- Единая карточка: основное + секции сущностей -->
     <div class="unified-card mb-4 pa-4">
 
@@ -324,8 +310,8 @@ async function submitOffer() {
           <v-expansion-panel-text>
             <div v-for="(f, i) in offer.flights" :key="i" class="entity-row">
               <div class="entity-info">
-                <span class="text-body-2">{{ i + 1 }}. {{ f.segments[0]?.airline || '—' }}</span>
-                <span class="text-caption text-medium-emphasis ml-2">{{ f.segments[0]?.from.city }} → {{ f.segments.at(-1)?.to.city }}</span>
+                <span class="text-body-2">{{ i + 1 }}. {{ f.segments[0]?.airline?.name || '—' }}</span>
+                <span class="text-caption text-medium-emphasis ml-2">{{ f.segments[0]?.departureAirport?.city.name }} → {{ f.segments.at(-1)?.arrivalAirport?.city.name }}</span>
               </div>
               <div class="entity-actions">
                 <v-btn icon size="x-small" variant="text" @click="openEdit('flight', i)"><v-icon size="14">mdi-pencil</v-icon></v-btn>
@@ -486,6 +472,11 @@ async function submitOffer() {
       </v-expansion-panels>
     </div>
 
+    <!-- Ошибка — рядом с кнопкой сохранения: на длинной форме верх страницы может быть вне экрана -->
+    <v-alert v-if="offerStore.error" type="error" class="mb-3" closable>
+      {{ offerStore.error }}
+    </v-alert>
+
     <!-- Сохранить -->
     <div class="d-flex justify-end ga-2">
       <v-btn
@@ -501,6 +492,7 @@ async function submitOffer() {
         size="default"
         prepend-icon="mdi-content-save"
         :loading="offerStore.loading"
+        :disabled="loadFailed"
         @click="submitOffer"
       >
         {{ isEdit ? 'Сохранить изменения' : 'Создать тур' }}
