@@ -23,6 +23,7 @@ import { mount } from 'cypress/vue'
 // Alternatively, can be defined in cypress/support/component.d.ts
 // with a <reference path="./component" /> at the top of your spec.
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace -- так Cypress рекомендует расширять типы своих команд
   namespace Cypress {
     interface Chainable {
       mount: typeof mount

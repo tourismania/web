@@ -7,7 +7,7 @@ export default defineComponent({
     modelValue: Boolean
   },
   emits: {
-    'update:modelValue': (value: boolean) => true
+    'update:modelValue': (value: boolean) => typeof value === 'boolean'
   },
   computed: {
     value: {

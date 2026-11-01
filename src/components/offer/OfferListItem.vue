@@ -44,7 +44,8 @@ function handleCopyLink(e: Event) {
           prepend-icon="mdi-account"
           variant="outlined"
           size="small"
-          v-for="client in props.offer.clients" >
+          v-for="client in props.offer.clients"
+          :key="client.email" >
         {{client.name}} {{client.surname}}
       </v-chip>
     </td>
