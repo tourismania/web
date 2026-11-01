@@ -1,4 +1,5 @@
-import type { Airport, CabinClass, Flight, FlightSegment } from '@/api/types/offer'
+import type { Airport } from '@/api/types/airport'
+import type { CabinClass, Flight, FlightSegment } from '@/api/types/offer'
 import type { FieldRule } from './rules'
 
 const SECONDS_IN_MINUTE = 60

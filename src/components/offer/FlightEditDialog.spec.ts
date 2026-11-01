@@ -5,7 +5,8 @@ import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 import FlightEditDialog from './FlightEditDialog.vue'
 import { blankFlight } from '@/helpers/flight'
-import type { Airline, Airport, Flight } from '@/api/types/offer'
+import type { Airport } from '@/api/types/airport'
+import type { Airline, Flight } from '@/api/types/offer'
 
 function airport(icao: string, iata: string | null, city: string): Airport {
   return {

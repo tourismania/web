@@ -50,7 +50,7 @@ src/
       auth.ts             # AuthResponse: { token: string }
       user.ts             # User: id, email, phone, firstName, lastName, rights.isSuperAdmin
       offer.ts            # Offer + все вложенные типы
-      airport.ts          # Ответ поиска аэропортов
+      airport.ts          # Airport + ответ поиска аэропортов
       airline.ts          # Ответ поиска авиакомпаний
   assets/
     variables.scss        # Общие SCSS-токены ($color-blue, $color-blue-dark, $color-yellow, шрифты)
@@ -208,7 +208,7 @@ Navigation guard: маршруты с `meta: { requiresAuth: true }` перен�
 
 `Flight { id?, price: string, currency, managerComment: string, segments: FlightSegment[], totalDurationSeconds?, layovers?: { airportIcao, durationSeconds }[] }`  
 `FlightSegment { departureAirport, arrivalAirport: Airport | null, departureAt, arrivalAt: string, cabinClass: CabinClass, airline: Airline | null, flightNumber, durationSeconds? }`  
-`Airport { icao, iata: string | null, name, city: { name }, country: { iso2, name } }`  
+`Airport { icao, iata: string | null, name, city: { name }, country: { iso2, name } }` — определён в `src/api/types/airport.ts`  
 `Airline { id, icao: string | null, name, dissolvedOn: string | null }`
 
 **Правило:** прямой рейс = 1 сегмент, N пересадок = N+1 сегмент.  

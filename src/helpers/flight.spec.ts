@@ -10,7 +10,7 @@ import {
   formatLocalDateTime,
   priceRule,
 } from './flight'
-import type { Airport } from '@/api/types/offer'
+import type { Airport } from '@/api/types/airport'
 
 const airport: Airport = {
   icao: 'UUEE',

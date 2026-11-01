@@ -1,3 +1,5 @@
+import type { Airport } from './airport'
+
 // Класс обслуживания сегмента; '' — класс неизвестен («Не указан»).
 export type CabinClass = 'economy' | 'comfort' | 'comfort_plus' | 'business' | ''
 export type Currency = 'RUB' | 'USD' | 'EUR' | 'TRY'
@@ -5,19 +7,6 @@ export type OfferStatus = 'draft' | 'ready' | 'published'
 
 // Модель перелёта повторяет модель api в camelCase вместо snake_case, без полей,
 // которые web не использует (таймзона города аэропорта). Маппинг — в src/api/offer.ts.
-
-export interface Airport {
-  icao: string                    // ключ аэропорта, e.g. "USSS"
-  iata: string | null             // только для показа, e.g. "SVX"
-  name: string                    // e.g. "Кольцово"
-  city: {
-    name: string
-  }
-  country: {
-    iso2: string
-    name: string
-  }
-}
 
 export interface Airline {
   id: number                      // ключ авиакомпании, в api уходит как airline_id
