@@ -115,7 +115,7 @@ docker/
 - **`Cruise`** — одна каюта на круиз (`cabin: CruiseCabin`).
 - **`Excursion`, `Cruise`** — галереи изображений (`gallery: Image[]`).
 
-Полные определения — в `src/api/types/offer.ts`, `Airport` — в `src/api/types/airport.ts`.
+Полные определения — в `src/api/types/offer.ts`, `Airport` — в `src/api/types/airport.ts`, `Airline` — в `src/api/types/airline.ts`.
 
 ### Хранение данных
 

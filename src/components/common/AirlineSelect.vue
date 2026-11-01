@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { Airline } from '@/api/types/offer'
-import type { AirlineSearchItem } from '@/api/types/airline'
+import type { Airline, AirlineSearchItem } from '@/api/types/airline'
 import { AirlineApi } from '@/api/airline'
 import type { FieldRule } from '@/helpers/rules'
 

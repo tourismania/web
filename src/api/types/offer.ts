@@ -1,3 +1,4 @@
+import type { Airline } from './airline'
 import type { Airport } from './airport'
 
 // Класс обслуживания сегмента; '' — класс неизвестен («Не указан»).
@@ -7,13 +8,6 @@ export type OfferStatus = 'draft' | 'ready' | 'published'
 
 // Модель перелёта повторяет модель api в camelCase вместо snake_case, без полей,
 // которые web не использует (таймзона города аэропорта). Маппинг — в src/api/offer.ts.
-
-export interface Airline {
-  id: number                      // ключ авиакомпании, в api уходит как airline_id
-  icao: string | null             // null только у служебной записи «Неизвестная»
-  name: string                    // для показа: русское, если есть, иначе английское (выбирает api)
-  dissolvedOn: string | null      // YYYY-MM-DD; null — действует
-}
 
 export interface FlightSegment {
   departureAirport: Airport | null // null бывает только в черновике диалога

@@ -1,7 +1,7 @@
 import apiClient from './axios'
+import type { Airline } from './types/airline'
 import type { Airport } from './types/airport'
 import type {
-  Airline,
   CabinClass,
   Currency,
   Flight,
