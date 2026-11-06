@@ -2,7 +2,6 @@
 import {RouterView} from "vue-router";
 import {useUserStore} from "@/stores/user.ts";
 import {onMounted, ref} from "vue";
-import SocialLinksFooter from "@/blocks/SocialLinksFooter.vue";
 import AppBar from "@/blocks/AppBar.vue";
 import NavigationDrawer from "@/blocks/NavigationDrawer.vue";
 

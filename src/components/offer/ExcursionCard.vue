@@ -16,14 +16,6 @@ const currencySymbol: Record<string, string> = {
 function formatPrice(price: number, currency: string): string {
   return `${price.toLocaleString('ru-RU')} ${currencySymbol[currency] ?? currency}`
 }
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('ru-RU', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-}
 </script>
 
 <template>

@@ -59,7 +59,7 @@ src/
   blocks/                 # Layout/chrome компоненты с бизнес-логикой (могут обращаться к стору)
     AppBar.vue
     NavigationDrawer.vue
-    SocialLinksFooter.vue # Импортирован в MainLayout, но не рендерится
+    SocialLinksFooter.vue # Футер главной страницы (HomeView)
     LoginForm.vue
   components/
     offer/                # Карточки и блоки доменной сущности Offer

@@ -11,7 +11,7 @@ export default defineComponent({
       get() {
         return this.modelValue
       },
-      set(value: any) {
+      set(value: boolean) {
         this.$emit('update:modelValue', value)
       }
     }

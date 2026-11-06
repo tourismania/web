@@ -1,6 +1,11 @@
+import axios from 'axios'
 import apiClient from '@/api/axios'
 import type { AuthResponse } from '@/api/types/auth.ts'
 import { useAuthStore } from '@/stores/auth.ts'
+
+interface LoginErrorDto {
+  message?: string
+}
 
 export class Auth {
   private authStore = useAuthStore()
@@ -12,14 +17,11 @@ export class Auth {
         password,
       })
       this.authStore.setToken(response.data.token)
-    } catch (error: any) {
-      if (error.response?.data?.message) {
-        console.error('login error', error.response?.data)
-        throw new Error(error.response.data.message)
-      } else {
-        console.error('login error', error.response?.data)
-        throw new Error('Ошибка при авторизации. Попробуйте позже.')
-      }
+    } catch (error) {
+      const data = axios.isAxiosError<LoginErrorDto>(error) ? error.response?.data : undefined
+      console.error('login error', data)
+      if (data?.message) throw new Error(data.message)
+      throw new Error('Ошибка при авторизации. Попробуйте позже.')
     }
   }
 }
